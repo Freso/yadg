@@ -1,0 +1,6 @@
+{{ artist }} ---- {{ title }}
+        
+{% for cd,tracks in discs.items %}
+    {{ cd }}:{% for number,artist,tracktitle,duration in tracks %}
+        {{ number }}.{% if artist %} {{ artist}} -{% endif %} {{ tracktitle }} ({{ duration }}){% endfor %}
+{% endfor %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title%}Index{% endblock %}
+
+{% block content %}
+        <h1 id="caption">Test</h1>
+        <form action="{% url descgen.views.index %}" method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Submit" />
+        </form>
+{% endblock %}

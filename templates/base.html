@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>{% block title %}Title{% endblock %}</title>
+        <meta charset="utf-8">
+        <!-- <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.3.0/build/yui/yui-min.js"></script> -->
+        
+        {% block additionalHeaders %}
+        {% endblock %}
+    </head>
+    <body>
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
