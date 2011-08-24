@@ -121,6 +121,13 @@ class Release(APIBase):
             self._data = self._extract_infos()
         return self._data
     
+    def release_from_url(url):
+        m = re.match('^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)',url)
+        if m:
+            return Release(int(m.group(1)))
+        else:
+            return None
+    
     def __unicode__(self):
         return u'<Release: id=%d>' % self.id
 
