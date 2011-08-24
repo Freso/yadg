@@ -181,10 +181,3 @@ class Search(APIBase):
     
     def __unicode__(self):
         return u'<Search: term="' + self._term + u'">'
-
-#bla = Search(u'überall')
-#for release in bla.releases:
-#    print release
-
-rel = Release(1239600)
-print rel.data['title'].encode('utf-8')
