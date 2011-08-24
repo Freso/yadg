@@ -86,7 +86,9 @@ class Release(APIBase):
                 content = content.split(',')
                 #remove leading and trailing whitespace
                 content = map(lambda x: x.rstrip().lstrip(),content)
-            if not content == 'none':
+                #remove empty elements
+                content = filter(lambda x: x, content)
+            if content and (not content == 'none'):
                 data[label] = content
         
         discs = SortedDict()
