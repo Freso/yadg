@@ -2,6 +2,6 @@
 
 {% block title%}Error{% endblock %}
 
-{% block content %}
+{% block content %}{% include "form.html" %}
     <p>There was an error retrieving the data from discogs. This might be a temporary problem. <a href="{% url index %}">Try again</a> in a few minutes</p>.
 {% endblock %}

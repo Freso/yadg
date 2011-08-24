@@ -2,8 +2,6 @@
 
 {% block title%}Result{% endblock %}
 
-{% block content %}
-    <pre>
-{{ result }}
-    </pre>
-{% endblock %}
+{% block content %}{% include "form.html" %}
+    
+<div class="form_settings"><textarea class="wide">{{ result }}</textarea></div>{% endblock %}

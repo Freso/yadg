@@ -2,6 +2,6 @@
 
 {% block title%}Not found{% endblock %}
 
-{% block content %}
+{% block content %}{% include "form.html" %}
     <p>I was unable to find the data you were looking for. Please realize that the results of your request are purged periodically. You can of course make <a href="{% url index %}">a new one</a> at any time.</p>.
 {% endblock %}

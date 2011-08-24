@@ -3,7 +3,7 @@ import requests,lxml.html,re
 from django.utils.datastructures import SortedDict
 
 
-class DiscogsAPIError(BaseException):
+class DiscogsAPIError(Exception):
     pass
 
 
@@ -105,11 +105,14 @@ class Release(APIBase):
                     continue
                 (track_pos,track_artists,track,track_duration,filler) = row.getchildren()
                 #determine cd and track number
-                m = re.search('(?i)^(?:(?:cd)?(\d{1,2})-)?(\d+)',track_pos.text_content())
+                m = re.search('(?i)^(?:(?:cd)?(\d{1,2})-)?(\d+|(\w\d*))',track_pos.text_content())
                 if not m:
                     #ignore tracks with strange track number
                     continue
-                (track_cd_number,track_number) = (m.group(1),int(m.group(2)))
+                number = m.group(2)
+                if not re.match('\w',number):
+                    number = int(number)
+                (track_cd_number,track_number) = (m.group(1),number)
                 #if there is no cd number we default to 1
                 if not track_cd_number:
                     track_cd_number = 1

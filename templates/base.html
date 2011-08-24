@@ -1,17 +1,31 @@
-<!DOCTYPE html>
-
+<!DOCTYPE HTML>
 <html>
-    <head>
-        <title>{% block title %}Title{% endblock %}</title>
-        <meta charset="utf-8">
-        <!-- <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.3.0/build/yui/yui-min.js"></script> -->
-        
-        {% block additionalHeaders %}
-        {% endblock %}
-    </head>
-    <body>
-        <h1 id="caption">YADG</h1>
+
+<head>
+  <title>{% block title %}Title{% endblock %}</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="/static/style.css" title="style" />
+  {% block additionalHeaders %}
+  {% endblock %}
+</head>
+
+<body>
+  <div id="main">
+    <div id="header">
+      <div id="logo">
+        <div id="logo_text">
+          <h1><a href="{% url index %}">YADG</a></h1>
+          <h2>Yet Another Description Generator</h2>
+
+        </div>
+      </div>
+    </div>
+    <div id="site_content">
         {% block content %}
         {% endblock %}
-    </body>
+    </div>
+    <div id="footer">
+      <a href="http://validator.w3.org/check?uri=referer">HTML5</a> | <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> | <a href="http://www.html5webtemplates.co.uk">design from HTML5webtemplates.co.uk</a>
+    </div>
+  </div>
 </html>

@@ -38,17 +38,19 @@ def get_result(request,id):
     try:
         task = TaskMeta.objects.get(task_id__exact=id)
     except:
-        return render(request,'result_404.html', status=404)
+        return render(request,'result_404.html',{'form':InputForm()}, status=404)
     if task.status == 'SUCCESS':
         (type,data) = task.result
         if type == 'release':
             t = django.template.loader.get_template('result_template.txt')
             c = Context(data)
             result = t.render(c)
-            return render(request,'result.html',{'result':result,'status':task.status})
+            return render(request,'result.html',{'result':result,'form':InputForm()})
         elif type == 'list':
-            return render(request,'result_list.html',{'release_list':data,'status':task.status})
+            return render(request,'result_list.html',{'release_list':data,'form':InputForm()})
+        elif type == '404':
+            return render(request,'result_not_found_on_discogs.html', {'form':InputForm()})
     elif task.status == 'FAILURE':
-        return render(request,'result_failed.html', status=503)
+        return render(request,'result_failed.html', {'form':InputForm()}, status=503)
     else:
         return render(request,'result_waiting.html')

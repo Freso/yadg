@@ -1,5 +1,5 @@
 from celery.decorators import task
-from descgen.discogs import Search,Release
+from descgen.discogs import Search,Release,DiscogsAPIError
 
 @task
 def get_search_results(term):
@@ -9,9 +9,21 @@ def get_search_results(term):
 @task
 def get_release_info(id):
     release = Release(id)
-    return ('release',release.data)
+    try:
+        return ('release',release.data)
+    except DiscogsAPIError as e:
+        if e.message == "404":
+            return ('404', None)
+        else:
+            raise e
 
 @task
 def get_release_from_url(url):
     release = Release.release_from_url(url)
-    return ('release',release.data)
+    try:
+        return ('release',release.data)
+    except DiscogsAPIError as e:
+        if e.message == "404":
+            return ('404', None)
+        else:
+            raise e
