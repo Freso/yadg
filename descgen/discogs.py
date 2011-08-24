@@ -42,7 +42,8 @@ class Release(APIBase):
         data = {}
         
         #get the raw response content and parse it
-        content = self._response.content
+        #we explicitely decode the response content to unicode
+        content = self._response.content.decode('utf-8')
         doc = lxml.html.document_fromstring(content)
         
         #get the div that contains all the information we want
@@ -51,12 +52,21 @@ class Release(APIBase):
             raise DiscogsAPIError, u'could not find anchor point'
         container = container[0]
         
-        #get title
+        #get artist and title
         title_element = container.cssselect('div.profile h1')
         if len(title_element) != 1:
             raise DiscogsAPIError, u'could not find title element'
+        artist_element = title_element[0].cssselect('a')
+        if len(artist_element) != 1:
+            raise DiscogsAPIError, u'could not find artist element'
+        artist = self._remove_whitespace(artist_element[0].text_content())
         title = self._remove_whitespace(title_element[0].text_content())
+        #right now this contains 'artist - title', so remove 'artist'
+        title = title.replace(artist,'')
+        #there is still '- ' before the title, remove that too
+        title = re.sub(u'^.*?\u2013\s*','',title)
         
+        data['artist'] = artist
         data['title'] = title
         
         #get additional infos
@@ -85,6 +95,9 @@ class Release(APIBase):
             if not rows:
                 raise DiscogsAPIError, u'could not find track information'
             for row in rows:
+                #ignore rows that don't have the right amount of columns
+                if len(row.getchildren()) != 5:
+                    continue
                 (track_pos,track_artists,track,track_duration,filler) = row.getchildren()
                 #determine cd and track number
                 m = re.search('(?i)(?:(?:cd)?(\d{1,2})-)?(\d+)',track_pos.text_content())
@@ -96,6 +109,15 @@ class Release(APIBase):
                     track_cd_number = 1
                 else:
                     track_cd_number = int(track_cd_number)
+                #get track artist
+                track_artists = track_artists.text_content()
+                track_artists = self._remove_whitespace(track_artists)
+                if track_artists:
+                    #remove trailing '-' if it exists
+                    if track_artists.endswith(u' \u2013'):
+                        track_artists = track_artists[:-2]
+                else:
+                    track_artists = None
                 #get track title
                 track_title = track.cssselect('span.track_title')
                 if len(track_title) != 1:
@@ -109,7 +131,7 @@ class Release(APIBase):
                 #insert the data into the dict
                 if not discs.has_key(track_cd_number):
                     discs[track_cd_number] = []
-                discs[track_cd_number].append((track_number,track_title,track_duration))
+                discs[track_cd_number].append((track_number,track_artists,track_title,track_duration))
         
         data['discs'] = discs
         
@@ -121,6 +143,7 @@ class Release(APIBase):
             self._data = self._extract_infos()
         return self._data
     
+    @staticmethod
     def release_from_url(url):
         m = re.match('^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)',url)
         if m:
@@ -145,7 +168,8 @@ class Search(APIBase):
         releases = []
         
         #get the raw response content and parse it
-        content = self._response.content
+        #we explicitely decode the response content to unicode
+        content = self._response.content.decode('utf-8')
         doc = lxml.html.document_fromstring(content)
         
         result_containers = doc.cssselect('div.search_result')
