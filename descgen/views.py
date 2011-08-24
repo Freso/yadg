@@ -35,9 +35,20 @@ def get_by_discogs_id(request,id):
     return redirect('get_result',id=task.task_id)
 
 def get_result(request,id):
-    task = get_object_or_404(TaskMeta,task_id__exact=id)
-    data = task.result
-    t = django.template.loader.get_template('result_template.txt')
-    c = Context(data)
-    result = t.render(c)
-    return render(request,'result.html',{'result':result,'status':task.status})
+    try:
+        task = TaskMeta.objects.get(task_id__exact=id)
+    except:
+        return render(request,'result_404.html', status=404)
+    if task.status == 'SUCCESS':
+        (type,data) = task.result
+        if type == 'release':
+            t = django.template.loader.get_template('result_template.txt')
+            c = Context(data)
+            result = t.render(c)
+            return render(request,'result.html',{'result':result,'status':task.status})
+        elif type == 'list':
+            return render(request,'result_list.html',{'release_list':data,'status':task.status})
+    elif task.status == 'FAILURE':
+        return render(request,'result_failed.html', status=503)
+    else:
+        return render(request,'result_waiting.html')

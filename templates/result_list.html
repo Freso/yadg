@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title%}Result{% endblock %}
+
+{% block content %}
+    {% if release_list %}
+    <ul id="release_list">
+    {% for entry in release_list %}
+    <li><a href="{% url get_by_discogs_id entry.release.id %}">{{ entry.name }}</a><br /><span>{{ entry.info }}</span></li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p>Sorry, there were no matches.</p>
+    {% endif %}
+{% endblock %}
