@@ -56,17 +56,17 @@ class Release(APIBase):
         title_element = container.cssselect('div.profile h1')
         if len(title_element) != 1:
             raise DiscogsAPIError, u'could not find title element'
-        artist_element = title_element[0].cssselect('a')
-        if len(artist_element) != 1:
-            raise DiscogsAPIError, u'could not find artist element'
-        artist = self._remove_whitespace(artist_element[0].text_content())
+        artist_elements = title_element[0].cssselect('a')
+        if len(artist_elements) == 0:
+            raise DiscogsAPIError, u'could not find artist elements'
+        artists = []
+        for artist_element in artist_elements:
+            artists.append(self._remove_whitespace(artist_element.text_content()))
         title = self._remove_whitespace(title_element[0].text_content())
         #right now this contains 'artist - title', so remove 'artist'
-        title = title.replace(artist,'')
-        #there is still '- ' before the title, remove that too
-        title = re.sub(u'^.*?\u2013\s*','',title)
+        title = title.split(u' \u2013 ')[1]
         
-        data['artist'] = artist
+        data['artists'] = artists
         data['title'] = title
         
         #get additional infos
@@ -76,13 +76,18 @@ class Release(APIBase):
             #get label and remove whitespace and ':'
             label = label_element.text_content()
             label = self._remove_whitespace(label)
-            label = label.replace(':','')
+            #make sure only valid keys are present
+            label = re.sub('\W','',label)
+            label = label.lower()
             #get content and remove whitespace
             content = additional_info.text_content()
             content = self._remove_whitespace(content)
-            if label in ('Genre','Style'):
+            if label in ('genre','style'):
                 content = content.split(',')
-            data[label] = content
+                #remove leading and trailing whitespace
+                content = map(lambda x: x.rstrip().lstrip(),content)
+            if not content == 'none':
+                data[label] = content
         
         discs = SortedDict()
         
@@ -100,9 +105,10 @@ class Release(APIBase):
                     continue
                 (track_pos,track_artists,track,track_duration,filler) = row.getchildren()
                 #determine cd and track number
-                m = re.search('(?i)(?:(?:cd)?(\d{1,2})-)?(\d+)',track_pos.text_content())
+                m = re.search('(?i)^(?:(?:cd)?(\d{1,2})-)?(\d+)',track_pos.text_content())
                 if not m:
-                    raise DiscogsAPIError, u'could not determine track number'
+                    #ignore tracks with strange track number
+                    continue
                 (track_cd_number,track_number) = (m.group(1),int(m.group(2)))
                 #if there is no cd number we default to 1
                 if not track_cd_number:
