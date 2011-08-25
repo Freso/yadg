@@ -29,11 +29,9 @@ YUI().use('node','event','io', function (Y) {
     input.on('clickoutside', restoreInputDefaultValue );
     input.on('key', restoreInputDefaultValue, 'press:tab');
     
-    var running = false;
-    
     function submitInput(e) {
         e.preventDefault();
-        if (input.get('value') != '' && input.get('value') != input_string && !running) {
+        if (input.get('value') != '' && input.get('value') != input_string) {
             running = true;
             
             var cfg = {
@@ -45,6 +43,7 @@ YUI().use('node','event','io', function (Y) {
             
             Y.on('io:complete', complete, Y);
             submit.set('disabled',true);
+            input.set('disabled',true);
             submit.set('value','Please wait...')
             // Start the transaction.
             var request = Y.io('/?xhr', cfg);
@@ -58,6 +57,7 @@ YUI().use('node','event','io', function (Y) {
       Y.detach('io:complete', complete);
       queryId(data);
       submit.set('disabled',false);
+      input.set('disabled',false);
       submit.set('value','Fetch')
       running = false;
     };
