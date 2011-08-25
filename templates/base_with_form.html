@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block additionalHeaders %}<script src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
+
+<script>
+YUI().use('node','event','io', function (Y) {
+    // Access DOM elements.
+    var submit = Y.one('#submit'),
+        input   = Y.one('#id_input'),
+        form = Y.one('form'),
+        subcontent = Y.one('#subcontent');
+
+    var input_string = 'Enter discogs url, id or search term';
+
+    input.set('value',input_string);
+    
+    input.on('focus', function(e) {
+       if ( input.get('value') == input_string ) {
+        input.set('value','');
+       }
+    });
+    
+    function restoreInputDefaultValue(e) {
+       if ( input.get('value') == '' ) {
+        input.set('value',input_string);
+       }
+    };
+    
+    input.on('clickoutside', restoreInputDefaultValue );
+    input.on('key', restoreInputDefaultValue, 'press:tab');
+    
+    var running = false;
+    
+    function submitInput(e) {
+        e.preventDefault();
+        if (input.get('value') != '' && input.get('value') != input_string && !running) {
+            running = true;
+            
+            var cfg = {
+            method: 'POST',
+            form: {
+                id: form,
+            }
+            };
+            
+            Y.on('io:complete', complete, Y);
+            submit.set('disabled',true);
+            submit.set('value','Please wait...')
+            // Start the transaction.
+            var request = Y.io('/?xhr', cfg);
+        }
+    };
+    
+    // Define a function to handle the response data.
+    function complete(id, o, args) {
+      var id = id; // Transaction ID.
+      var data = o.responseText; // Response data.
+      Y.detach('io:complete', complete);
+      queryId(data);
+      submit.set('disabled',false);
+      submit.set('value','Fetch')
+      running = false;
+    };
+    
+    function queryId(id) {
+        
+    };
+    
+    input.on('key', submitInput, 'press:enter');
+    submit.on('key', submitInput, 'press:enter');
+    submit.on('click', submitInput);
+});
+</script>
+{% endblock %}
+
+{% block content %}{% include "form.html" %}
+<div id="subcontent">{% block subcontent %}{% endblock %}</div>{% endblock %}

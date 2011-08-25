@@ -22,7 +22,7 @@ def index(request):
                     task = get_search_results.delay(input)
                 else:
                     task = get_release_info.delay(id)
-            if request.GET.has_key("htx"):
+            if request.GET.has_key("xhr"):
                 return HttpResponse(task.task_id)
             else:
                 return redirect('get_result',id=task.task_id)
@@ -50,7 +50,7 @@ def get_result(request,id):
             return render(request,'result_list.html',{'release_list':data,'form':InputForm()})
         elif type == '404':
             return render(request,'result_not_found_on_discogs.html', {'form':InputForm()})
-    elif task.status == 'FAILURE':
+    elif task.status == 'FAILURE' or task.status == 'REVOKED':
         return render(request,'result_failed.html', {'form':InputForm()}, status=503)
     else:
         return render(request,'result_waiting.html')

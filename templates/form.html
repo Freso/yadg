@@ -1,5 +1,5 @@
 <form action="{% url descgen.views.index %}" method="post" class="form_settings center">{% csrf_token %}
 {{ form.input.errors }}
 <label for="id_input" class="inv">Input:</label> {{ form.input }}
-<input type="submit" value="Submit" class="submit"/>
+<input type="submit" value="Fetch" class="submit" id="submit"/>
 </form>
