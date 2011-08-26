@@ -3,7 +3,7 @@
 {% block additionalHeaders %}<script src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
 
 <script>
-YUI().use('node','event','io', function (Y) {
+YUI().use('node','event','io','json-parse', function (Y) {
     // Access DOM elements.
     var submit = Y.one('#submit'),
         input   = Y.one('#id_input'),
@@ -11,6 +11,27 @@ YUI().use('node','event','io', function (Y) {
         subcontent = Y.one('#subcontent');
 
     var input_string = 'Enter discogs url, id or search term';
+
+    function busyStart(onlyBar) {
+        if (!onlyBar) {
+            submit.set('disabled',true);
+            input.set('disabled',true);
+            submit.set('value','Please wait...');
+        }
+        subcontent.setContent('<img class="center" src="/static/ajax-loader.gif" alt="Loading" />');
+    }
+    
+    function busyStop() {
+        submit.set('disabled',false);
+        input.set('disabled',false);
+        submit.set('value','Fetch');
+    }
+    
+    function restoreInputDefaultValue(e) {
+       if ( input.get('value') == '' ) {
+        input.set('value',input_string);
+       }
+    };
 
     input.set('value',input_string);
     
@@ -20,50 +41,126 @@ YUI().use('node','event','io', function (Y) {
        }
     });
     
-    function restoreInputDefaultValue(e) {
-       if ( input.get('value') == '' ) {
-        input.set('value',input_string);
-       }
-    };
-    
     input.on('clickoutside', restoreInputDefaultValue );
     input.on('key', restoreInputDefaultValue, 'press:tab');
     
     function submitInput(e) {
         e.preventDefault();
         if (input.get('value') != '' && input.get('value') != input_string) {
-            running = true;
-            
             var cfg = {
             method: 'POST',
             form: {
                 id: form,
-            }
+                useDisabled: true,
+            },
+            on: {
+                success: function(id, o, args) {
+                    queryId(o.responseText);
+                    busyStop();
+                },
+                failure: function(id, o, args) {
+                    if (o.status == 400) {
+                        subcontent.setContent('<p>The input field is required.</p>')
+                    } else {
+                        subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                    }
+                    busyStop();
+                }
+            },
             };
             
-            Y.on('io:complete', complete, Y);
-            submit.set('disabled',true);
-            input.set('disabled',true);
-            submit.set('value','Please wait...')
+            //Y.on('io:complete', complete, Y);
+            busyStart(false);
             // Start the transaction.
-            var request = Y.io('/?xhr', cfg);
+            Y.io('{% url index %}?xhr', cfg);
         }
     };
     
-    // Define a function to handle the response data.
-    function complete(id, o, args) {
-      var id = id; // Transaction ID.
-      var data = o.responseText; // Response data.
-      Y.detach('io:complete', complete);
-      queryId(data);
-      submit.set('disabled',false);
-      input.set('disabled',false);
-      submit.set('value','Fetch')
-      running = false;
+    function getByDiscogsId(e) {
+        e.preventDefault();
+        var cfg = {
+            method: 'GET',
+            on: {
+                success: function(id, o, args) {
+                    queryId(o.responseText);
+                },
+                failure: function(id, o, args) {
+                    subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                }
+            },
+        };
+        
+        busyStart(true);
+        Y.io('/get/'+this.get('id')+'?xhr', cfg);
     };
     
     function queryId(id) {
-        
+        var cfg = {
+            method: 'GET',
+            on: {
+                success: function(id, o, args) {
+                    var data = Y.JSON.parse(o.responseText);
+                    
+                    if (data[0] == 'result') {
+                        var textarea = Y.Node.create('<textarea></textarea>');
+                        textarea.addClass('wide');
+                        textarea.setContent(data[1]);
+                        
+                        var div = Y.Node.create('<div></div>');
+                        div.addClass('form_settings');
+                        div.insert(textarea,'replace');
+                        
+                        subcontent.insert(div,'replace');
+                    } else if (data[0] == 'list') {
+                        var ul = Y.Node.create('<ul id="release_list"></ul>');
+                        
+                        for (var i = 0; i < data[1].length;i++) {
+                            var name = data[1][i]['name'],
+                                info = data[1][i]['info'],
+                                id = data[1][i]['release'];
+                            
+                            var li = Y.Node.create('<li></li>');
+                            var a = Y.Node.create('<a href="/get/' + id + '">'+name+'</a>');
+                            a.set('id',id);
+                            a.on('key', getByDiscogsId, 'press:enter');
+                            a.on('click', getByDiscogsId);
+                            
+                            li.append(a);
+                            li.append('<br />')
+                            li.append(info);
+                            
+                            ul.append(li);
+                        }
+                        
+                        if (data[1].length != 0) {
+                            subcontent.insert(ul,'replace');
+                        } else {
+                            subcontent.setContent('<p>Sorry, there were no matches.</p>');
+                        }
+                    } else if (data[0] == 'notfound') {
+                        subcontent.setContent('<p>I could not find the release with the given ID on Discogs. You may want to <a href="{% url index %}">try again</a> with another one.</p>.');
+                    } else if (data[0] == 'waiting') {
+                        var delay = function() { queryId(args.q_id); };
+                        setTimeout(delay, 1000);
+                    } else {
+                        subcontent.setContent(o.responseText);
+                    }
+                },
+                failure: function(id, o, args) {
+                    if (o.status == 503) {
+                        subcontent.setContent('<p>There was an error retrieving the data from discogs. This might be a temporary problem. Try again in a few minutes</p>..');
+                    } else if (o.status == 404) {
+                        subcontent.setContent('<p>Something happened that should not happen. Please try again.</p>.');
+                    } else {
+                        subcontent.setContent('<p>A general error occured. Please try again later.</p>');
+                    }
+                }
+            },
+            arguments: {
+                q_id: id,
+            }
+        };
+        Y.io('/result/'+id+'?xhr', cfg);
     };
     
     input.on('key', submitInput, 'press:enter');
