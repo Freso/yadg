@@ -44,7 +44,7 @@ def get_by_discogs_id(request,id):
 def get_result(request,id):
     try:
         task = TaskMeta.objects.get(task_id__exact=id)
-    except:
+    except TaskMeta.DoesNotExist:
         if request.GET.has_key("xhr"):
             return HttpResponse(status=404)
         return render(request,'result_404.html',{'form':InputForm()}, status=404)
