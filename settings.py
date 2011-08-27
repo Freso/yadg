@@ -4,7 +4,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+    ('Slack', 'your_email@example.com'),
 )
 
 MANAGERS = ADMINS
@@ -27,7 +27,7 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'Berlin/Germany'
+TIME_ZONE = 'Europe/Berlin'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -147,6 +147,14 @@ LOGGING = {
         },
     }
 }
+
+#email settings
+EMAIL_HOST = '***REMOVED***'
+EMAIL_HOST_USER = '***REMOVED***'
+EMAIL_HOST_PASSWORD = '***REMOVED***'
+EMAIL_USE_TLS = True
+SERVER_EMAIL = '***REMOVED***'
+
 
 #add celery
 import djcelery
