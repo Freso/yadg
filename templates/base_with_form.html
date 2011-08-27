@@ -18,7 +18,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             input.set('disabled',true);
             submit.set('value','Please wait...');
         }
-        subcontent.setContent('<img class="center" src="/static/ajax-loader.gif" alt="Loading" />');
+        subcontent.setContent('<img class="center" src="{{ STATIC_URL }}ajax-loader.gif" alt="Loading" />');
     }
     
     function busyStop() {
@@ -48,28 +48,27 @@ YUI().use('node','event','io','json-parse', function (Y) {
         e.preventDefault();
         if (input.get('value') != '' && input.get('value') != input_string) {
             var cfg = {
-            method: 'POST',
-            form: {
-                id: form,
-                useDisabled: true,
-            },
-            on: {
-                success: function(id, o, args) {
-                    queryId(o.responseText);
-                    busyStop();
+                method: 'POST',
+                form: {
+                    id: form,
+                    useDisabled: true,
                 },
-                failure: function(id, o, args) {
-                    if (o.status == 400) {
-                        subcontent.setContent('<p>The input field is required.</p>')
-                    } else {
-                        subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                on: {
+                    success: function(id, o, args) {
+                        queryId(o.responseText);
+                        busyStop();
+                    },
+                    failure: function(id, o, args) {
+                        if (o.status == 400) {
+                            subcontent.setContent('<p>The input field is required.</p>')
+                        } else {
+                            subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                        }
+                        busyStop();
                     }
-                    busyStop();
-                }
-            },
+                },
             };
             
-            //Y.on('io:complete', complete, Y);
             busyStart(false);
             // Start the transaction.
             Y.io('{% url index %}?xhr', cfg);
@@ -91,7 +90,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
         };
         
         busyStart(true);
-        Y.io('/get/'+this.get('id')+'?xhr', cfg);
+        Y.io('{% url get_by_discogs_id 121212 %}'.replace(/121212/,this.get('id')) + '?xhr', cfg);
     };
     
     function queryId(id) {
@@ -120,7 +119,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                 id = data[1][i]['release'];
                             
                             var li = Y.Node.create('<li></li>');
-                            var a = Y.Node.create('<a href="/get/' + id + '">'+name+'</a>');
+                            var a = Y.Node.create('<a href="'+ '{% url get_by_discogs_id 121212 %}'.replace(/121212/,id) + '">'+name+'</a>');
                             a.set('id',id);
                             a.on('key', getByDiscogsId, 'press:enter');
                             a.on('click', getByDiscogsId);
@@ -160,7 +159,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 q_id: id,
             }
         };
-        Y.io('/result/'+id+'?xhr', cfg);
+        Y.io('{% url get_result '121212' %}'.replace(/121212/,id)+'?xhr', cfg);
     };
     
     input.on('key', submitInput, 'press:enter');
