@@ -166,6 +166,15 @@ ol li
 { color: #FFF;
   text-decoration: underline;}
 
+ul.errorlist li
+{ list-style-type: none;
+  background: none !important;
+  font-weight: bold;
+  color: red;}
+ 
+ul.errorlist 
+{ margin: 0 !important;}
+  
 .search
 { color: #5D5D5D; 
   border: 1px solid #BBB; 
