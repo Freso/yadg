@@ -137,7 +137,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             subcontent.setContent('<p>Sorry, there were no matches.</p>');
                         }
                     } else if (data[0] == 'notfound') {
-                        subcontent.setContent('<p>I could not find the release with the given ID on Discogs. You may want to <a href="{% url index %}">try again</a> with another one.</p>.');
+                        subcontent.setContent('<p>I could not find the release with the given ID on Discogs. You may want to try again with another one.</p>.');
                     } else if (data[0] == 'waiting') {
                         var delay = function() { queryId(args.q_id); };
                         setTimeout(delay, 1000);
