@@ -6,6 +6,7 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.http import HttpResponse
 from django.template import Context
 from djcelery.models import TaskMeta
+from django.core.cache import cache
 import django.template.loader
 import json
 
@@ -23,6 +24,9 @@ def index(request):
                     task = get_search_results.delay(input)
                 else:
                     task = get_release_info.delay(id)
+            #the task might not get written to the database immediately
+            #we make sure, that we know it exists
+            cache.set(task.task_id,'',3600)
             if request.GET.has_key("xhr"):
                 return HttpResponse(task.task_id)
             else:
@@ -36,6 +40,9 @@ def index(request):
 
 def get_by_discogs_id(request,id):
     task = get_release_info.delay(int(id))
+    #the task might not get written to the database immediately
+    #we make sure, that we know it exists
+    cache.set(task.task_id,'',3600)
     if request.GET.has_key("xhr"):
         return HttpResponse(task.task_id)
     else:
@@ -45,9 +52,17 @@ def get_result(request,id):
     try:
         task = TaskMeta.objects.get(task_id__exact=id)
     except TaskMeta.DoesNotExist:
-        if request.GET.has_key("xhr"):
-            return HttpResponse(status=404)
-        return render(request,'result_404.html',{'form':InputForm()}, status=404)
+        #check if we dispatched a task with this id
+        #if so it might just not be written to the database yet
+        if not cache.has_key(id):
+            #there was no task with this id dispatched in the last hour
+            if request.GET.has_key("xhr"):
+                return HttpResponse(status=404)
+            return render(request,'result_404.html',{'form':InputForm()}, status=404)
+        else:
+            #there was a task with this id dispatched, so we assume it is still pending
+            task = TaskMeta()
+            task.status = 'PENDING'
     if task.status == 'SUCCESS':
         (type,data) = task.result
         if type == 'release':
