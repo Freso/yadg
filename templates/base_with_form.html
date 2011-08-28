@@ -182,6 +182,18 @@ YUI().use('node','event','io','json-parse', function (Y) {
         input.on('key', submitInput, 'press:enter');
         submit.on('key', submitInput, 'press:enter');
         submit.on('click', submitInput);
+        
+        //there may already be a release list on the page
+        var release_links = Y.all('#release_list li a');
+        
+        //alter the default events for each link
+        release_links.each( function(node,index,nodelist) {
+            var target = node.get('href');
+
+            node.set('id',target.replace(/.*\//,''));
+            node.on('key', getByDiscogsId, 'press:enter');
+            node.on('click', getByDiscogsId);
+        });
     });
 });
 </script>
