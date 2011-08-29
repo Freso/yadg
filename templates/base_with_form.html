@@ -91,7 +91,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             };
             
             busyStart(true);
-            Y.io('{% url get_by_discogs_id 121212 %}'.replace(/121212/,this.get('id')) + '?xhr', cfg);
+            Y.io(this.get('href') + '?xhr', cfg);
         };
         
         function queryId(id) {
@@ -126,7 +126,6 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                 
                                 var li = Y.Node.create('<li></li>');
                                 var a = Y.Node.create('<a href="'+ '{% url get_by_discogs_id 121212 %}'.replace(/121212/,id) + '">'+name+'</a>');
-                                a.set('id',id);
                                 a.on('key', getByDiscogsId, 'press:enter');
                                 a.on('click', getByDiscogsId);
                                 
@@ -188,9 +187,6 @@ YUI().use('node','event','io','json-parse', function (Y) {
         
         //alter the default events for each link
         release_links.each( function(node,index,nodelist) {
-            var target = node.get('href');
-
-            node.set('id',target.replace(/.*\//,''));
             node.on('key', getByDiscogsId, 'press:enter');
             node.on('click', getByDiscogsId);
         });
