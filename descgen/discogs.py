@@ -107,7 +107,7 @@ class Release(APIBase):
                     continue
                 (track_pos,track_artists,track,track_duration,filler) = row.getchildren()
                 #determine cd and track number
-                m = re.search('(?i)^(?:(?:cd(?: )?)?(\d{1,2})-)?(\d+|(\w\d*))(?:\.)?$',track_pos.text_content())
+                m = re.search('(?i)^(?:(?:cd\s*)?(\d{1,2})-)?(\d+|(\w\d*))(?:\.)?$',track_pos.text_content())
                 if not m:
                     #ignore tracks with strange track number
                     continue
