@@ -1,5 +1,5 @@
 {% load dotify %}[size=5][b]{% for artist in artists %}[artist]{{ artist }}[/artist]{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
-{% if label %}[b]Label:[/b] [size=3][url=https://ssl.what.cd/torrents.php?recordlabel={{ label|urlencode }}]{{ label }}[/url][/size]
+{% if label %}[b]Label:[/b] [size=3]{% for l in label %}[url=https://ssl.what.cd/torrents.php?recordlabel={{ l|urlencode }}]{{ l }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}[/size]
 {% endif %}{% if catalog %}[b]Catalog#:[/b] [size=3]{{ catalog }}[/size]
 {% endif %}{% if country %}[b]Country:[/b] [size=3]{{ country }}[/size]
 {% endif %}{% if released %}[b]Year:[/b] [size=3]{{ released }}[/size]

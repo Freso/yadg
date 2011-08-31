@@ -82,13 +82,32 @@ class Release(APIBase):
             #get content and remove whitespace
             content = additional_info.text_content()
             content = self._remove_whitespace(content)
-            if label in ('genre','style'):
+            if label in ('genre','style','label'):
                 content = content.split(',')
                 #remove leading and trailing whitespace
                 content = map(lambda x: x.rstrip().lstrip(),content)
                 #remove empty elements
                 content = filter(lambda x: x, content)
-            if content and (not content == 'none'):
+            if label == 'label':
+                #sometimes we have the format "label - catalog#" for a label
+                labels = []
+                catalog_nr = []
+                for c in content:
+                    #split label and catalog#
+                    split = c.split(u' \u2013 ')
+                    if len(split) == 2: #we have exactely label and catalog#
+                        labels.append(split[0])
+                        if split[1] != 'none': #the catalog# should not be 'none'
+                            catalog_nr.append(split[1])
+                    else:
+                        #we just have a label or to many components, so don't change anything
+                        labels.append(c)
+                #if there is not an explicit catalog# already, we add them to the data dict
+                if not data.has_key('catalog') and catalog_nr:
+                    data['catalog'] = u', '.join(catalog_nr)
+                #add the updated data to the dict
+                content = labels
+            if content and (content != 'none'):
                 data[label] = content
         
         discs = SortedDict()
