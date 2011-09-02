@@ -26,7 +26,7 @@ def index(request):
             #make sure a TaskMeta object for the created task exists
             TaskMeta.objects.get_or_create(task_id=task.task_id)
             if request.GET.has_key("xhr"):
-                return HttpResponse(task.task_id)
+                return HttpResponse(task.task_id, mimetype='text/plain')
             else:
                 return redirect('get_result',id=task.task_id)
         elif request.GET.has_key("xhr"):
@@ -41,7 +41,7 @@ def get_by_discogs_id(request,id):
     #make sure a TaskMeta object for the created task exists
     TaskMeta.objects.get_or_create(task_id=task.task_id)
     if request.GET.has_key("xhr"):
-        return HttpResponse(task.task_id)
+        return HttpResponse(task.task_id, mimetype='text/plain')
     else:
         return redirect('get_result',id=task.task_id)
 
@@ -59,17 +59,17 @@ def get_result(request,id):
             c = Context(data)
             result = t.render(c)
             if request.GET.has_key("xhr"):
-                return HttpResponse(json.dumps(('result',result),ensure_ascii=False))
+                return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json')
             return render(request,'result.html',{'result':result,'form':InputForm()})
         elif type == 'list':
             if request.GET.has_key("xhr"):
                 for entry in data:
                     entry['release'] = entry['release'].id
-                return HttpResponse(json.dumps(('list',data),ensure_ascii=False))
+                return HttpResponse(json.dumps(('list',data),ensure_ascii=False), mimetype='application/json')
             return render(request,'result_list.html',{'release_list':data,'form':InputForm()})
         elif type == '404':
             if request.GET.has_key("xhr"):
-                return HttpResponse(json.dumps(('notfound',[]),ensure_ascii=False))
+                return HttpResponse(json.dumps(('notfound',[]),ensure_ascii=False), mimetype='application/json')
             return render(request,'result_not_found_on_discogs.html', {'form':InputForm()})
     elif task.status == 'FAILURE' or task.status == 'REVOKED':
         if request.GET.has_key("xhr"):
@@ -77,5 +77,5 @@ def get_result(request,id):
         return render(request,'result_failed.html', {'form':InputForm()}, status=503)
     else:
         if request.GET.has_key("xhr"):
-                return HttpResponse(json.dumps(('waiting',[]),ensure_ascii=False))
+                return HttpResponse(json.dumps(('waiting',[]),ensure_ascii=False), mimetype='application/json')
         return render(request,'result_waiting.html')
