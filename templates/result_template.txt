@@ -1,4 +1,4 @@
-{% load dotify %}[size=5][b]{% for artist in artists %}[artist]{{ artist }}[/artist]{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
+{% load dotify %}{% load isdigit %}[size=5][b]{% for artist in artists %}[artist]{{ artist }}[/artist]{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
 {% if label %}[b]Label:[/b] [size=3]{% for l in label %}[url=https://ssl.what.cd/torrents.php?recordlabel={{ l|urlencode }}]{{ l }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}[/size]
 {% endif %}{% if catalog %}[b]Catalog#:[/b] [size=3]{{ catalog }}[/size]
 {% endif %}{% if country %}[b]Country:[/b] [size=3]{{ country }}[/size]
@@ -11,5 +11,5 @@
 {% endif %}{% for cd,tracks in discs.items %}{% if discs.items|length > 1 %}{% if not forloop.first %}
 
 {% endif %}[size=4][b]Disc {{ cd }}[/b][/size]:
-{% endif %}[size=3]{% for number,artists,tracktitle,duration in tracks %}[b]{{ number }}.[/b]{% for artist in artists %} [artist]{{ artist }}[/artist]{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% if duration %} [i]({{ duration }})[/i]{% endif %}
+{% endif %}[size=3]{% for number,artists,tracktitle,duration in tracks %}[b]{{ number }}{% if number|isdigit %}.[/b]{% else %}[/b] -{% endif %}{% for artist in artists %} [artist]{{ artist }}[/artist]{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% if duration %} [i]({{ duration }})[/i]{% endif %}
 {% endfor %}[/size]{% endfor %}
