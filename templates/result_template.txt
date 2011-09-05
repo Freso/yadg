@@ -11,5 +11,5 @@
 {% endif %}{% for cd,tracks in discs.items %}{% if discs.items|length > 1 %}{% if not forloop.first %}
 
 {% endif %}[size=4][b]Disc {{ cd }}[/b][/size]:
-{% endif %}[size=3]{% for number,artist,tracktitle,duration in tracks %}[b]{{ number }}.[/b]{% if artist %} [artist]{{ artist }}[/artist] -{% endif %} {{ tracktitle }}{% if duration %} [i]({{ duration }})[/i]{% endif %}
+{% endif %}[size=3]{% for number,artists,tracktitle,duration in tracks %}[b]{{ number }}.[/b]{% for artist in artists %} [artist]{{ artist }}[/artist]{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% if duration %} [i]({{ duration }})[/i]{% endif %}
 {% endfor %}[/size]{% endfor %}

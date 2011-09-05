@@ -25,19 +25,32 @@ class APIBase(object):
             else:
                 raise DiscogsAPIError, '%d' % r.status_code
         return self._cached_response
-
+    
+    def _remove_whitespace(self, string):
+        return ' '.join(string.split())
+    
 
 class Release(APIBase):
+    
+    presuffixes = [
+        (u'The ', u', The'),
+        (u'A ', u', A'),
+    ]
     
     def __init__(self, id):
         APIBase.__init__(self)
         self.id = id
         self._url_appendix = 'release/%d' % id
         self._data = {}
-        
-    def _remove_whitespace(self, string):
-        return ' '.join(string.split())
     
+    def _swapsuffix(self, string):
+        for (prefix,suffix) in self.presuffixes:
+            if string.endswith(suffix):
+                string = prefix + string[:-len(suffix)]
+                #we assume there is only one suffix to swap
+                break
+        return string
+            
     def _extract_infos(self):
         data = {}
         
@@ -61,7 +74,10 @@ class Release(APIBase):
             raise DiscogsAPIError, u'could not find artist elements'
         artists = []
         for artist_element in artist_elements:
-            artists.append(self._remove_whitespace(artist_element.text_content()))
+            artist = artist_element.text_content()
+            artist = self._remove_whitespace(artist)
+            artist = self._swapsuffix(artist)
+            artists.append(artist)
         title = self._remove_whitespace(title_element[0].text_content())
         #right now this contains 'artist - title', so remove 'artist'
         title = title.split(u' \u2013 ')[1]
@@ -124,7 +140,7 @@ class Release(APIBase):
                 #ignore rows that don't have the right amount of columns
                 if len(row.getchildren()) != 5:
                     continue
-                (track_pos,track_artists,track,track_duration,filler) = row.getchildren()
+                (track_pos,track_artists_column,track,track_duration,filler) = row.getchildren()
                 #determine cd and track number
                 m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})-)|(?:cd(?:\s+|\.)))?(\d+|(\w\d*))(?:\.)?$',track_pos.text_content())
                 if not m:
@@ -140,14 +156,16 @@ class Release(APIBase):
                 else:
                     track_cd_number = int(track_cd_number)
                 #get track artist
-                track_artists = track_artists.text_content()
-                track_artists = self._remove_whitespace(track_artists)
-                if track_artists:
-                    #remove trailing '-' if it exists
-                    if track_artists.endswith(u' \u2013'):
-                        track_artists = track_artists[:-2]
+                track_artists_elements = track_artists_column.cssselect('a')
+                if track_artists_elements:
+                    track_artists = []
                 else:
                     track_artists = None
+                for track_artist_element in track_artists_elements:
+                    track_artist = track_artist_element.text_content()
+                    track_artist = self._remove_whitespace(track_artist)
+                    track_artist = self._swapsuffix(track_artist)
+                    track_artists.append(track_artist)
                 #get track title
                 track_title = track.cssselect('span.track_title')
                 if len(track_title) != 1:
