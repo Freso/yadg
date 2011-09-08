@@ -114,7 +114,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             div.addClass('form_settings');
                             div.insert(textarea,'replace');
                             
-                            subcontent.insert(div,'replace');
+                            subcontent.setContent(div);
                         } else if (data[0] == 'list') {
                             var ul = Y.Node.create('<ul id="release_list"></ul>');
                             
@@ -136,7 +136,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             }
                             
                             if (data[1].length != 0) {
-                                subcontent.insert(ul,'replace');
+                                subcontent.setContent(ul);
                             } else {
                                 subcontent.setContent('<p>Sorry, there were no matches.</p>');
                             }
