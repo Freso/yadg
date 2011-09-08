@@ -6,9 +6,11 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from django.template import Context
 from djcelery.models import TaskMeta
+from django.views.decorators.csrf import csrf_exempt
 import django.template.loader
 import json
 
+@csrf_exempt
 def index(request):
     if request.method == 'POST':
         form = InputForm(request.POST)
