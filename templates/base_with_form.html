@@ -85,11 +85,12 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     },
                     failure: function(id, o, args) {
                         subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                        busyStop();
                     }
                 },
             };
             
-            busyStart(true);
+            busyStart(false);
             Y.io(this.get('href') + '?xhr', cfg);
         };
         
@@ -115,6 +116,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             div.insert(textarea,'replace');
                             
                             subcontent.setContent(div);
+                            busyStop();
                         } else if (data[0] == 'list') {
                             var ul = Y.Node.create('<ul id="release_list"></ul>');
                             
@@ -140,15 +142,17 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             } else {
                                 subcontent.setContent('<p>Sorry, there were no matches.</p>');
                             }
+                            busyStop();
                         } else if (data[0] == 'notfound') {
                             subcontent.setContent('<p>I could not find the release with the given ID on Discogs. You may want to try again with another one.</p>');
+                            busyStop();
                         } else if (data[0] == 'waiting') {
                             var delay = function() { queryId(args.q_id); };
                             window.setTimeout(delay, 1000);
                         } else {
                             subcontent.setContent(o.responseText);
+                            busyStop();
                         }
-                        busyStop();
                     },
                     failure: function(id, o, args) {
                         if (o.status == 503) {
