@@ -98,7 +98,7 @@ class Release(APIBase):
             #get content and remove whitespace
             content = additional_info.text_content()
             content = self._remove_whitespace(content)
-            if label in ('genre','style','label'):
+            if label in ('genre','style','label','catalog'):
                 content = content.split(',')
                 #remove leading and trailing whitespace
                 content = map(lambda x: x.rstrip().lstrip(),content)
@@ -120,7 +120,7 @@ class Release(APIBase):
                         labels.append(c)
                 #if there is not an explicit catalog# already, we add them to the data dict
                 if not data.has_key('catalog') and catalog_nr:
-                    data['catalog'] = u', '.join(catalog_nr)
+                    data['catalog'] = catalog_nr
                 #add the updated data to the dict
                 content = labels
             if content and (content != 'none'):
