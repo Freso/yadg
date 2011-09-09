@@ -57,9 +57,13 @@ def get_result(request,id):
     if task.status == 'SUCCESS':
         (type,data) = task.result
         if type == 'release':
-            t = django.template.loader.get_template('result_template.txt')
-            c = Context(data)
-            result = t.render(c)
+            format = request.GET.get('f','whatcd')
+            if format == 'raw' and request.GET.has_key("xhr"):
+                result = data
+            else:
+                t = django.template.loader.get_template('result_template.txt')
+                c = Context(data)
+                result = t.render(c)
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
             return render(request,'result.html',{'result':result,'form':InputForm()})
