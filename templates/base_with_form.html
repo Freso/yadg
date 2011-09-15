@@ -120,13 +120,14 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         } else if (data[0] == 'list') {
                             var ul = Y.Node.create('<ul id="release_list"></ul>');
                             
-                            for (var i = 0; i < data[1].length;i++) {
-                                var name = data[1][i]['name'],
-                                    info = data[1][i]['info'],
-                                    id = data[1][i]['release'];
+                            var scraper = data[1][0];
+                            for (var i = 0; i < data[1][1].length;i++) {
+                                var name = data[1][1][i]['name'],
+                                    info = data[1][1][i]['info'],
+                                    id = data[1][1][i]['release'];
                                 
                                 var li = Y.Node.create('<li></li>');
-                                var a = Y.Node.create('<a href="'+ '{% url get_by_discogs_id 121212 %}'.replace(/121212/,id) + '">'+name+'</a>');
+                                var a = Y.Node.create('<a href="'+ '{% url get_by_id 121212 131313 %}'.replace(/121212/,scraper).replace(/131313/,id) + '">'+name+'</a>');
                                 a.on('key', getByDiscogsId, 'press:enter');
                                 a.on('click', getByDiscogsId);
                                 

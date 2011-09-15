@@ -5,7 +5,7 @@
 {% block subcontent %}{% if release_list %}
     <ul id="release_list">
     {% for entry in release_list %}
-    <li><a href="{% url get_by_discogs_id entry.release.id %}">{{ entry.name }}</a><br /><span>{{ entry.info }}</span></li>
+    <li><a href="{% url get_by_id scraper entry.release.id %}">{{ entry.name }}</a><br /><span>{{ entry.info }}</span></li>
     {% endfor %}
     </ul>
     {% else %}

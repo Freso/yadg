@@ -2,6 +2,7 @@
 import requests,lxml.html,re
 from django.utils.datastructures import SortedDict
 
+READABLE_NAME = 'Discogs'
 
 class DiscogsAPIError(Exception):
     pass

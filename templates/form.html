@@ -1,5 +1,5 @@
 <form action="{% url descgen.views.index %}" method="post" class="form_settings center">
 {{ form.input.errors }}
-<label for="id_input" class="inv">Input:</label> {{ form.input }}
+<label for="id_input" class="inv">Input:</label> {{ form.input }} <label for="id_scraper" class="inv">Scraper:</label> {{ form.scraper }}
 <input type="submit" value="Fetch" class="submit" id="submit"/>
 </form>

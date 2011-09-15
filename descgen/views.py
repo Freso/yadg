@@ -1,12 +1,12 @@
 # Create your views here.
 from descgen.forms import InputForm
-from descgen.discogs import Release
-from descgen.tasks import get_release_from_url,get_search_results,get_release_info
+from descgen.tasks import get_search_results,get_release_info
 from django.shortcuts import render,redirect
-from django.http import HttpResponse
+from django.http import HttpResponse,Http404
 from django.template import Context
 from djcelery.models import TaskMeta
 from django.views.decorators.csrf import csrf_exempt
+from descgen.scraper.factory import ScraperFactory,SCRAPER
 import django.template.loader
 import json
 
@@ -15,16 +15,19 @@ def index(request):
     if request.method == 'POST':
         form = InputForm(request.POST)
         if form.is_valid():
+            factory = ScraperFactory()
             input = form.cleaned_data['input']
-            if Release.release_from_url(input):
-                task = get_release_from_url.delay(input)
+            scraper = form.cleaned_data['scraper']
+            release = factory.get_release_by_url(input)
+            if release:
+                task = get_release_info.delay(release)
             else:
                 try:
                     id = int(input)
                 except:
-                    task = get_search_results.delay(input)
+                    task = get_search_results.delay(factory.get_search(input,scraper),scraper)
                 else:
-                    task = get_release_info.delay(id)
+                    task = get_release_info.delay(factory.get_release_by_id(id,scraper))
             #make sure a TaskMeta object for the created task exists
             TaskMeta.objects.get_or_create(task_id=task.task_id)
             if request.GET.has_key("xhr"):
@@ -38,8 +41,11 @@ def index(request):
         form = InputForm()
     return render(request,'index.html',{'form':form})
 
-def get_by_discogs_id(request,id):
-    task = get_release_info.delay(int(id))
+def get_by_id(request,id,scraper):
+    if not scraper in SCRAPER:
+        raise Http404
+    factory = ScraperFactory()
+    task = get_release_info.delay(factory.get_release_by_id(int(id),scraper))
     #make sure a TaskMeta object for the created task exists
     TaskMeta.objects.get_or_create(task_id=task.task_id)
     if request.GET.has_key("xhr"):
@@ -68,11 +74,12 @@ def get_result(request,id):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
             return render(request,'result.html',{'result':result,'form':InputForm()})
         elif type == 'list':
+            (scraper,data) = data
             if request.GET.has_key("xhr"):
                 for entry in data:
                     entry['release'] = entry['release'].id
-                return HttpResponse(json.dumps(('list',data),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result_list.html',{'release_list':data,'form':InputForm()})
+                return HttpResponse(json.dumps(('list',(scraper,data)),ensure_ascii=False), mimetype='application/json; charset=utf-8')
+            return render(request,'result_list.html',{'release_list':data,'scraper':scraper,'form':InputForm()})
         elif type == '404':
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('notfound',[]),ensure_ascii=False), mimetype='application/json; charset=utf-8')
