@@ -2,11 +2,11 @@
 
 {% block title%}Result{% endblock %}
 
-{% block subcontent %}{% if release_list %}
+{% block subcontent %}{% if scraper_results %}
     <ul id="release_list">
-    {% for entry in release_list %}
+    {% for scraper,release_list in scraper_results.items %}{% for entry in release_list %}
     <li><a href="{% url get_by_id scraper entry.release.id %}">{{ entry.name }}</a><br /><span>{{ entry.info }}</span></li>
-    {% endfor %}
+    {% endfor %}{% endfor %}
     </ul>
     {% else %}
     <p>Sorry, there were no matches.</p>

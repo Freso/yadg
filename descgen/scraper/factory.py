@@ -1,4 +1,4 @@
-import discogs
+import descgen.scraper.discogs as discogs
 
 _SCRAPERS = {
     'discogs':discogs,
@@ -11,6 +11,8 @@ _SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),_SCRAPERS))
 SCRAPER = _SCRAPERS.keys()
 
 SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),_SCRAPERS)
+
+SCRAPER_DEFAULT = 'discogs'
 
 SCRAPER_EXCEPTIONS = (
     discogs.DiscogsAPIError,
@@ -26,6 +28,8 @@ class ScraperFactory(object):
     def get_release_by_id(self,id,scraper):
         if not scraper in SCRAPER:
             raise ScraperFactoryError, u'no scraper "%s"' % scraper
+        
+        id = _SCRAPER_RELEASES[scraper].id_from_string(id)
         
         return _SCRAPER_RELEASES[scraper](id)
     
@@ -43,4 +47,8 @@ class ScraperFactory(object):
         if not scraper in SCRAPER:
             raise ScraperFactoryError, u'no scraper "%s"' % scraper
         
-        return _SCRAPER_SEARCHES[scraper](search_term)
+        search = _SCRAPER_SEARCHES[scraper](search_term)
+        if not getattr(search,'SCRAPER',False):
+            setattr(search,'SCRAPER',scraper)
+        
+        return search

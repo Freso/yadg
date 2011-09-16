@@ -11,7 +11,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             form = Y.one('form'),
             subcontent = Y.one('#subcontent');
     
-        var input_string = 'Enter discogs url, id or search term';
+        var input_string = 'Enter discogs url or search term';
     
         function busyStart(onlyBar) {
             if (!onlyBar) {
@@ -120,25 +120,28 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         } else if (data[0] == 'list') {
                             var ul = Y.Node.create('<ul id="release_list"></ul>');
                             
-                            var scraper = data[1][0];
-                            for (var i = 0; i < data[1][1].length;i++) {
-                                var name = data[1][1][i]['name'],
-                                    info = data[1][1][i]['info'],
-                                    id = data[1][1][i]['release'];
-                                
-                                var li = Y.Node.create('<li></li>');
-                                var a = Y.Node.create('<a href="'+ '{% url get_by_id 121212 131313 %}'.replace(/121212/,scraper).replace(/131313/,id) + '">'+name+'</a>');
-                                a.on('key', getByDiscogsId, 'press:enter');
-                                a.on('click', getByDiscogsId);
-                                
-                                li.append(a);
-                                li.append('<br />')
-                                li.append(info);
-                                
-                                ul.append(li);
-                            }
+                            var scraper_results = data[1];
+                            for (scraper in scraper_results) {
+                                var release_list = scraper_results[scraper];
+                                for (var i = 0; i < release_list.length;i++) {
+                                    var name = release_list[i]['name'],
+                                        info = release_list[i]['info'],
+                                        id = release_list[i]['release'];
+                                    
+                                    var li = Y.Node.create('<li></li>');
+                                    var a = Y.Node.create('<a href="'+ '{% url get_by_id 121212 131313 %}'.replace(/121212/,scraper).replace(/131313/,id) + '">'+name+'</a>');
+                                    a.on('key', getByDiscogsId, 'press:enter');
+                                    a.on('click', getByDiscogsId);
+                                    
+                                    li.append(a);
+                                    li.append('<br />')
+                                    li.append(info);
+                                    
+                                    ul.append(li);
+                                }
+                            };
                             
-                            if (data[1].length != 0) {
+                            if (ul.all('*').size() != 0) {
                                 subcontent.setContent(ul);
                             } else {
                                 subcontent.setContent('<p>Sorry, there were no matches.</p>');

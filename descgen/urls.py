@@ -6,7 +6,7 @@ from django.conf.urls.defaults import patterns, url
 
 urlpatterns = patterns('descgen.views',
     url(r'^$', 'index', name='index'),
-    url(r'^get/(?P<scraper>\w+)/(?P<id>\d+)$', 'get_by_id', name='get_by_id'),
+    url(r'^get/(?P<scraper>\w+)/(?P<id>[^\/]+)$', 'get_by_id', name='get_by_id'),
     url(r'^result/(?P<id>[\w\d-]+)$', 'get_result', name='get_result'),
     # url(r'^whatdesc/', include('whatdesc.foo.urls')),
 

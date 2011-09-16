@@ -200,6 +200,14 @@ class Release(APIBase):
         else:
             return None
     
+    @staticmethod
+    def id_from_string(string_id):
+        m = re.search('\D',string_id)
+        if m:
+            raise ValueError
+        id = int(string_id)
+        return id
+    
     def __unicode__(self):
         return u'<Release: id=%d>' % self.id
 

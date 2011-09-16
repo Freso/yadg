@@ -193,7 +193,7 @@ ul.errorlist
   width: 200px; 
   text-align: left;}
   
-.form_settings input, .form_settings textarea
+.form_settings input, .form_settings textarea, .form_settings select
 { padding: 5px; 
   width: 500px; 
   font: 100% arial; 
@@ -221,7 +221,7 @@ ul.errorlist
   width: 299px;}
 
 .form_settings select
-{ width: 310px;}
+{ width: 120px;}
 
 .form_settings .checkbox
 { margin: 4px 0; 

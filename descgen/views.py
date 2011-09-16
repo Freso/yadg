@@ -22,12 +22,7 @@ def index(request):
             if release:
                 task = get_release_info.delay(release)
             else:
-                try:
-                    id = int(input)
-                except:
-                    task = get_search_results.delay(factory.get_search(input,scraper),scraper)
-                else:
-                    task = get_release_info.delay(factory.get_release_by_id(id,scraper))
+                task = get_search_results.delay(factory.get_search(input,scraper))
             #make sure a TaskMeta object for the created task exists
             TaskMeta.objects.get_or_create(task_id=task.task_id)
             if request.GET.has_key("xhr"):
@@ -45,7 +40,13 @@ def get_by_id(request,id,scraper):
     if not scraper in SCRAPER:
         raise Http404
     factory = ScraperFactory()
-    task = get_release_info.delay(factory.get_release_by_id(int(id),scraper))
+    try:
+        #try to get a release with the given id
+        release = factory.get_release_by_id(id,scraper)
+    except ValueError:
+        #the id is malformed
+        raise Http404
+    task = get_release_info.delay(release)
     #make sure a TaskMeta object for the created task exists
     TaskMeta.objects.get_or_create(task_id=task.task_id)
     if request.GET.has_key("xhr"):
@@ -74,12 +75,12 @@ def get_result(request,id):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
             return render(request,'result.html',{'result':result,'form':InputForm()})
         elif type == 'list':
-            (scraper,data) = data
             if request.GET.has_key("xhr"):
-                for entry in data:
-                    entry['release'] = entry['release'].id
-                return HttpResponse(json.dumps(('list',(scraper,data)),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result_list.html',{'release_list':data,'scraper':scraper,'form':InputForm()})
+                for releases in data.values():
+                    for entry in releases:
+                        entry['release'] = entry['release'].id
+                return HttpResponse(json.dumps(('list',data),ensure_ascii=False), mimetype='application/json; charset=utf-8')
+            return render(request,'result_list.html',{'scraper_results':data,'form':InputForm()})
         elif type == '404':
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('notfound',[]),ensure_ascii=False), mimetype='application/json; charset=utf-8')
