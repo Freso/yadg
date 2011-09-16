@@ -1,6 +1,4 @@
 # coding=utf-8
-import musicbrainz2.webservice as ws
-import musicbrainz2.utils as u
 import requests,lxml.html,re
 
 
