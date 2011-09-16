@@ -11,7 +11,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             form = Y.one('form'),
             subcontent = Y.one('#subcontent');
     
-        var input_string = 'Enter discogs url or search term';
+        var input_string = 'Enter release url or search term';
     
         function busyStart(onlyBar) {
             if (!onlyBar) {
@@ -148,7 +148,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             }
                             busyStop();
                         } else if (data[0] == 'notfound') {
-                            subcontent.setContent('<p>I could not find the release with the given ID on Discogs. You may want to try again with another one.</p>');
+                            subcontent.setContent('<p>I could not find the release with the given ID. You may want to try again with another one.</p>');
                             busyStop();
                         } else if (data[0] == 'waiting') {
                             var delay = function() { queryId(args.q_id); };
@@ -160,7 +160,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     },
                     failure: function(id, o, args) {
                         if (o.status == 503) {
-                            subcontent.setContent('<p>There was an error retrieving the data from discogs. This might be a temporary problem. Try again in a few minutes.</p>');
+                            subcontent.setContent('<p>There was an error retrieving the data. This might be a temporary problem. Try again in a few minutes.</p>');
                         } else if (o.status == 404) {
                             subcontent.setContent('<p>Something happened that should not happen. Please try again.</p>');
                         } else {

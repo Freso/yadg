@@ -84,7 +84,7 @@ def get_result(request,id):
         elif type == '404':
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('notfound',[]),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result_not_found_on_discogs.html', {'form':InputForm()})
+            return render(request,'result_id_not_found.html', {'form':InputForm()})
     elif task.status == 'FAILURE' or task.status == 'REVOKED':
         if request.GET.has_key("xhr"):
             return HttpResponse(status=503)

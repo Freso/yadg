@@ -38,6 +38,14 @@ class Release(object):
         return self._data
     
     @staticmethod
+    def id_from_string(string_id):
+        m = re.search('\D',string_id)
+        if m:
+            raise ValueError
+        id = int(string_id)
+        return id
+    
+    @staticmethod
     def release_from_url(url):
         #m = re.match('^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)',url)
         #if m:
