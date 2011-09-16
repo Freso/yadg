@@ -1,7 +1,9 @@
 import descgen.scraper.discogs as discogs
+import descgen.scraper.musicbrainz as musicbrainz
 
 _SCRAPERS = {
     'discogs':discogs,
+    'musicbrainz':musicbrainz,
 }
 
 _SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
@@ -16,6 +18,7 @@ SCRAPER_DEFAULT = 'discogs'
 
 SCRAPER_EXCEPTIONS = (
     discogs.DiscogsAPIError,
+    musicbrainz.MusicBrainzAPIError,
 )
 
 
