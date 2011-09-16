@@ -247,7 +247,8 @@ class Search(APIBase):
         result_table = doc.cssselect('div#content table.tbl')
         
         if len(result_table) != 1:
-            self._raise_exception(u'could not extract result table')
+            #no results
+            return releases
         
         result_table = result_table[0]
         
