@@ -281,7 +281,13 @@ class Search(APIBase):
             #get release object
             release = Release.release_from_url(title_a.attrib['href'])
             #compile info
-            info = u'Country: ' + country + u'|' + track_count + u' Tracks'
+            info = u''
+            if country:
+                info += u'Country: ' + country
+                if track_count:
+                    info += u'|'
+            if track_count:
+                info += track_count + u' Tracks'
             #compile release name
             name = u', '.join(artists) + u' - ' + title
             #add result to list
