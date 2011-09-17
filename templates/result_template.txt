@@ -1,4 +1,4 @@
-{% load dotify %}{% load isdigit %}[size=5][b]{% for artist in artists %}[artist]{{ artist }}[/artist]{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
+{% load dotify %}{% load isdigit %}[size=5][b]{% for artist in artists %}{% if artist == "Various" %}{{ artist }}{% else %}[artist]{{ artist }}[/artist]{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
 {% if label %}[b]Label:[/b] {% for l in label %}[url=https://ssl.what.cd/torrents.php?recordlabel={{ l|urlencode }}]{{ l }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
 {% endif %}{% if catalog %}[b]Catalog#:[/b] {{ catalog|join:", " }}
 {% endif %}{% if country %}[b]Country:[/b] {{ country }}
