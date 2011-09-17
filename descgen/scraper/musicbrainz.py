@@ -289,7 +289,7 @@ class Search(APIBase):
             if track_count:
                 info += track_count + u' Tracks'
             #compile release name
-            name = u', '.join(artists) + u' - ' + title
+            name = u', '.join(artists) + u' \u2013 ' + title
             #add result to list
             releases.append({'name':name,'info':info,'release':release})
             
