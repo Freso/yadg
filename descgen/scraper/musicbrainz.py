@@ -1,5 +1,6 @@
 # coding=utf-8
 import requests,lxml.html,re
+from django.utils.datastructures import SortedDict
 
 
 READABLE_NAME = 'Musicbrainz'
@@ -141,7 +142,7 @@ class Release(APIBase):
                 disc_divs = tracklist_table.cssselect('tbody > div')
                 if len(disc_divs) == 0:
                     self._raise_exception(u'could not find any disc tracklisting')
-                data['discs'] = {}
+                data['discs'] = SortedDict()
                 for disc_div in disc_divs:
                     caption_tr = disc_div.getprevious()
                     caption_a = caption_tr.cssselect('a')
