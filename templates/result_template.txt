@@ -12,4 +12,6 @@
 
 {% endif %}[size=4][b]Disc {{ cd }}[/b][/size]:
 {% endif %}{% for number,artists,tracktitle,duration in tracks %}[b]{{ number }}{% if number|isdigit %}.[/b]{% else %}[/b] -{% endif %}{% for artist in artists %} [artist]{{ artist }}[/artist]{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% if duration %} [i]({{ duration }})[/i]{% endif %}{% if not forloop.last %}
-{% endif %}{% endfor %}{% endfor %}
+{% endif %}{% endfor %}{% endfor %}{% if link %}
+
+More information: {{ link }}{% endif %}

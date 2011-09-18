@@ -24,7 +24,10 @@ class Release(MusicBrainzAPIBase):
         self._url_appendix = 'release/%s' % id
         self._object_id = id
         self._data = {}
-        
+    
+    def _get_link(self):
+        return self._base_url + self._url_appendix
+    
     def _extract_infos(self):
         data = {}
         
@@ -181,6 +184,8 @@ class Release(MusicBrainzAPIBase):
                         track_length = self._remove_whitespace(length_span.text_content())
                         
                         data['discs'][disc_number].append((track_number,track_artists,track_title,track_length))
+        
+        data['link'] = self._get_link()
         
         return data
     

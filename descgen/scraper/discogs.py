@@ -37,6 +37,10 @@ class Release(DiscogsAPIBase):
                 break
         return string
             
+            
+    def _get_link(self):
+        return self._base_url + self._url_appendix
+            
     def _extract_infos(self):
         data = {}
         
@@ -168,6 +172,8 @@ class Release(DiscogsAPIBase):
                 discs[track_cd_number].append((track_number,track_artists,track_title,track_duration))
         
         data['discs'] = discs
+        
+        data['link'] = self._get_link()
         
         return data
     

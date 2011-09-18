@@ -26,6 +26,9 @@ class Release(BeatportAPIBase):
         self._params = {'format':'json','v':'1.0','id':id}
         self._data = {}
 
+    def _get_link(self,release_name=''):
+        return 'http://www.beatport.com/release/%s/%d' %(release_name,self.id)
+        
     def _extract_infos(self):
         data = {}
         
@@ -91,6 +94,8 @@ class Release(BeatportAPIBase):
         
         if release.has_key('genres'):
             data['genre'] = map(lambda x: x['name'], release['genres'])
+        
+        data['link'] = self._get_link()
         
         return data
     
