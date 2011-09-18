@@ -1,5 +1,6 @@
 # coding=utf-8
-import json,re,requests
+import json,re
+from descgen.scraper.base import APIBase
 
 
 READABLE_NAME = 'Beatport'
@@ -9,51 +10,35 @@ class BeatportAPIError(Exception):
     pass
 
 
-class APIBase(object):
+class BeatportAPIBase(APIBase):
     
     _base_url = 'http://api.beatport.com/'
-    
-    def __init__(self):
-        self._cached_response = None
-        self._url_appendix = None
-        self._params = None
-    
-    @property
-    def _response(self):
-        if not self._cached_response:
-            r = requests.get(self._base_url + self._url_appendix, params=self._params)
-            if r.status_code == 200:
-                try:
-                    self._cached_response = json.loads(r.content)
-                except:
-                    raise BeatportAPIError, u'invalid server response'
-            else:
-                raise BeatportAPIError, '%d' % r.status_code
-        return self._cached_response
-    
-    def _remove_whitespace(self, string):
-        return ' '.join(string.split())
+    _exception = BeatportAPIError
 
 
-class Release(APIBase):
+class Release(BeatportAPIBase):
     
     def __init__(self, id):
-        APIBase.__init__(self)
+        BeatportAPIBase.__init__(self)
         self.id = id
         self._url_appendix = 'catalog/releases/detail'
+        self._object_id = str(id)
         self._params = {'format':'json','v':'1.0','id':id}
         self._data = {}
-            
-    def _raise_exception(self,message):
-        raise BeatportAPIError, u'%s [%s]' % (message,self.id)
-    
+
     def _extract_infos(self):
         data = {}
         
-        if self._response['metadata']['count'] != 1:
+        content = self._response.content
+        try:
+            response = json.loads(content)
+        except:
+            self._raise_exception(u'invalid server response')
+        
+        if response['metadata']['count'] != 1:
             self._raise_exception(u'got more than one release for given id')
         
-        release = self._response['results']
+        release = response['results']
         
         if release.has_key('releaseDate'):
             data['released'] = release['releaseDate']
@@ -135,23 +120,27 @@ class Release(APIBase):
         return u'<BeatportRelease: id=%d>' % self.id
 
     
-class Search(APIBase):
+class Search(BeatportAPIBase):
     
     def __init__(self, term):
-        APIBase.__init__(self)
+        BeatportAPIBase.__init__(self)
         self._term = term
         self._url_appendix = 'catalog/search'
+        self._object_id = u'[' + term + u']'
         self._params = {'v':'2.0','format':'json','perPage':'25','page':'1','facets':['fieldType:release',], 'highlight':'false', 'query':term}
         self._releases = []
-    
-    def _raise_exception(self,message):
-        raise BeatportAPIError, u'%s [%s]' % (message,self.term)
     
     def _extract_releases(self):
         releases = []
         
-        if self._response.has_key('results'):
-            for result in self._response['results']:
+        content = self._response.content
+        try:
+            response = json.loads(content)
+        except:
+            self._raise_exception(u'invalid server response')
+        
+        if response.has_key('results'):
+            for result in response['results']:
                 if not result.has_key('id'):
                     continue
                 id = result['id']

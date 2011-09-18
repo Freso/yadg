@@ -1,6 +1,7 @@
 # coding=utf-8
-import requests,lxml.html,re
+import lxml.html,re
 from django.utils.datastructures import SortedDict
+from descgen.scraper.base import APIBase
 
 READABLE_NAME = 'Discogs'
 
@@ -8,30 +9,13 @@ class DiscogsAPIError(Exception):
     pass
 
 
-class APIBase(object):
+class DiscogsAPIBase(APIBase):
     
     _base_url = 'http://www.discogs.com/'
-    
-    def __init__(self):
-        self._cached_response = None
-        self._url_appendix = None
-        self._params = None
-    
-    @property
-    def _response(self):
-        if not self._cached_response:
-            r = requests.get(self._base_url + self._url_appendix, params=self._params)
-            if r.status_code == 200:
-                self._cached_response = r
-            else:
-                raise DiscogsAPIError, '%d' % r.status_code
-        return self._cached_response
-    
-    def _remove_whitespace(self, string):
-        return ' '.join(string.split())
+    _exception = DiscogsAPIError
     
 
-class Release(APIBase):
+class Release(DiscogsAPIBase):
     
     presuffixes = [
         (u'The ', u', The'),
@@ -39,9 +23,10 @@ class Release(APIBase):
     ]
     
     def __init__(self, id):
-        APIBase.__init__(self)
+        DiscogsAPIBase.__init__(self)
         self.id = id
         self._url_appendix = 'release/%d' % id
+        self._object_id = str(id)
         self._data = {}
     
     def _swapsuffix(self, string):
@@ -63,16 +48,16 @@ class Release(APIBase):
         #get the div that contains all the information we want
         container = doc.cssselect('div#page > div.lr > div.left')
         if len(container) != 1:
-            raise DiscogsAPIError, u'could not find anchor point'
+            self._raise_exception(u'could not find anchor point')
         container = container[0]
         
         #get artist and title
         title_element = container.cssselect('div.profile h1')
         if len(title_element) != 1:
-            raise DiscogsAPIError, u'could not find title element'
+            self._raise_exception(u'could not find title element')
         artist_elements = title_element[0].cssselect('a')
         if len(artist_elements) == 0:
-            raise DiscogsAPIError, u'could not find artist elements'
+            self._raise_exception(u'could not find artist elements')
         artists = []
         for artist_element in artist_elements:
             artist = artist_element.text_content()
@@ -132,11 +117,11 @@ class Release(APIBase):
         #get track listing
         tracklist_tables = container.cssselect('div#tracklist table')
         if not tracklist_tables:
-            raise DiscogsAPIError, u'could not find tracklisting'
+            self._raise_exception(u'could not find tracklisting')
         for table in tracklist_tables:
             rows = table.cssselect('tr')
             if not rows:
-                raise DiscogsAPIError, u'could not find track information'
+                self._raise_exception(u'could not find track information')
             for row in rows:
                 #ignore rows that don't have the right amount of columns
                 if len(row.getchildren()) != 5:
@@ -170,7 +155,7 @@ class Release(APIBase):
                 #get track title
                 track_title = track.cssselect('span.track_title')
                 if len(track_title) != 1:
-                    raise DiscogsAPIError, u'could not determine track title'
+                    self._raise_exception(u'could not determine track title')
                 track_title = track_title[0].text_content()
                 track_title = self._remove_whitespace(track_title)
                 #get track duration
@@ -212,12 +197,13 @@ class Release(APIBase):
         return u'<Release: id=%d>' % self.id
 
     
-class Search(APIBase):
+class Search(DiscogsAPIBase):
     
     def __init__(self, term):
-        APIBase.__init__(self)
+        DiscogsAPIBase.__init__(self)
         self._term = term
         self._url_appendix = 'search'
+        self._object_id = u'[' + term + u']'
         self._params = {'type':'releases', 'q':term}
         self._releases = []
         
@@ -235,13 +221,13 @@ class Search(APIBase):
             #get the link containing the release
             release_link = container.cssselect('div.data > div > a')
             if len(release_link) != 1:
-                raise DiscogsAPIError, u'could not extract release link from:' + container.text
+                self._raise_exception(u'could not extract release link from:' + container.text)
             release_link = release_link[0]
             
             #get additional info
             release_info = container.cssselect('div.data > div.search_release_stats')
             if len(release_info) != 1:
-                raise DiscogsAPIError, u'could not extract additional info from: ' + container.text
+                self._raise_exception(u'could not extract additional info from: ' + container.text)
             release_info = release_info[0].text_content()
             
             #get release name
@@ -250,7 +236,7 @@ class Search(APIBase):
             #get the release id
             m = re.search('/(release|master)/(\d+)$',release_link.attrib['href'])
             if not m:
-                raise DiscogsAPIError, u'could not get release id from: ' + release_link.attrib['href']
+                self._raise_exception(u'could not get release id from: ' + release_link.attrib['href'])
             release_id = int(m.group(2))
             #check if current release is a master release
             master_release = (m.group(1) == 'master')

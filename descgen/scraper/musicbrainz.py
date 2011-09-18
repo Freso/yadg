@@ -1,6 +1,7 @@
 # coding=utf-8
-import requests,lxml.html,re
+import lxml.html,re
 from django.utils.datastructures import SortedDict
+from descgen.scraper.base import APIBase
 
 
 READABLE_NAME = 'Musicbrainz'
@@ -10,38 +11,19 @@ class MusicBrainzAPIError(Exception):
     pass
 
 
-class APIBase(object):
+class MusicBrainzAPIBase(APIBase):
     
     _base_url = 'http://musicbrainz.org/'
-    
-    def __init__(self):
-        self._cached_response = None
-        self._url_appendix = None
-        self._params = None
-    
-    @property
-    def _response(self):
-        if not self._cached_response:
-            r = requests.get(self._base_url + self._url_appendix, params=self._params)
-            if r.status_code == 200:
-                self._cached_response = r
-            else:
-                raise MusicBrainzAPIError, '%d' % (404 if r.status_code == 400 else r.status_code)
-        return self._cached_response
-    
-    def _remove_whitespace(self, string):
-        return ' '.join(string.split())
+    _exception = MusicBrainzAPIError
 
 
-class Release(APIBase):
+class Release(MusicBrainzAPIBase):
     def __init__(self,id):
-        APIBase.__init__(self)
+        MusicBrainzAPIBase.__init__(self)
         self.id = id
         self._url_appendix = 'release/%s' % id
+        self._object_id = id
         self._data = {}
-        
-    def _raise_exception(self,message):
-        raise MusicBrainzAPIError, u'%s [%s]' % (message,self.id)
         
     def _extract_infos(self):
         data = {}
@@ -225,17 +207,15 @@ class Release(APIBase):
     
 
 
-class Search(APIBase):
+class Search(MusicBrainzAPIBase):
     
     def __init__(self, term):
-        APIBase.__init__(self)
+        MusicBrainzAPIBase.__init__(self)
         self._term = term
         self._url_appendix = 'search'
+        self._object_id = u'"' + term + u'"'
         self._params = {'type':'release', 'limit':'25', 'query':term}
         self._releases = []
-    
-    def _raise_exception(self,message):
-        raise MusicBrainzAPIError, u'%s ["%s"]' % (message,self._term)
     
     def _extract_releases(self):
         releases = []
