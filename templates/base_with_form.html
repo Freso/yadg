@@ -8,17 +8,16 @@ YUI().use('node','event','io','json-parse', function (Y) {
         // Access DOM elements.
         var submit = Y.one('#submit'),
             input   = Y.one('#id_input'),
-            scraper = Y.one('#id_scraper'),
+            select = Y.one('#id_scraper'),
             form = Y.one('form'),
             subcontent = Y.one('#subcontent');
-    
         var input_string = 'Enter release url or search term';
     
         function busyStart(onlyBar) {
             if (!onlyBar) {
                 submit.set('disabled',true);
                 input.set('disabled',true);
-                scraper.set('disabled',true);
+                select.set('disabled',true);
                 submit.set('value','Please wait...');
             }
             subcontent.setContent('<img class="center" src="{{ STATIC_URL }}ajax-loader.gif" alt="Loading" />');
@@ -27,7 +26,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
         function busyStop() {
             submit.set('disabled',false);
             input.set('disabled',false);
-            scraper.set('disabled',false);
+            select.set('disabled',false);
             submit.set('value','Fetch');
         }
         
