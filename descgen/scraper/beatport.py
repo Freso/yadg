@@ -59,10 +59,13 @@ class Release(BeatportAPIBase):
             data['title'] = release['name']
         
         if release.has_key('artists'):
-            artists = []
-            for artist_candidate in release['artists']:
-                if artist_candidate['type'] == 'Artist':
-                    artists.append(artist_candidate['name'])
+            if release.has_key('category') and release['category'] == 'Album':
+                artists = ['Various',]
+            else:
+                artists = []
+                for artist_candidate in release['artists']:
+                    if artist_candidate['type'] == 'Artist':
+                        artists.append(artist_candidate['name'])
             data['artists'] = artists
         
         if release.has_key('tracks'):
@@ -152,10 +155,13 @@ class Search(BeatportAPIBase):
                 release = Release(id)
                 name_components = []
                 if result.has_key('artists'):
-                    artists = []
-                    for artist in result['artists']:
-                        if artist['type'] == 'Artist':
-                            artists.append(artist['name'])
+                    if result.has_key('category') and result['category'] == 'Album':
+                        artists = ['Various',]
+                    else:
+                        artists = []
+                        for artist in result['artists']:
+                            if artist['type'] == 'Artist':
+                                artists.append(artist['name'])
                     if artists:
                         name_components.append(u', '.join(artists))
                 if result.has_key('name'):
