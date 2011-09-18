@@ -43,7 +43,7 @@ class Release(BeatportAPIBase):
         if release.has_key('releaseDate'):
             data['released'] = release['releaseDate']
             
-        if release.has_key('category') and release['category'] != 'Uncategorized':
+        if release.has_key('category') and not release['category'] in ('Release','Uncategorized'):
             data['format'] = release['category']
         
         if release.has_key('label'):
