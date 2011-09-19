@@ -200,7 +200,7 @@ class Release(DiscogsAPIBase):
         return id
     
     def __unicode__(self):
-        return u'<Release: id=%d>' % self.id
+        return u'<DiscogsRelease: id=%d>' % self.id
 
     
 class Search(DiscogsAPIBase):
@@ -260,4 +260,4 @@ class Search(DiscogsAPIBase):
         return self._releases
     
     def __unicode__(self):
-        return u'<Search: term="' + self._term + u'">'
+        return u'<DiscogsSearch: term="' + self._term + u'">'
