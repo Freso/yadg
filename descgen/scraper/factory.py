@@ -1,11 +1,13 @@
 import descgen.scraper.discogs as discogs
 import descgen.scraper.musicbrainz as musicbrainz
 import descgen.scraper.beatport as beatport
+import descgen.scraper.metalarchives as metalarchives
 
 _SCRAPERS = {
     'discogs':discogs,
     'musicbrainz':musicbrainz,
     'beatport':beatport,
+    'metalarchives':metalarchives,
 }
 
 _SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
@@ -23,6 +25,7 @@ SCRAPER_EXCEPTIONS = (
     discogs.DiscogsAPIError,
     musicbrainz.MusicBrainzAPIError,
     beatport.BeatportAPIError,
+    metalarchives.MetalarchivesAPIError,
 )
 
 
