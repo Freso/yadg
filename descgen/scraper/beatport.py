@@ -110,7 +110,7 @@ class Release(BeatportAPIBase):
     
     @staticmethod
     def release_from_url(url):
-        m = re.match('^http://(?:www\.)?beatport\.com/release/(?:.+?/)?(\d+)',url)
+        m = re.match('^http://(?:www\.)?beatport\.com/release/(?:.*?/)?(\d+)$',url)
         if m:
             return Release(int(m.group(1)))
         else:
