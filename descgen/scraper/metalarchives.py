@@ -82,7 +82,7 @@ class Release(MetalarchivesAPIBase):
             self._raise_exception(u'could not find tracklist table')
         tracklist_table = tracklist_table[0]
         table_rows = tracklist_table.cssselect('tr')
-        discs = {}
+        discs = SortedDict()
         disc_number = '1'
         for row in table_rows:
             columns = row.cssselect('td')
