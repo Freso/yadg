@@ -59,13 +59,17 @@ class Release(BeatportAPIBase):
             data['title'] = release['name']
         
         if release.has_key('artists'):
-            if release.has_key('category') and release['category'] == 'Album':
+            #get all real 'Artists' (not 'Remixers', etc.)
+            real_artists = []
+            for artist in release['artists']:
+                if artist['type'] == 'Artist' and artist['name']:
+                    real_artists.append(artist['name'])
+            #we assume that it is a Various Artists release if the release type is 'Album'
+            #and the number of 'Artists' (not 'Remixers') is greater 1
+            if release.has_key('category') and release['category'] == 'Album' and len(real_artists) > 1:
                 artists = ['Various',]
             else:
-                artists = []
-                for artist_candidate in release['artists']:
-                    if artist_candidate['type'] == 'Artist':
-                        artists.append(artist_candidate['name'])
+                artists = real_artists
             data['artists'] = artists
         
         if release.has_key('tracks'):
@@ -155,13 +159,18 @@ class Search(BeatportAPIBase):
                 release = Release(id)
                 name_components = []
                 if result.has_key('artists'):
-                    if result.has_key('category') and result['category'] == 'Album':
+                    #get all real 'Artists' (not 'Remixers', etc.)
+                    real_artists = []
+                    for artist in result['artists']:
+                        if artist['type'] == 'Artist' and artist['name']:
+                            real_artists.append(artist['name'])
+                    #we assume that it is a Various Artists release if the release type is 'Album'
+                    #and the number of 'Artists' (not 'Remixers') is greater 1
+                    if result.has_key('category') and result['category'] == 'Album' and len(real_artists) > 1:
                         artists = ['Various',]
                     else:
-                        artists = []
-                        for artist in result['artists']:
-                            if artist['type'] == 'Artist':
-                                artists.append(artist['name'])
+                        artists = real_artists
+                        
                     if artists:
                         name_components.append(u', '.join(artists))
                 if result.has_key('name'):
