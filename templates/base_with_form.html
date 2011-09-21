@@ -162,7 +162,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     },
                     failure: function(id, o, args) {
                         if (o.status == 503) {
-                            subcontent.setContent('<p>There was an error retrieving the data. This might be a temporary problem. Try again in a few minutes.</p>');
+                            subcontent.setContent('<p>An error occured while retrieving the data. This might be a temporary problem. Try again in a few minutes.</p>');
                         } else if (o.status == 404) {
                             subcontent.setContent('<p>Something happened that should not happen. Please try again.</p>');
                         } else {
