@@ -209,7 +209,7 @@ class Search(DiscogsAPIBase):
         DiscogsAPIBase.__init__(self)
         self._term = term
         self._url_appendix = 'search'
-        self._object_id = u'[' + term + u']'
+        self._object_id = u'"' + term + u'"'
         self._params = {'type':'releases', 'q':term}
         self._releases = []
         
@@ -225,15 +225,15 @@ class Search(DiscogsAPIBase):
         
         for container in result_containers:
             #get the link containing the release
-            release_link = container.cssselect('div.data > div > a')
+            release_link = container.cssselect('div.data > div:first-child > a')
             if len(release_link) != 1:
-                self._raise_exception(u'could not extract release link from:' + container.text)
+                self._raise_exception(u'could not extract release link from:' + container.text_content())
             release_link = release_link[0]
             
             #get additional info
             release_info = container.cssselect('div.data > div.search_release_stats')
             if len(release_info) != 1:
-                self._raise_exception(u'could not extract additional info from: ' + container.text)
+                self._raise_exception(u'could not extract additional info from: ' + container.text_content())
             release_info = release_info[0].text_content()
             
             #get release name
