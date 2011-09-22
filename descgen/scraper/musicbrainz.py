@@ -197,11 +197,14 @@ class Release(MusicBrainzAPIBase):
     
     @staticmethod
     def id_from_string(string_id):
+        m = re.match('^[A-Za-z0-9\-]+$',string_id)
+        if m is None:
+            raise ValueError
         return string_id
     
     @staticmethod
     def release_from_url(url):
-        m = re.match('^http://(?:www\.)?musicbrainz.org/release/([^\/]+)$',url)
+        m = re.match('^http://(?:www\.)?musicbrainz.org/release/([A-Za-z0-9\-]+)$',url)
         if m:
             return Release(m.group(1))
         else:
