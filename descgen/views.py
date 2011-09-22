@@ -34,7 +34,7 @@ def index(request):
             return HttpResponse(status=400)
     else:
         form = InputForm()
-    return render(request,'index.html',{'form':form})
+    return render(request,'index.html',{'input_form':form})
 
 def get_by_id(request,id,scraper):
     if not scraper in SCRAPER:
@@ -60,7 +60,7 @@ def get_result(request,id):
     except TaskMeta.DoesNotExist:
         if request.GET.has_key("xhr"):
             return HttpResponse(status=404)
-        return render(request,'result_404.html',{'form':InputForm()}, status=404)
+        return render(request,'result_404.html', status=404)
     if task.status == 'SUCCESS':
         (type,data) = task.result
         if type == 'release':
@@ -73,22 +73,22 @@ def get_result(request,id):
                 result = t.render(c)
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result.html',{'result':result,'form':InputForm()})
+            return render(request,'result.html',{'result':result})
         elif type == 'list':
             if request.GET.has_key("xhr"):
                 for releases in data.values():
                     for entry in releases:
                         entry['release'] = entry['release'].id
                 return HttpResponse(json.dumps(('list',data),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result_list.html',{'scraper_results':data,'form':InputForm()})
+            return render(request,'result_list.html',{'scraper_results':data})
         elif type == '404':
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('notfound',[]),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result_id_not_found.html', {'form':InputForm()})
+            return render(request,'result_id_not_found.html')
     elif task.status == 'FAILURE' or task.status == 'REVOKED':
         if request.GET.has_key("xhr"):
             return HttpResponse(status=503)
-        return render(request,'result_failed.html', {'form':InputForm()}, status=503)
+        return render(request,'result_failed.html', status=503)
     else:
         if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('waiting',[]),ensure_ascii=False), mimetype='application/json; charset=utf-8')

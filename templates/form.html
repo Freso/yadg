@@ -1,6 +1,6 @@
 <form action="{% url descgen.views.index %}" method="post" class="form_settings center">
-{{ form.input.errors }}
-{{ form.scraper.errors }}
-<label for="id_input" class="inv">Input:</label> {{ form.input }} <label for="id_scraper" class="inv">Scraper:</label> {{ form.scraper }}
+{{ input_form.input.errors|default:INPUT_FORM.input.errors }}
+{{ input_form.scraper.errors|default:INPUT_FORM.scraper.errors }}
+<label for="id_input" class="inv">Input:</label> {{ input_form.input|default:INPUT_FORM.input }} <label for="id_scraper" class="inv">Scraper:</label> {{ input_form.scraper|default:INPUT_FORM.scraper }}
 <input type="submit" value="Fetch" class="submit" id="submit"/>
 </form>
