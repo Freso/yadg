@@ -138,7 +138,7 @@ class Search(BeatportAPIBase):
         BeatportAPIBase.__init__(self)
         self._term = term
         self._url_appendix = 'catalog/search'
-        self._object_id = u'[' + term + u']'
+        self._object_id = u'"' + term + u'"'
         self._params = {'v':'2.0','format':'json','perPage':'25','page':'1','facets':['fieldType:release',], 'highlight':'false', 'query':term}
         self._releases = []
     
