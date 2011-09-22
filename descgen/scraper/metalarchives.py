@@ -165,7 +165,7 @@ class Search(MetalarchivesAPIBase):
         if (response.has_key('aaData') and len(response['aaData']) == 0) or not response.has_key('aaData'):
             return releases
         
-        for entry in response['aaData']:
+        for entry in response['aaData'][:25]:
             (artists_html,title_html,type,date_html) = entry
             
             artists_div = lxml.html.fragment_fromstring(artists_html, create_parent="div")
