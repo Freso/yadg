@@ -11,11 +11,12 @@ class APIBase(object):
         self._cached_response = None
         self._url_appendix = None
         self._params = None
+        self._headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0.2) Gecko/20100101 Firefox/6.0.2'}
     
     @property
     def _response(self):
         if not self._cached_response:
-            r = requests.get(self._base_url + self._url_appendix, params=self._params)
+            r = requests.get(self._base_url + self._url_appendix, params=self._params, headers=self._headers)
             if r.status_code == 200:
                 self._cached_response = r
             else:
