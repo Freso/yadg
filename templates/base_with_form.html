@@ -106,12 +106,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         if (data[0] == 'result') {
                             var textarea = Y.Node.create('<textarea></textarea>');
                             textarea.addClass('wide');
-                            //IE, I hate you...
-                            if (Y.UA.ie > 0) {
-                                textarea.set('text',data[1].replace(/\n/g,"\r\n"));
-                            } else {
-                                textarea.setContent(data[1]);
-                            }
+                            textarea.set('value',data[1]);
                             
                             var div = Y.Node.create('<div></div>');
                             div.addClass('form_settings');
