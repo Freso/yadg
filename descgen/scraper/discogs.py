@@ -136,8 +136,15 @@ class Release(DiscogsAPIBase):
                     #ignore tracks with strange track number
                     continue
                 number = m.group(2)
-                if not re.match('\w',number):
-                    number = int(number)
+                if not re.search('\D',number):
+                    #remove leading zeros
+                    number_without_zeros = number.lstrip('0')
+                    #see if there is anything left
+                    if number_without_zeros:
+                        number = number_without_zeros
+                    else:
+                        #number consists only of zeros
+                        number = '0'
                 (track_cd_number,track_number) = (m.group(1),number)
                 #if there is no cd number we default to 1
                 if not track_cd_number:

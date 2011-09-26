@@ -95,7 +95,11 @@ class Release(MetalarchivesAPIBase):
                 
                 m = re.search('(\d+)(?:\.)?',track_number_td.text_content())
                 if m:
-                    track_number = m.group(1)
+                    track_number_without_zeros = m.group(1).lstrip('0')
+                    if track_number_without_zeros:
+                        track_number = track_number_without_zeros
+                    else:
+                        track_number = '0'
                 else:
                     self._raise_exception(u'could not extract track number')
                     

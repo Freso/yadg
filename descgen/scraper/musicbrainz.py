@@ -156,6 +156,12 @@ class Release(MusicBrainzAPIBase):
                         track_number_span = track_number_span[0]
                         track_number = self._remove_whitespace(track_number_span.text_content())
                         
+                        #remove leading zeros from track number
+                        if track_number.lstrip('0'):
+                            track_number = track_number.lstrip('0')
+                        else:
+                            track_number = '0'
+                        
                         title_a = title_td.cssselect('a')
                         if len(title_a) != 1:
                             self._raise_exception(u'could not get track title')
