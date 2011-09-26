@@ -1,6 +1,5 @@
 # coding=utf-8
 import lxml.html,re
-from django.utils.datastructures import SortedDict
 from descgen.scraper.base import APIBase
 
 
@@ -127,7 +126,7 @@ class Release(MusicBrainzAPIBase):
                 disc_divs = tracklist_table.cssselect('tbody > div')
                 if len(disc_divs) == 0:
                     self._raise_exception(u'could not find any disc tracklisting')
-                data['discs'] = SortedDict()
+                data['discs'] = {}
                 for disc_div in disc_divs:
                     caption_tr = disc_div.getprevious()
                     caption_a = caption_tr.cssselect('a')

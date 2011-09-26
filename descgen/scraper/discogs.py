@@ -1,6 +1,5 @@
 # coding=utf-8
 import lxml.html,re
-from django.utils.datastructures import SortedDict
 from descgen.scraper.base import APIBase
 
 READABLE_NAME = 'Discogs'
@@ -116,7 +115,7 @@ class Release(DiscogsAPIBase):
             if content and (content != 'none'):
                 data[label] = content
         
-        discs = SortedDict()
+        discs = {}
         
         #get track listing
         tracklist_tables = container.cssselect('div#tracklist table')

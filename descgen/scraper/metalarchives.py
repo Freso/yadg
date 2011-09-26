@@ -1,6 +1,5 @@
 # coding=utf-8
 import lxml.html,re,json
-from django.utils.datastructures import SortedDict
 from descgen.scraper.base import APIBase
 
 
@@ -82,7 +81,7 @@ class Release(MetalarchivesAPIBase):
             self._raise_exception(u'could not find tracklist table')
         tracklist_table = tracklist_table[0]
         table_rows = tracklist_table.cssselect('tr')
-        discs = SortedDict()
+        discs = {}
         disc_number = 1
         for row in table_rows:
             columns = row.cssselect('td')
