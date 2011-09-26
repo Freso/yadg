@@ -83,14 +83,14 @@ class Release(MetalarchivesAPIBase):
         tracklist_table = tracklist_table[0]
         table_rows = tracklist_table.cssselect('tr')
         discs = SortedDict()
-        disc_number = '1'
+        disc_number = 1
         for row in table_rows:
             columns = row.cssselect('td')
             if len(columns) == 1:
                 header = columns[0].text_content()
                 m = re.match('(?:Disc|CD) (\d+)',header)
                 if m:
-                    disc_number = m.group(1)
+                    disc_number = int(m.group(1))
             elif len(columns) == 4:
                 (track_number_td,track_title_td,track_length_td,lyrics_td) = columns
                 

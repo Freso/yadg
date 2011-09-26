@@ -73,7 +73,7 @@ class Release(BeatportAPIBase):
             data['artists'] = artists
         
         if release.has_key('tracks'):
-            data['discs'] = {"1":[]}
+            data['discs'] = {1:[]}
             track_number = 0
             for track in release['tracks']:
                 track_number += 1
@@ -97,7 +97,7 @@ class Release(BeatportAPIBase):
                     track_length = track['length']
                 else:
                     track_length = ''
-                data['discs']["1"].append((track_number_str,track_artists,track_title,track_length))
+                data['discs'][1].append((track_number_str,track_artists,track_title,track_length))
         
         if release.has_key('genres'):
             data['genre'] = map(lambda x: x['name'], release['genres'])
