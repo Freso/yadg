@@ -3,8 +3,8 @@
 {% endif %}{% if catalog %}[b]Catalog#:[/b] {{ catalog|join:", " }}
 {% endif %}{% if country %}[b]Country:[/b] {{ country }}
 {% endif %}{% if released %}[b]Year:[/b] {{ released }}
-{% endif %}{% if genre %}[b]Genre:[/b] {% for g in genre %}[url=https://ssl.what.cd/torrents.php?taglist={{ g|dotify }}]{{ g }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
-{% endif %}{% if style %}[b]Style:[/b] {% for s in style %}[url=https://ssl.what.cd/torrents.php?taglist={{ s|dotify }}]{{ s }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if genre %}[b]Genre:[/b] {% for g in genre %}[url=https://ssl.what.cd/torrents.php?taglist={{ g|dotify|urlencode }}]{{ g }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if style %}[b]Style:[/b] {% for s in style %}[url=https://ssl.what.cd/torrents.php?taglist={{ s|dotify|urlencode }}]{{ s }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
 {% endif %}{% if format %}[b]Format:[/b] {{ format }}
 {% endif %}
 {% if discs.items|length == 1 %}[size=4][b]Tracklist[/b][/size]
