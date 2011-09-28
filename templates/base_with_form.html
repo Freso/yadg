@@ -104,9 +104,9 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         var data = Y.JSON.parse(o.responseText);
                         
                         if (data[0] == 'result') {
-                            //the result is already escaped, so we insert it as html into the site 
-                            var textarea = Y.Node.create('<textarea>' + data[1] + '</textarea>');
+                            var textarea = Y.Node.create('<textarea></textarea>');
                             textarea.addClass('wide');
+                            textarea.set('value',data[1]);
                             
                             var div = Y.Node.create('<div></div>');
                             div.addClass('form_settings');
