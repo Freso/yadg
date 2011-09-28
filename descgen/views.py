@@ -69,8 +69,12 @@ def get_result(request,id):
                 result = data
             else:
                 t = django.template.loader.get_template('result_template.txt')
-                c = Context(data)
-                result = t.render(c)
+                #we render the description without autoescaping
+                c = Context(data,autoescape=False)
+                #t.render() returns a django.utils.safestring.SafeData instance which
+                #would not be escaped if used in another template. We don't want that,
+                #so create a plain unicode string from the return value
+                result = unicode(t.render(c))
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
             return render(request,'result.html',{'result':result})
