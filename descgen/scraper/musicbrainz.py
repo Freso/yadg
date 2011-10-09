@@ -92,9 +92,11 @@ class Release(MusicBrainzAPIBase):
                     label_a = label_a[0]
                     data['label'].append(self._remove_whitespace(label_a.text_content()))
                     if catalog_span is not None:
-                        if not data.has_key('catalog'):
-                            data['catalog'] = []
-                        data['catalog'].append(self._remove_whitespace(catalog_span.text_content()))
+                        catalog_span_content = self._remove_whitespace(catalog_span.text_content())
+                        if catalog_span_content:
+                            if not data.has_key('catalog'):
+                                data['catalog'] = []
+                            data['catalog'].append(catalog_span_content)
         
         releaseheader_div = content_div.cssselect('div.releaseheader')
         if len(releaseheader_div) != 1:
