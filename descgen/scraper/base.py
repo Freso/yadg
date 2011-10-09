@@ -20,7 +20,7 @@ class APIBase(object):
             if r.status_code == 200:
                 self._cached_response = r
             else:
-                raise self._exception, '%d' % r.status_code
+                raise self._exception, '%d' % (r.status_code if r.status_code else 500) #make sure we don't crash
         return self._cached_response
     
     def _remove_whitespace(self, string):
