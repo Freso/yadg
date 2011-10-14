@@ -77,7 +77,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             }
         };
         
-        function getByDiscogsId(e) {
+        function getById(e) {
             e.preventDefault();
             var cfg = {
                 method: 'GET',
@@ -127,8 +127,8 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                     
                                     var li = Y.Node.create('<li></li>');
                                     var a = Y.Node.create('<a href="'+ '{% url get_by_id 121212 131313 %}'.replace(/121212/,scraper).replace(/131313/,id) + '">'+name+'</a>');
-                                    a.on('key', getByDiscogsId, 'press:enter');
-                                    a.on('click', getByDiscogsId);
+                                    a.on('key', getById, 'press:enter');
+                                    a.on('click', getById);
                                     
                                     li.append(a);
                                     li.append('<br />')
@@ -193,8 +193,8 @@ YUI().use('node','event','io','json-parse', function (Y) {
         
         //alter the default events for each link
         release_links.each( function(node,index,nodelist) {
-            node.on('key', getByDiscogsId, 'press:enter');
-            node.on('click', getByDiscogsId);
+            node.on('key', getById, 'press:enter');
+            node.on('click', getById);
         });
     });
 });
