@@ -98,7 +98,6 @@ YUI().use('node','event','io','json-parse', function (Y) {
         };
         
         function changeFormat(e) {
-            e.preventDefault();
             var format_form = this.get('parentNode'),
                 url = format_form.get('action'),
                 textarea = Y.Node.one('#result_container textarea'),
