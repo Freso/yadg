@@ -2,4 +2,5 @@
 
 {% block title%}Result{% endblock %}
 
-{% block subcontent %}<div class="form_settings"><textarea class="wide">{{ result }}</textarea></div>{% endblock %}
+{% block subcontent %}<div class="form_settings" id="result_container"><textarea class="wide">{{ result }}</textarea></div>
+{% include "format_form.html" %}{% endblock %}

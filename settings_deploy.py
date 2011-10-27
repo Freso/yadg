@@ -181,5 +181,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.static",
     "django.contrib.messages.context_processors.messages",
     "django.core.context_processors.request", #make request.path available in templates
-    "descgen.context_processors.input_form" #make an input_form available on all pages
+    "descgen.context_processors.add_forms" #make an input_form available on all pages
 )

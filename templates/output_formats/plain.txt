@@ -1,0 +1,18 @@
+{% load isdigit %}{% load sorteditems %}{{ artists|join:", " }} – {{ title }}
+
+{% if label %}Label: {% for l in label %}{{ l }}{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if catalog %}Catalog#: {{ catalog|join:", " }}
+{% endif %}{% if country %}Country: {{ country }}
+{% endif %}{% if released %}Year: {{ released }}
+{% endif %}{% if genre %}Genre: {{ genre|join:", " }}
+{% endif %}{% if style %}Style: {{ style|join:", " }}
+{% endif %}{% if format %}Format: {{ format }}
+{% endif %}
+{% if discs.items|length == 1 %}Tracklist
+{% endif %}{% for cd,tracks in discs|sorteditems %}{% if discs.items|length > 1 %}{% if not forloop.first %}
+
+{% endif %}Disc {{ cd }}
+{% endif %}{% for number,artists,tracktitle,duration in tracks %}{{ number }}{% if number|isdigit %}.{% else %} -{% endif %}{% for artist in artists %} {{ artist }}{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% if duration %} ({{ duration }}){% endif %}{% if not forloop.last %}
+{% endif %}{% endfor %}{% endfor %}{% if link %}
+
+More information: {{ link }}{% endif %}

@@ -12,6 +12,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             form = Y.one('form'),
             subcontent = Y.one('#subcontent');
         var input_string = 'Enter release url or search term';
+        var global_cache = {};
     
         function busyStart(onlyBar) {
             if (!onlyBar) {
@@ -96,7 +97,14 @@ YUI().use('node','event','io','json-parse', function (Y) {
             Y.io(this.get('href') + '?xhr', cfg);
         };
         
-        function queryId(id) {
+        function changeFormat(e) {
+            e.preventDefault();
+            var format_form = this.get('parentNode'),
+                url = format_form.get('action'),
+                textarea = Y.Node.one('#result_container textarea'),
+                loading_image = Y.Node.create('<img id="format_loading" src="{{ STATIC_URL }}ajax-loader.gif" alt="Loading" />'),
+                format = this.get('value');
+            
             var cfg = {
                 method: 'GET',
                 on: {
@@ -104,15 +112,66 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         var data = Y.JSON.parse(o.responseText);
                         
                         if (data[0] == 'result') {
+                            args.textarea.set('value',data[1]);
+                            global_cache[args.format] = data[1];
+                        }
+                        
+                        args.textarea.set('disabled',false);
+                        args.select.set('disabled',false);
+                        args.loading_image.remove();
+                    },
+                    failure: function(id, o, args) {
+                        args.textarea.set('disabled',false);
+                        args.select.set('disabled',false);
+                        args.loading_image.remove();
+                    }
+                },
+                arguments: {
+                    select: this,
+                    textarea: textarea,
+                    loading_image: loading_image,
+                    format: format,
+                }
+            };
+            
+            if (format in global_cache) {
+                textarea.set('value',global_cache[format]);
+            } else {
+                textarea.set('disabled',true);
+                this.set('disabled',true);
+                format_form.append(loading_image);
+                
+                Y.io(url + '?xhr&f=' + format, cfg);
+            };
+        }
+        
+        function queryId(id) {
+            var cfg = {
+                method: 'GET',
+                on: {
+                    success: function(id, o, args) {
+                        //invalidate the cache
+                        global_cache = {};
+                        
+                        var data = Y.JSON.parse(o.responseText);
+                        
+                        if (data[0] == 'result') {
                             var textarea = Y.Node.create('<textarea></textarea>');
                             textarea.addClass('wide');
                             textarea.set('value',data[1]);
                             
-                            var div = Y.Node.create('<div></div>');
+                            var div = Y.Node.create('<div id="result_container"></div>');
                             div.addClass('form_settings');
                             div.insert(textarea,'replace');
                             
                             subcontent.setContent(div);
+                            
+                            var format_form = Y.Node.create('{% spaceless %}{% include "format_form.html" %}{% endspaceless %}');
+                            format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id))
+                            format_form.one('#id_f').on('change',changeFormat);
+                            
+                            subcontent.append(format_form);
+                            
                             busyStop();
                         } else if (data[0] == 'list') {
                             var ul = Y.Node.create('<ul id="release_list"></ul>');
@@ -196,10 +255,15 @@ YUI().use('node','event','io','json-parse', function (Y) {
             node.on('key', getById, 'press:enter');
             node.on('click', getById);
         });
+        
+        var format_select = Y.all('#id_f');
+        format_select.each(function(node,index,nodelist) {
+            node.on('change',changeFormat);
+        });
     });
 });
 </script>
 {% endblock %}
 
-{% block content %}{% include "form.html" %}
+{% block content %}{% include "input_form.html" %}
 <div id="subcontent">{% block subcontent %}{% endblock %}</div>{% endblock %}

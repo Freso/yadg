@@ -200,9 +200,43 @@ ul.errorlist
   border: 1px solid #E5E5DB; 
   background: #FFF; 
   color: #47433F;}
-  
-.wide
-{ width: 90% !important;
+
+div#result_container {
+  padding-right: 13px;
+  margin-bottom: 10px !important;
+}
+
+form#format_form {
+  padding-right: 13px;
+  vertical-align: middle;
+}
+
+form#format_form select {
+  width: 100px;
+  color: #47433F;
+}
+
+form#format_form label {
+  margin-right: 5px;
+}
+
+form#format_form img#format_loading {
+  height: 15px;
+  margin-left: 3px;
+}
+
+form#format_form input {
+  border: 1px solid #E5E5DB; 
+  background: #FFF; 
+  color: #47433F;
+}
+
+html.yui3-js-enabled form#format_form input {
+  display: none;
+}
+
+textarea.wide
+{ width: 100% !important;
   height: 500px;}
   
 .form_settings .submit

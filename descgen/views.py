@@ -1,13 +1,12 @@
 # Create your views here.
-from descgen.forms import InputForm
+from descgen.forms import InputForm,FormatForm
 from descgen.tasks import get_search_results,get_release_info
+from descgen.formatter import Formatter,FORMATS,FORMAT_DEFAULT
 from django.shortcuts import render,redirect
 from django.http import HttpResponse,Http404
-from django.template import Context
 from djcelery.models import TaskMeta
 from django.views.decorators.csrf import csrf_exempt
 from descgen.scraper.factory import ScraperFactory,SCRAPER
-import django.template.loader
 import json
 
 @csrf_exempt
@@ -64,20 +63,17 @@ def get_result(request,id):
     if task.status == 'SUCCESS':
         (type,data) = task.result
         if type == 'release':
-            format = request.GET.get('f','whatcd')
+            format = request.GET.get('f',FORMAT_DEFAULT)
             if format == 'raw' and request.GET.has_key("xhr"):
                 result = data
             else:
-                t = django.template.loader.get_template('result_template.txt')
-                #we render the description without autoescaping
-                c = Context(data,autoescape=False)
-                #t.render() returns a django.utils.safestring.SafeData instance which
-                #would not be escaped if used in another template. We don't want that,
-                #so create a plain unicode string from the return value
-                result = unicode(t.render(c))
+                formatter = Formatter()
+                format = format if format in FORMATS else FORMAT_DEFAULT
+                result = formatter.format(data,format)
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            return render(request,'result.html',{'result':result})
+            format_form = FormatForm(initial={'f':format})
+            return render(request,'result.html',{'result':result,'format_form':format_form})
         elif type == 'list':
             if request.GET.has_key("xhr"):
                 for releases in data.values():

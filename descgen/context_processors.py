@@ -1,4 +1,4 @@
-from descgen.forms import InputForm
+from descgen.forms import InputForm,FormatForm
 
-def input_form(request):
-    return {'INPUT_FORM':InputForm()}
+def add_forms(request):
+    return {'INPUT_FORM':InputForm(),'FORMAT_FORM':FormatForm()}
