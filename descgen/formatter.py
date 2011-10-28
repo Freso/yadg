@@ -1,6 +1,6 @@
 from django.template import Context
 import django.template.loader
-import os
+import os,re,unicodedata
 
 
 _FORMATS = {
@@ -35,3 +35,14 @@ class Formatter(object):
         #would not be escaped if used in another template. We don't want that,
         #so create a plain unicode string from the return value
         return unicode(t.render(c))
+    
+    def get_filename(self,data):
+        filename = u''
+        if 'artists' in data:
+            filename += u', '.join(data['artists'])
+            if 'title' in data:
+                filename += u' - '
+        if 'title' in data:
+            filename += data['title']
+        unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore')
+        return re.sub('[^\w\s-]', '', filename).strip()

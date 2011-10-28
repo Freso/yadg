@@ -8,6 +8,7 @@ urlpatterns = patterns('descgen.views',
     url(r'^$', 'index', name='index'),
     url(r'^get/(?P<scraper>\w+)/(?P<id>[^\/]+)$', 'get_by_id', name='get_by_id'),
     url(r'^result/(?P<id>[\w\d-]+)$', 'get_result', name='get_result'),
+    url(r'^result/(?P<id>[\w\d-]+)/download/(?P<format>[\w\d-]+)$', 'download_result', name='download_result'),
     # url(r'^whatdesc/', include('whatdesc.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

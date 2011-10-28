@@ -73,7 +73,7 @@ def get_result(request,id):
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
             format_form = FormatForm(initial={'f':format})
-            return render(request,'result.html',{'result':result,'format_form':format_form})
+            return render(request,'result.html',{'result':result,'format_form':format_form,'format':format,'result_id':id})
         elif type == 'list':
             if request.GET.has_key("xhr"):
                 for releases in data.values():
@@ -93,3 +93,18 @@ def get_result(request,id):
         if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('waiting',[]),ensure_ascii=False), mimetype='application/json; charset=utf-8')
         return render(request,'result_waiting.html')
+
+def download_result(request,id,format):
+    try:
+        task = TaskMeta.objects.get(task_id=id)
+    except TaskMeta.DoesNotExist:
+        raise Http404
+    if task.status != 'SUCCESS' or task.result[0] != 'release' or not format in FORMATS:
+        raise Http404
+    data = task.result[1]
+    formatter = Formatter()
+    result = formatter.format(data,format)
+    filename = formatter.get_filename(data)
+    response = HttpResponse(result,mimetype='text/plain; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="%s.txt"' % filename if filename else str(id + '-' + format)
+    return response
