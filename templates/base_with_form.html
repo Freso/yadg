@@ -170,7 +170,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             var download_link = Y.Node.create('<a href="{% url download_result "121212" "whatcd" %}" id="download_link">Download as .txt</a>'.replace(/121212/,args.q_id));
                             subcontent.append(download_link);
                             
-                            var format_form = Y.Node.create('{% spaceless %}{% include "format_form.html" %}{% endspaceless %}');
+                            var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
                             format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id))
                             format_form.one('#id_f').on('change',changeFormat);
                             
