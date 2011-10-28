@@ -110,7 +110,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     success: function(id, o, args) {
                         var data = Y.JSON.parse(o.responseText);
                         var download_link = Y.Node.one('a#download_link');
-                        download_link.set('href',download_link.get('href').replace(/[\w\d-]+$/,args.format))
+                        download_link.set('href',download_link.get('href').replace(/[\w\d-]+$/,args.format));
                         
                         if (data[0] == 'result') {
                             args.textarea.set('value',data[1]);
@@ -171,7 +171,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             subcontent.append(download_link);
                             
                             var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
-                            format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id))
+                            format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id));
                             format_form.one('#id_f').on('change',changeFormat);
                             
                             subcontent.append(format_form);
