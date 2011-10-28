@@ -152,7 +152,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 on: {
                     success: function(id, o, args) {
                         //invalidate the cache
-                        global_cache = {'result_id':args.q_id};
+                        global_cache = {};
                         
                         var data = Y.JSON.parse(o.responseText);
                         
