@@ -153,10 +153,7 @@ class Release(DiscogsAPIBase):
                     track_cd_number = int(track_cd_number)
                 #get track artist
                 track_artists_elements = track_artists_column.cssselect('a')
-                if track_artists_elements:
-                    track_artists = []
-                else:
-                    track_artists = None
+                track_artists = []
                 for track_artist_element in track_artists_elements:
                     track_artist = track_artist_element.text_content()
                     track_artist = self._remove_whitespace(track_artist)

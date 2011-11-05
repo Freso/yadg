@@ -170,8 +170,8 @@ class Release(MusicBrainzAPIBase):
                         title_a = title_a[0]
                         track_title = self._remove_whitespace(title_a.text_content())
                         
+                        track_artists = []
                         if artist_td is not None:
-                            track_artists = []
                             track_artist_links = artist_td.cssselect('a')
                             if len(track_artist_links) == 0:
                                 self._raise_exception(u'could not get track artists')
@@ -181,8 +181,6 @@ class Release(MusicBrainzAPIBase):
                                     track_artist = u'Various'
                                 if not track_artist in track_artists:
                                     track_artists.append(track_artist)
-                        else:
-                            track_artists = None
                         
                         length_span = length_td.cssselect('span')
                         if len(length_span) != 1:

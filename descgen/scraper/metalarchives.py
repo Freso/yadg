@@ -110,7 +110,7 @@ class Release(MetalarchivesAPIBase):
                 if not discs.has_key(disc_number):
                     discs[disc_number] = []
                 
-                discs[disc_number].append((track_number,None,track_title,track_length))
+                discs[disc_number].append((track_number,[],track_title,track_length))
             else:
                 continue
         

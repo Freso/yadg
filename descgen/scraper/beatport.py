@@ -78,15 +78,13 @@ class Release(BeatportAPIBase):
             for track in release['tracks']:
                 track_number += 1
                 track_number_str = str(track_number)
+                track_artists = []
                 if track.has_key('artists'):
-                    track_artists = []
                     for track_artist_candidate in track['artists']:
                         if track_artist_candidate['type'] == 'Artist':
                             track_artists.append(track_artist_candidate['name'])
                     if track_artists == artists:
-                        track_artists = None
-                else:
-                    track_artists = None
+                        track_artists = []
                 if track.has_key('name'):
                     track_title = track['name']
                 else:
