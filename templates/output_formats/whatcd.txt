@@ -1,4 +1,4 @@
-{% load dotify %}{% load isdigit %}{% load sorteditems %}[size=5][b]{% for artist in artists %}{% if artist == "Various" %}{{ artist }}{% else %}[artist]{{ artist }}[/artist]{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
+{% load dotify %}{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}[size=5][b]{% for artist in artists|artistsbytype:"Main" %}{% if artist == "Various" %}{{ artist }}{% else %}[artist]{{ artist }}[/artist]{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} – {{ title }}[/b][/size]
 {% if label %}[b]Label:[/b] {% for l in label %}[url=https://ssl.what.cd/torrents.php?recordlabel={{ l|urlencode }}]{{ l }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
 {% endif %}{% if catalog %}[b]Catalog#:[/b] {{ catalog|join:", " }}
 {% endif %}{% if country %}[b]Country:[/b] {{ country }}
@@ -11,7 +11,7 @@
 {% endif %}{% for cd,tracks in discs|sorteditems %}{% if discs.items|length > 1 %}{% if not forloop.first %}
 
 {% endif %}[size=4][b]Disc {{ cd }}[/b][/size]
-{% endif %}{% for number,artists,tracktitle,duration in tracks %}[b]{{ number }}{% if number|isdigit %}.[/b]{% else %}[/b] -{% endif %}{% for artist in artists %} [artist]{{ artist }}[/artist]{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% if duration %} [i]({{ duration }})[/i]{% endif %}{% if not forloop.last %}
+{% endif %}{% for number,artists,tracktitle,duration in tracks %}[b]{{ number }}{% if number|isdigit %}.[/b]{% else %}[/b] -{% endif %}{% for artist in artists|artistsbytype:"Main" %} [artist]{{ artist }}[/artist]{% if not forloop.last %},{% else %} -{% endif %}{% endfor %} {{ tracktitle }}{% with feature=artists|artistsbytype:"Feature" %}{% if feature %} (feat. {% for feat in feature %}[artist]{{ feat }}[/artist]{% if not forloop.last %}{% if forloop.revcounter0 == 1 %} & {% else %}, {% endif %}{% endif %}{% endfor %}){% endif %}{% endwith %}{% if duration %} [i]({{ duration }})[/i]{% endif %}{% if not forloop.last %}
 {% endif %}{% endfor %}{% endfor %}{% if link %}
 
 More information: {{ link }}{% endif %}

@@ -1,6 +1,6 @@
 # coding=utf-8
 import lxml.html,re
-from descgen.scraper.base import APIBase
+from base import APIBase
 
 
 READABLE_NAME = 'Musicbrainz'
@@ -119,7 +119,7 @@ class Release(MusicBrainzAPIBase):
             artist = self._remove_whitespace(artist_a.text_content())
             if artist == 'Various Artists':
                 artist = u'Various'
-            data['artists'].append(artist)
+            data['artists'].append({'name':artist,'type':'Main'})
         
         content_h2 = content_div.cssselect('h2')
         for caption in content_h2:
@@ -180,7 +180,7 @@ class Release(MusicBrainzAPIBase):
                                 if track_artist == 'Various Artists':
                                     track_artist = u'Various'
                                 if not track_artist in track_artists:
-                                    track_artists.append(track_artist)
+                                    track_artists.append({'name':track_artist,'type':'Main'})
                         
                         length_span = length_td.cssselect('span')
                         if len(length_span) != 1:

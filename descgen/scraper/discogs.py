@@ -1,6 +1,6 @@
 # coding=utf-8
-import lxml.html,re
-from descgen.scraper.base import APIBase
+import lxml.html,re,lxml.etree
+from base import APIBase
 
 READABLE_NAME = 'Discogs'
 
@@ -66,7 +66,7 @@ class Release(DiscogsAPIBase):
             artist = artist_element.text_content()
             artist = self._remove_whitespace(artist)
             artist = self._swapsuffix(artist)
-            artists.append(artist)
+            artists.append({'name':artist,'type':'Main'})
         title = self._remove_whitespace(title_element[0].text_content())
         #right now this contains 'artist - title', so remove 'artist'
         title = title.split(u' \u2013 ')[1]
@@ -158,7 +158,24 @@ class Release(DiscogsAPIBase):
                     track_artist = track_artist_element.text_content()
                     track_artist = self._remove_whitespace(track_artist)
                     track_artist = self._swapsuffix(track_artist)
-                    track_artists.append(track_artist)
+                    track_artists.append({'name':track_artist,'type':'Main'})
+                #there might be featuring artists in the track column
+                blockquote = track.cssselect('blockquote')
+                if len(blockquote) == 1:
+                    blockquote = blockquote[0]
+                    serialized = lxml.etree.tostring(blockquote, encoding='utf-8').decode('utf-8')
+                    serialized = serialized.replace(u'<blockquote>',u'').replace(u'</blockquote>',u'')
+                    lines = serialized.split(u'<br/>')
+                    lines = map(lambda x: self._remove_whitespace(x), lines)
+                    for line in lines:
+                        if line.startswith(u'Featuring '):
+                            div =  lxml.html.fragment_fromstring(line, create_parent='div')
+                            track_featuring_elements = div.cssselect('a')
+                            for track_featuring_element in track_featuring_elements:
+                                track_feature = track_featuring_element.text_content()
+                                track_feature = self._remove_whitespace(track_feature)
+                                track_feature = self._swapsuffix(track_feature)
+                                track_artists.append({'name':track_feature,'type':'Feature'})
                 #get track title
                 track_title = track.cssselect('span.track_title')
                 if len(track_title) != 1:

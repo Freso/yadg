@@ -1,6 +1,6 @@
 # coding=utf-8
 import json,re
-from descgen.scraper.base import APIBase
+from base import APIBase
 
 
 READABLE_NAME = 'Beatport'
@@ -63,11 +63,11 @@ class Release(BeatportAPIBase):
             real_artists = []
             for artist in release['artists']:
                 if artist['type'] == 'Artist' and artist['name']:
-                    real_artists.append(artist['name'])
+                    real_artists.append({'name':artist['name'],'type':'Main'})
             #we assume that it is a Various Artists release if the release type is 'Album'
             #and the number of 'Artists' (not 'Remixers') is greater 1
             if release.has_key('category') and release['category'] == 'Album' and len(real_artists) > 1:
-                artists = ['Various',]
+                artists = [{'name':'Various','type':'Main'},]
             else:
                 artists = real_artists
             data['artists'] = artists
@@ -80,11 +80,18 @@ class Release(BeatportAPIBase):
                 track_number_str = str(track_number)
                 track_artists = []
                 if track.has_key('artists'):
+                    track_main_artists = []
+                    track_additional_artists = []
                     for track_artist_candidate in track['artists']:
-                        if track_artist_candidate['type'] == 'Artist':
-                            track_artists.append(track_artist_candidate['name'])
-                    if track_artists == artists:
-                        track_artists = []
+                        if track_artist_candidate['name']:
+                            if track_artist_candidate['type'] == 'Artist':
+                                track_main_artists.append({'name':track_artist_candidate['name'],'type':'Main'})
+                            elif track_artist_candidate['type'] == 'Remixer':
+                                track_additional_artists.append({'name':track_artist_candidate['name'],'type':'Remixer'})
+                    if track_main_artists == artists:
+                        track_artists = track_additional_artists
+                    else:
+                        track_artists = track_main_artists + track_additional_artists
                 if track.has_key('name'):
                     track_title = track['name']
                 else:

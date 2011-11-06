@@ -1,6 +1,6 @@
 # coding=utf-8
 import lxml.html,re,json
-from descgen.scraper.base import APIBase
+from base import APIBase
 
 
 READABLE_NAME = 'Metal-Archives'
@@ -54,7 +54,7 @@ class Release(MetalarchivesAPIBase):
             self._raise_exception(u'could not find artist h2')
         artists = []
         for artist_h2 in artists_h2:
-            artists.append(self._remove_whitespace(artist_h2.text_content()))
+            artists.append({'name':self._remove_whitespace(artist_h2.text_content()),'type':'Main'})
         
         data['artists'] = artists
         
