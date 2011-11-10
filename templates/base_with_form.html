@@ -102,15 +102,15 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 url = format_form.get('action'),
                 textarea = Y.Node.one('#result_container textarea'),
                 loading_image = Y.Node.create('<img id="format_loading" src="{{ STATIC_URL }}ajax-loader.gif" alt="Loading" />'),
-                format = this.get('value');
+                format = this.get('value'),
+                download_link = Y.Node.one('a#download_link');
             
             var cfg = {
                 method: 'GET',
                 on: {
                     success: function(id, o, args) {
                         var data = Y.JSON.parse(o.responseText);
-                        var download_link = Y.Node.one('a#download_link');
-                        download_link.set('href',download_link.get('href').replace(/[\w\d-]+$/,args.format));
+                        args.download_link.set('href',args.download_link.get('href').replace(/[\w\d-]+$/,args.format));
                         
                         if (data[0] == 'result') {
                             args.textarea.set('value',data[1]);
@@ -132,11 +132,13 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     textarea: textarea,
                     loading_image: loading_image,
                     format: format,
+                    download_link: download_link
                 }
             };
             
             if (format in global_cache) {
                 textarea.set('value',global_cache[format]);
+                download_link.set('href',download_link.get('href').replace(/[\w\d-]+$/,args.format));
             } else {
                 textarea.set('disabled',true);
                 this.set('disabled',true);
