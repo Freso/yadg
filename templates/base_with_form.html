@@ -138,7 +138,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             
             if (format in global_cache) {
                 textarea.set('value',global_cache[format]);
-                download_link.set('href',download_link.get('href').replace(/[\w\d-]+$/,args.format));
+                download_link.set('href',download_link.get('href').replace(/[\w\d-]+$/,format));
             } else {
                 textarea.set('disabled',true);
                 this.set('disabled',true);
