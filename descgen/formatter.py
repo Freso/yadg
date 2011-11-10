@@ -1,4 +1,5 @@
 from django.template import Context
+from templatetags.artistsbytype import artistsbytype
 import django.template.loader
 import os,re,unicodedata
 
@@ -39,7 +40,9 @@ class Formatter(object):
     def get_filename(self,data):
         filename = u''
         if 'artists' in data:
-            filename += u', '.join(data['artists'])
+            #get the names of the main artists
+            artists = artistsbytype(data['artists'],"Main")
+            filename += u', '.join(artists)
             if 'title' in data:
                 filename += u' - '
         if 'title' in data:
