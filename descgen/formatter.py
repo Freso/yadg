@@ -6,7 +6,8 @@ import os,re,unicodedata
 
 _FORMATS = {
     'whatcd':('whatcd.txt','what.cd'),
-    'plain':('plain.txt','plain')
+    'whatcd-tracks-only':('whatcd-tracks-only.txt','what.cd (tracks only)'),
+    'plain':('plain.txt','plain'),
 }
 
 FORMAT_CHOICES = map(lambda x: (x,_FORMATS[x][1]),_FORMATS)
