@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls.defaults import patterns, url, include
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -9,6 +9,7 @@ urlpatterns = patterns('descgen.views',
     url(r'^get/(?P<scraper>\w+)/(?P<id>[^\/]+)$', 'get_by_id', name='get_by_id'),
     url(r'^result/(?P<id>[\w\d-]+)$', 'get_result', name='get_result'),
     url(r'^result/(?P<id>[\w\d-]+)/download/(?P<format>[\w\d-]+)$', 'download_result', name='download_result'),
+    url(r'^api/', include('descgen.api.v1_urls')),
     # url(r'^whatdesc/', include('whatdesc.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

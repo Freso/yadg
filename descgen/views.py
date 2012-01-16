@@ -1,12 +1,12 @@
 # Create your views here.
-from descgen.forms import InputForm,FormatForm
+from descgen.forms import InputForm,FormatForm,IdQueryForm
 from descgen.tasks import get_search_results,get_release_info
 from descgen.formatter import Formatter,FORMATS,FORMAT_DEFAULT
 from django.shortcuts import render,redirect
 from django.http import HttpResponse,Http404
 from djcelery.models import TaskMeta
 from django.views.decorators.csrf import csrf_exempt
-from descgen.scraper.factory import ScraperFactory,SCRAPER
+from descgen.scraper.factory import ScraperFactory
 import json
 
 @csrf_exempt
@@ -36,15 +36,11 @@ def index(request):
     return render(request,'index.html',{'input_form':form})
 
 def get_by_id(request,id,scraper):
-    if not scraper in SCRAPER:
+    form = IdQueryForm(data={'id':id,'scraper':scraper})
+    if not form.is_valid():
         raise Http404
     factory = ScraperFactory()
-    try:
-        #try to get a release with the given id
-        release = factory.get_release_by_id(id,scraper)
-    except ValueError:
-        #the id is malformed
-        raise Http404
+    release = factory.get_release_by_id(id,scraper)
     task = get_release_info.delay(release)
     #make sure a TaskMeta object for the created task exists
     TaskMeta.objects.get_or_create(task_id=task.task_id)
