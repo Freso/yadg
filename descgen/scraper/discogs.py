@@ -168,10 +168,10 @@ class Release(DiscogsAPIBase):
                     lines = serialized.split(u'<br/>')
                     lines = map(lambda x: self._remove_whitespace(x), lines)
                     for line in lines:
-                        if line.startswith(u'Featuring ') or line.startswith(u'Remix '):
-                            if line.startswith(u'Featuring '):
+                        if u'Featuring \u2013 ' in line or u'Remix \u2013 ' in line:
+                            if u'Featuring \u2013 ' in line:
                                 track_artist_type = 'Feature'
-                            elif line.startswith(u'Remix '):
+                            elif u'Remix \u2013 ' in line:
                                 track_artist_type = 'Remixer'
                             div =  lxml.html.fragment_fromstring(line, create_parent='div')
                             track_featuring_elements = div.cssselect('a')
