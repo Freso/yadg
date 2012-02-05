@@ -7,6 +7,8 @@ import os,re,unicodedata
 _FORMATS = {
     'whatcd':('whatcd.txt','what.cd'),
     'whatcd-tracks-only':('whatcd-tracks-only.txt','what.cd (tracks only)'),
+    'wafflesfm':('wafflesfm.txt', 'waffles.fm'),
+    'wafflesfm-tracks-only':('wafflesfm-tracks-only.txt', 'waffles.fm (tracks only)'),
     'plain':('plain.txt','plain'),
 }
 
