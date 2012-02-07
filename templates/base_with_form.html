@@ -11,7 +11,6 @@ YUI().use('node','event','io','json-parse', function (Y) {
             select = Y.one('#id_scraper'),
             form = Y.one('form'),
             subcontent = Y.one('#subcontent');
-        var input_string = 'Enter release url or search term';
         var global_cache = {};
     
         function busyStart(onlyBar) {
@@ -21,7 +20,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 select.set('disabled',true);
                 submit.set('value','Please wait...');
             }
-            subcontent.setContent('<img class="center" src="{{ STATIC_URL }}ajax-loader.gif" alt="Loading" />');
+            subcontent.setContent('<img class="center" src="{{ STATIC_URL }}img/ajax-loader.gif" alt="Loading" />');
         }
         
         function busyStop() {
@@ -31,26 +30,9 @@ YUI().use('node','event','io','json-parse', function (Y) {
             submit.set('value','Fetch');
         }
         
-        function restoreInputDefaultValue(e) {
-           if ( input.get('value') == '' ) {
-            input.set('value',input_string);
-           }
-        };
-    
-        input.set('value',input_string);
-        
-        input.on('focus', function(e) {
-           if ( input.get('value') == input_string ) {
-            input.set('value','');
-           }
-        });
-        
-        input.on('clickoutside', restoreInputDefaultValue );
-        input.on('key', restoreInputDefaultValue, 'press:tab');
-        
         function submitInput(e) {
             e.preventDefault();
-            if (input.get('value') != '' && input.get('value') != input_string) {
+            if (input.get('value') != '') {
                 var cfg = {
                     method: 'POST',
                     form: {
@@ -63,9 +45,9 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         },
                         failure: function(id, o, args) {
                             if (o.status == 400) {
-                                subcontent.setContent('<p>The input field is required.</p>')
+                                subcontent.setContent('<div class="alert alert-error">The input field is required.</div>')
                             } else {
-                                subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                                subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>')
                             }
                             busyStop();
                         }
@@ -87,7 +69,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         queryId(o.responseText);
                     },
                     failure: function(id, o, args) {
-                        subcontent.setContent('<p>A general error occured. Please try again later.</p>')
+                        subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>')
                         busyStop();
                     }
                 },
@@ -100,8 +82,8 @@ YUI().use('node','event','io','json-parse', function (Y) {
         function changeFormat(e) {
             var format_form = this.get('parentNode'),
                 url = format_form.get('action'),
-                textarea = Y.Node.one('#result_container textarea'),
-                loading_image = Y.Node.create('<img id="format_loading" src="{{ STATIC_URL }}ajax-loader.gif" alt="Loading" />'),
+                textarea = Y.Node.one('textarea#description_area'),
+                loading_image = Y.Node.create('<img id="format_loading" src="{{ STATIC_URL }}img/ajax-loader.gif" alt="Loading" />'),
                 format = this.get('value'),
                 download_link = Y.Node.one('a#download_link');
             
@@ -159,24 +141,24 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         var data = Y.JSON.parse(o.responseText);
                         
                         if (data[0] == 'result') {
-                            var textarea = Y.Node.create('<textarea></textarea>');
-                            textarea.addClass('wide');
+                            var textarea = Y.Node.create('<textarea id="description_area"></textarea>');
+                            textarea.addClass('description_area');
                             textarea.set('value',data[1]);
                             
-                            var div = Y.Node.create('<div id="result_container"></div>');
-                            div.addClass('form_settings');
+                            var div = Y.Node.create('<div></div>');
+                            div.addClass('well');
                             div.insert(textarea,'replace');
                             
-                            subcontent.setContent(div);
-                            
-                            var download_link = Y.Node.create('<a href="{% url download_result "121212" "whatcd" %}" id="download_link">Download as .txt</a>'.replace(/121212/,args.q_id));
-                            subcontent.append(download_link);
+                            var download_link = Y.Node.create('<a href="{% url download_result "121212" "whatcd" %}" id="download_link" class="btn">Download as .txt</a>'.replace(/121212/,args.q_id));
+                            div.append(download_link);
                             
                             var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
                             format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id));
                             format_form.one('#id_f').on('change',changeFormat);
                             
-                            subcontent.append(format_form);
+                            div.append(format_form);
+                            
+                            subcontent.setContent(div);
                             
                             busyStop();
                         } else if (data[0] == 'list') {
@@ -197,20 +179,24 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                     
                                     li.append(a);
                                     li.append('<br />')
-                                    li.append(info);
+                                    li.append('<span class="label">' + info + '</label>');
                                     
                                     ul.append(li);
                                 }
                             };
                             
                             if (ul.all('*').size() != 0) {
-                                subcontent.setContent(ul);
+                                var div = Y.Node.create('<div></div>');
+                                div.addClass('well');
+                                div.setContent(ul)
+                                
+                                subcontent.setContent(div);
                             } else {
-                                subcontent.setContent('<p>Sorry, there were no matches.</p>');
+                                subcontent.setContent('<div class="alert alert-error">Sorry, there were no matches.</div>');
                             }
                             busyStop();
                         } else if (data[0] == 'notfound') {
-                            subcontent.setContent('<p>I could not find the release with the given ID. You may want to try again with another one.</p>');
+                            subcontent.setContent('<div class="alert alert-error">I could not find the release with the given ID. You may want to try again with another one.</div>');
                             busyStop();
                         } else if (data[0] == 'waiting') {
                             var delay = function() { queryId(args.q_id); };
@@ -222,11 +208,11 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     },
                     failure: function(id, o, args) {
                         if (o.status == 503) {
-                            subcontent.setContent('<p>An error occured while retrieving the data. This might be a temporary problem. Try again in a few minutes.</p>');
+                            subcontent.setContent('<div class="alert alert-error">An error occured while retrieving the data. This might be a temporary problem. Try again in a few minutes.</div>');
                         } else if (o.status == 404) {
-                            subcontent.setContent('<p>Something happened that should not happen. Please try again.</p>');
+                            subcontent.setContent('<div class="alert alert-error">Something happened that should not happen. Please try again.</div>');
                         } else {
-                            subcontent.setContent('<p>A general error occured. Please try again later.</p>');
+                            subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>');
                         }
                         busyStop();
                     }

@@ -1,6 +1,4 @@
 {% extends "base_with_form.html" %}
 
-{% block title%}Result{% endblock %}
-
-{% block subcontent %}<div class="form_settings" id="result_container"><textarea class="wide">{{ result }}</textarea></div>
-<a href="{% url download_result result_id format %}" id="download_link">Download as .txt</a> {% include "format_form.html" %}{% endblock %}
+{% block subcontent %}<div class="well"><textarea id="description_area">{{ result }}</textarea>
+<a href="{% url download_result result_id format %}" id="download_link" class="btn">Download as .txt</a> {% include "format_form.html" %}</div>{% endblock %}
