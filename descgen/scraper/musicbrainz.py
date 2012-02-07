@@ -279,7 +279,7 @@ class Search(MusicBrainzAPIBase):
             if country:
                 info += u'Country: ' + country
                 if track_count:
-                    info += u'|'
+                    info += u' | '
             if track_count:
                 info += track_count + u' Tracks'
             #compile release name

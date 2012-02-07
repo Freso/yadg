@@ -196,7 +196,7 @@ class Search(MetalarchivesAPIBase):
             
             info_components = filter(lambda x: x, [date,type])
             
-            info = u'|'.join(info_components)
+            info = u' | '.join(info_components)
             
             #compile release name
             name = u', '.join(artists) + u' \u2013 ' + title

@@ -188,7 +188,7 @@ class Search(BeatportAPIBase):
                     add_info.append(result['label']['name'])
                 if result.has_key('catalogNumber'):
                     add_info.append(result['catalogNumber'])
-                info = u'|'.join(add_info)
+                info = u' | '.join(add_info)
                 releases.append({'name':name,'info':info,'release':release})
             
         return releases

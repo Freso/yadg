@@ -259,7 +259,7 @@ class Search(DiscogsAPIBase):
             if len(release_info) != 1:
                 self._raise_exception(u'could not extract additional info from: ' + container.text_content())
             release_info = release_info[0].text_content()
-            release_info = self._remove_whitespace(release_info)
+            release_info = ' | '.join(map(lambda x: self._remove_whitespace(x), release_info.split('|')))
             
             #get release name
             release_name = release_link.text_content()
