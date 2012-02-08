@@ -25,6 +25,7 @@ class Release(BeatportAPIBase):
         self._object_id = str(id)
         self._params = {'format':'json','v':'1.0','id':id}
         self._data = {}
+        self.release_url = self._get_link()
 
     def _get_link(self,release_name=''):
         return 'http://www.beatport.com/release/%s/%d' %(release_name,self.id)
@@ -107,7 +108,7 @@ class Release(BeatportAPIBase):
         if release.has_key('genres'):
             data['genre'] = map(lambda x: x['name'], release['genres'])
         
-        data['link'] = self._get_link()
+        data['link'] = self.release_url
         
         return data
     
@@ -121,7 +122,9 @@ class Release(BeatportAPIBase):
     def release_from_url(url):
         m = re.match('^http://(?:www\.)?beatport\.com/release/(?:.*?/)?(\d+)$',url)
         if m:
-            return Release(int(m.group(1)))
+            release = Release(int(m.group(1)))
+            release.release_url = url
+            return release
         else:
             return None
     

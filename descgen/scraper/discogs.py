@@ -27,6 +27,7 @@ class Release(DiscogsAPIBase):
         self._url_appendix = 'release/%d' % id
         self._object_id = str(id)
         self._data = {}
+        self.release_url = self._get_link()
     
     def _swapsuffix(self, string):
         for (prefix,suffix) in self.presuffixes:
@@ -197,7 +198,7 @@ class Release(DiscogsAPIBase):
         
         data['discs'] = discs
         
-        data['link'] = self._get_link()
+        data['link'] = self.release_url
         
         return data
     
@@ -211,7 +212,9 @@ class Release(DiscogsAPIBase):
     def release_from_url(url):
         m = re.match('^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)',url)
         if m:
-            return Release(int(m.group(1)))
+            release = Release(int(m.group(1)))
+            release.release_url = url
+            return release
         else:
             return None
     

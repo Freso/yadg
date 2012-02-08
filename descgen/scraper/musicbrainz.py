@@ -23,6 +23,7 @@ class Release(MusicBrainzAPIBase):
         self._url_appendix = 'release/%s' % id
         self._object_id = id
         self._data = {}
+        self.release_url = self._get_link()
     
     def _get_link(self):
         return self._base_url + self._url_appendix
@@ -190,7 +191,7 @@ class Release(MusicBrainzAPIBase):
                         
                         data['discs'][disc_number].append((track_number,track_artists,track_title,track_length))
         
-        data['link'] = self._get_link()
+        data['link'] = self.release_url
         
         return data
     
@@ -211,7 +212,9 @@ class Release(MusicBrainzAPIBase):
     def release_from_url(url):
         m = re.match('^http://(?:www\.)?musicbrainz.org/release/([A-Za-z0-9\-]+)$',url)
         if m:
-            return Release(m.group(1))
+            release = Release(m.group(1))
+            release.release_url = url
+            return release
         else:
             return None
     

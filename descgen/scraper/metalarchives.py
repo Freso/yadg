@@ -24,6 +24,7 @@ class Release(MetalarchivesAPIBase):
         self._url_appendix = '/albums///%d' % id
         self._object_id = str(id)
         self._data = {}
+        self.release_url = self._get_link()
 
     def _get_link(self,release_artist='',release_name=''):
         return 'http://www.metal-archives.com/albums/%s/%s/%d' %(release_artist,release_name,self.id)
@@ -116,7 +117,7 @@ class Release(MetalarchivesAPIBase):
         
         data['discs'] = discs
         
-        data['link'] = self._get_link()
+        data['link'] = self.release_url
         
         return data
     
@@ -130,7 +131,9 @@ class Release(MetalarchivesAPIBase):
     def release_from_url(url):
         m = re.match('^http://(?:www\.)?metal-archives\.com/albums/(?:.*?/){0,2}(\d+)$',url)
         if m:
-            return Release(int(m.group(1)))
+            release = Release(int(m.group(1)))
+            release.release_url = url
+            return release
         else:
             return None
     
