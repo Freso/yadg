@@ -197,8 +197,8 @@ class Result(View):
                 
                 for releases in data.values():
                     for entry in releases:
-                        entry['release_url'] = entry['release']._get_link()
-                        entry['query_url'] = reverse('api_v1_makequery') + '?' + urlencode({'input':entry['release']._get_link()})
+                        entry['release_url'] = entry['release'].release_url
+                        entry['query_url'] = reverse('api_v1_makequery') + '?' + urlencode({'input':entry['release'].release_url})
                         del entry['release']
                         release_count += 1
                 
