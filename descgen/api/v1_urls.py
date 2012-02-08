@@ -1,8 +1,8 @@
 from django.conf.urls.defaults import patterns, url
-from v1 import ScraperList,FormatList,YADGRoot,MakeQuery,Result
+from v1 import ScraperList,FormatList,Root,MakeQuery,Result
 
 urlpatterns = patterns('',
-    url(r'^$', YADGRoot.as_view(), name="api_v1_root"),                   
+    url(r'^$', Root.as_view(), name="api_v1_root"),                   
     url(r'^query/$', MakeQuery.as_view(), name="api_v1_makequery"),
     url(r'^scrapers/$', ScraperList.as_view(), name="api_v1_scraperlist"),
     url(r'^formats/$', FormatList.as_view(), name="api_v1_formatlist"),

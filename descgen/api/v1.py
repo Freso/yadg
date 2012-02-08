@@ -36,7 +36,7 @@ class InputFormResource(GETFormResource):
 class FormatFormResource(GETFormResource):
     form = ResultForm
 
-class YADGRoot(View):
+class Root(View):
     """
     This is the entry point to the rest of the YADG API.
     """
