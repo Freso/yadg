@@ -142,7 +142,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 this.set('disabled',true);
                 format_form.append(loading_image);
                 
-                Y.io(appendFormatParam(url + '?description_format=' + encodeURIComponent(format)), cfg);
+                Y.io(appendFormatParam(appendGetParam(url,'description_format=' + encodeURIComponent(format))), cfg);
             };
         }
         
@@ -170,7 +170,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                 div.append(download_link);
                                 
                                 var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
-                                format_form.set('action',result_url);
+                                format_form.set('action',args.result_url);
                                 format_form.one('#id_description_format').on('change',changeFormat);
                                 
                                 div.append(format_form);
