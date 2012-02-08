@@ -59,7 +59,7 @@ def get_result(request,id):
     if task.status == 'SUCCESS':
         (type,data) = task.result
         if type == 'release':
-            format = request.GET.get('f',FORMAT_DEFAULT)
+            format = request.GET.get('description_format',FORMAT_DEFAULT)
             if format == 'raw' and request.GET.has_key("xhr"):
                 result = data
             else:
