@@ -52,7 +52,7 @@ class ScraperList(View):
     """
     This returns a list of all available scrapers.
     
-    You can use it to populate a scraper select box like that:
+    It can be used to populate a scraper select box like this:
     
         <select>
             <option value="value[0]">name[0]</option>
@@ -70,7 +70,7 @@ class FormatList(View):
     """
     This returns a list of all available description formats.
     
-    You can use it to populate a format select box like that:
+    It can be used to populate a format select box like this:
     
         <select>
             <option value="value[0]">name[0]</option>
