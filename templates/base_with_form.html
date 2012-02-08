@@ -248,7 +248,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
             node.on('click', getById);
         });
         
-        var format_select = Y.all('#id_f');
+        var format_select = Y.all('#id_description_format');
         format_select.each(function(node,index,nodelist) {
             node.on('change',changeFormat);
         });

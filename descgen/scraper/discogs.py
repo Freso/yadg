@@ -263,6 +263,7 @@ class Search(DiscogsAPIBase):
             
             #get release name
             release_name = release_link.text_content()
+            release_name = self._remove_whitespace(release_name)
 
             #get the release id
             m = re.search('/(release|master)/(\d+)$',release_link.attrib['href'])

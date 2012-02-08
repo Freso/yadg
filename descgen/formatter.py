@@ -29,7 +29,9 @@ class Formatter(object):
     def __init__(self,template_dir='output_formats'):
         self._template_dir = template_dir
     
-    def format(self,data,format):
+    def format(self,data,format = FORMAT_DEFAULT):
+        if not format:
+            format = FORMAT_DEFAULT
         if not format in _FORMATS.keys():
             raise FormatterValueError
         t = django.template.loader.get_template(os.path.join(self._template_dir,_FORMATS[format][0]))

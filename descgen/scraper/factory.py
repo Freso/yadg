@@ -53,7 +53,9 @@ class ScraperFactory(object):
         
         return release
     
-    def get_search(self,search_term,scraper):
+    def get_search(self,search_term,scraper = SCRAPER_DEFAULT):
+        if not scraper:
+            scraper = SCRAPER_DEFAULT
         if not scraper in SCRAPER:
             raise ScraperFactoryError, u'no scraper "%s"' % scraper
         

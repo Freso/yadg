@@ -4,11 +4,15 @@ from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 
 class InputForm(forms.Form):
     input = forms.CharField(label='Search Term:',widget=forms.TextInput(attrs={'placeholder': 'Enter release url or search term','class':'input-xhlarge'}))
-    scraper = forms.ChoiceField(label='Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT, widget=forms.Select(attrs={'class':'auto_width'}))
+    scraper = forms.ChoiceField(required=False, label='Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT, widget=forms.Select(attrs={'class':'auto_width'}))
 
 class FormatForm(forms.Form):
-    f = forms.ChoiceField(label='Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT, widget=forms.Select(attrs={'class':'auto_width'}))
-    
+    description_format = forms.ChoiceField(required=False, label='Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT, widget=forms.Select(attrs={'class':'auto_width'}))
+
+class ResultForm(forms.Form):
+    description_format = forms.ChoiceField(required=False, label='Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT)
+    include_raw_data = forms.BooleanField(required=False, label='Include raw data:', initial=False)
+
 class IdQueryForm(forms.Form):
     id = forms.CharField(label='ID')
     scraper = forms.ChoiceField(label='Scraper', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT)
