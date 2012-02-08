@@ -26,7 +26,7 @@ class GETFormResource(FormResource):
         Overwritten method to allow for to special fields.
         """
         
-        return self._validate(data, files,allowed_extra_fields=(BaseRenderer._FORMAT_QUERY_PARAM,JSONPRenderer.callback_parameter,ResponseMixin._ACCEPT_QUERY_PARAM))
+        return self._validate(data, files,allowed_extra_fields=(BaseRenderer._FORMAT_QUERY_PARAM,JSONPRenderer.callback_parameter,ResponseMixin._ACCEPT_QUERY_PARAM,'stupid_ie'))
 
 
 class InputFormResource(GETFormResource):
@@ -92,7 +92,11 @@ class MakeQuery(View):
     
     If `input` is a search term and `scraper` is omitted the default scraper will be used.
     
-    It returns the field `result_url` that contains the api call for obtaining the result of the query."""
+    It returns the following fields:
+    
+    *`result_url` contains the api call for obtaining the result of the query.
+    *`result_id` contains only the unique identifier for the result. This is only needed if the client has to construct some url involving the id itself.
+    """
      
     resource = InputFormResource
     
@@ -110,7 +114,13 @@ class MakeQuery(View):
             task = get_search_results.delay(factory.get_search(input,scraper))
         #make sure a TaskMeta object for the created task exists
         TaskMeta.objects.get_or_create(task_id=task.task_id)
-        return Response(content={'result_url':reverse('api_v1_result',args=[task.task_id])})
+        
+        result = {
+            'result_url': reverse('api_v1_result',args=[task.task_id]),
+            'result_id': task.task_id
+        }
+        
+        return Response(content=result)
     
     def post(self, request):
         params = urlencode(self.CONTENT)
@@ -187,6 +197,7 @@ class Result(View):
                 
                 for releases in data.values():
                     for entry in releases:
+                        entry['release_url'] = entry['release']._get_link()
                         entry['query_url'] = reverse('api_v1_makequery') + '?' + urlencode({'input':entry['release']._get_link()})
                         del entry['release']
                         release_count += 1

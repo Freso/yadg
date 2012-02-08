@@ -30,18 +30,19 @@ YUI().use('node','event','io','json-parse', function (Y) {
             submit.set('value','Fetch');
         }
         
-        function submitInput(e) {
+        function makeQueryFromInput(e) {
             e.preventDefault();
             if (input.get('value') != '') {
                 var cfg = {
-                    method: 'POST',
+                    method: 'GET',
                     form: {
                         id: form,
                         useDisabled: true,
                     },
                     on: {
                         success: function(id, o, args) {
-                            queryId(o.responseText);
+                            var response = Y.JSON.parse(o.responseText);
+                            getResult(response.result_url, response.result_id);
                         },
                         failure: function(id, o, args) {
                             if (o.status == 400) {
@@ -52,31 +53,35 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             busyStop();
                         }
                     },
+                    headers: { 'Accept': 'application/json' }
                 };
                 
                 busyStart(false);
                 // Start the transaction.
-                Y.io('{% url index %}?xhr', cfg);
+                Y.io('{% url api_v1_makequery %}', cfg);
             }
         };
         
-        function getById(e) {
+        function makeQueryFromLink(e) {
             e.preventDefault();
+            
             var cfg = {
                 method: 'GET',
                 on: {
                     success: function(id, o, args) {
-                        queryId(o.responseText);
+                        var response = Y.JSON.parse(o.responseText);
+                        getResult(response.result_url, response.result_id);
                     },
                     failure: function(id, o, args) {
                         subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>')
                         busyStop();
                     }
                 },
+                headers: { 'Accept': 'application/json' }
             };
             
             busyStart(false);
-            Y.io(this.get('href') + '?xhr', cfg);
+            Y.io(this.getAttribute('data-query-url'), cfg);
         };
         
         function changeFormat(e) {
@@ -94,9 +99,9 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         var data = Y.JSON.parse(o.responseText);
                         args.download_link.set('href',args.download_link.get('href').replace(/[\w\d-]+$/,args.format));
                         
-                        if (data[0] == 'result') {
-                            args.textarea.set('value',data[1]);
-                            global_cache[args.format] = data[1];
+                        if (data.status == 'done' && data.type == 'release') {
+                            args.textarea.set('value',data.description);
+                            global_cache[args.format] = data.description;
                         }
                         
                         args.textarea.set('disabled',false);
@@ -115,7 +120,8 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     loading_image: loading_image,
                     format: format,
                     download_link: download_link
-                }
+                },
+                headers: { 'Accept': 'application/json' }
             };
             
             if (format in global_cache) {
@@ -126,11 +132,11 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 this.set('disabled',true);
                 format_form.append(loading_image);
                 
-                Y.io(url + '?xhr&f=' + format, cfg);
+                Y.io(url + '?description_format=' + encodeURIComponent(format), cfg);
             };
         }
         
-        function queryId(id) {
+        function getResult(result_url, result_id) {
             var cfg = {
                 method: 'GET',
                 on: {
@@ -138,72 +144,72 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         //invalidate the cache
                         global_cache = {};
                         
-                        var data = Y.JSON.parse(o.responseText);
+                        var data = JSON.parse(o.responseText);
                         
-                        if (data[0] == 'result') {
-                            var textarea = Y.Node.create('<textarea id="description_area"></textarea>');
-                            textarea.addClass('description_area');
-                            textarea.set('value',data[1]);
-                            
-                            var div = Y.Node.create('<div></div>');
-                            div.addClass('well');
-                            div.insert(textarea,'replace');
-                            
-                            var download_link = Y.Node.create('<a href="{% url download_result "121212" "whatcd" %}" id="download_link" class="btn">Download as .txt</a>'.replace(/121212/,args.q_id));
-                            div.append(download_link);
-                            
-                            var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
-                            format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id));
-                            format_form.one('#id_description_format').on('change',changeFormat);
-                            
-                            div.append(format_form);
-                            
-                            subcontent.setContent(div);
-                            
-                            busyStop();
-                        } else if (data[0] == 'list') {
-                            var ul = Y.Node.create('<ul id="release_list"></ul>');
-                            
-                            var scraper_results = data[1];
-                            for (scraper in scraper_results) {
-                                var release_list = scraper_results[scraper];
-                                for (var i = 0; i < release_list.length;i++) {
-                                    var name = release_list[i]['name'],
-                                        info = release_list[i]['info'],
-                                        id = release_list[i]['release'];
-                                    
-                                    var li = Y.Node.create('<li></li>');
-                                    var a = Y.Node.create('<a href="'+ '{% url get_by_id 121212 131313 %}'.replace(/121212/,scraper).replace(/131313/,id) + '">'+name+'</a>');
-                                    a.on('key', getById, 'press:enter');
-                                    a.on('click', getById);
-                                    
-                                    li.append(a);
-                                    li.append('<br />')
-                                    li.append('<span class="label">' + info + '</label>');
-                                    
-                                    ul.append(li);
-                                }
-                            };
-                            
-                            if (ul.all('*').size() != 0) {
+                        if (data.status == "done") {
+                            if (data.type == 'release') {
+                                var textarea = Y.Node.create('<textarea id="description_area"></textarea>');
+                                textarea.addClass('description_area');
+                                textarea.set('value',data.description);
+                                
                                 var div = Y.Node.create('<div></div>');
                                 div.addClass('well');
-                                div.setContent(ul)
+                                div.insert(textarea,'replace');
+                                
+                                var download_link = Y.Node.create('<a href="{% url download_result "121212" "whatcd" %}" id="download_link" class="btn">Download as .txt</a>'.replace(/121212/,args.result_id));
+                                div.append(download_link);
+                                
+                                var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
+                                format_form.set('action',result_url);
+                                format_form.one('#id_description_format').on('change',changeFormat);
+                                
+                                div.append(format_form);
                                 
                                 subcontent.setContent(div);
+                            } else if (data.type == 'release_list') {
+                                var ul = Y.Node.create('<ul id="release_list"></ul>');
+                                
+                                var scraper_results = data.releases;
+                                for (scraper in scraper_results) {
+                                    var release_list = scraper_results[scraper];
+                                    for (var i = 0; i < release_list.length;i++) {
+                                        var name = release_list[i]['name'],
+                                            info = release_list[i]['info'],
+                                            query_url = release_list[i]['query_url'],
+                                            release_url = release_list[i]['release_url'];
+                                        
+                                        var li = Y.Node.create('<li></li>');
+                                        var a = Y.Node.create('<a href="{% url index %}' + '?input=' + encodeURIComponent(release_url) +'">'+name+'</a>');
+                                        a.setAttribute('data-query-url', query_url);
+                                        a.on('key', makeQueryFromLink, 'press:enter');
+                                        a.on('click', makeQueryFromLink);
+                                        
+                                        li.append(a);
+                                        li.append('<br />')
+                                        li.append('<span class="label">' + info + '</label>');
+                                        
+                                        ul.append(li);
+                                    }
+                                };
+                                
+                                if (ul.all('*').size() != 0) {
+                                    var div = Y.Node.create('<div></div>');
+                                    div.addClass('well');
+                                    div.setContent(ul)
+                                    
+                                    subcontent.setContent(div);
+                                } else {
+                                    subcontent.setContent('<div class="alert alert-error">Sorry, there were no matches.</div>');
+                                }
+                            } else if (data.type == 'release_not_found') {
+                                subcontent.setContent('<div class="alert alert-error">I could not find the release with the given ID. You may want to try again with another one.</div>');
                             } else {
-                                subcontent.setContent('<div class="alert alert-error">Sorry, there were no matches.</div>');
+                                subcontent.setContent(o.responseText);
                             }
                             busyStop();
-                        } else if (data[0] == 'notfound') {
-                            subcontent.setContent('<div class="alert alert-error">I could not find the release with the given ID. You may want to try again with another one.</div>');
-                            busyStop();
-                        } else if (data[0] == 'waiting') {
-                            var delay = function() { queryId(args.q_id); };
-                            window.setTimeout(delay, 1000);
                         } else {
-                            subcontent.setContent(o.responseText);
-                            busyStop();
+                            var delay = function() { getResult(args.result_url, args.result_id); };
+                            window.setTimeout(delay, 1000);
                         }
                     },
                     failure: function(id, o, args) {
@@ -218,34 +224,40 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     }
                 },
                 arguments: {
-                    q_id: id,
-                }
+                    result_url: result_url,
+                    result_id: result_id
+                },
+                headers: { 'Accept': 'application/json' }
             };
-            
-            var uri = '{% url get_result '121212' %}'.replace(/121212/,id)+'?xhr';
             
             //circumvent IE's ajax caching
             if (Y.UA.ie > 0) {
                 var date = new Date();
                 var timestamp = date.getTime();
                 
-                uri = uri + '=' + timestamp;
+                if (uri.charAt(uri.length-1) == '/') {
+                    uri += '?';
+                } else {
+                    uri += '&';
+                }
+                
+                uri += 'stupid_ie=' + timestamp;
             }
             
-            Y.io(uri, cfg);
+            Y.io(result_url, cfg);
         };
         
-        input.on('key', submitInput, 'press:enter');
-        submit.on('key', submitInput, 'press:enter');
-        submit.on('click', submitInput);
+        input.on('key', makeQueryFromInput, 'press:enter');
+        submit.on('key', makeQueryFromInput, 'press:enter');
+        submit.on('click', makeQueryFromInput);
         
         //there may already be a release list on the page
         var release_links = Y.all('#release_list li a');
         
         //alter the default events for each link
         release_links.each( function(node,index,nodelist) {
-            node.on('key', getById, 'press:enter');
-            node.on('click', getById);
+            node.on('key', makeQueryFromLink, 'press:enter');
+            node.on('click', makeQueryFromLink);
         });
         
         var format_select = Y.all('#id_description_format');
