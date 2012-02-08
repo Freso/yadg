@@ -54,17 +54,14 @@
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container">
-        <a class="brand" href="{% url index %}" title="Yet Another Description Generator">YADG</a>
-        <ul class="nav">
-          <li class="active"><a href="{% url index %}">Home</a></li>
-          <li><a href="{% url api_root %}">API</a></li>
-        </ul>
-        <ul class="nav pull-right">
-            <li><a href="#settings">Settings</a></li>
-        </ul>
-        <div id="user-tools" class="nav pull-right">
-          {% if user.is_active %}Welcome, {{ user }}.{% if logout_url %} <a href='{{ logout_url }}'>Log out</a>{% endif %}{% else %}Anonymous {% if login_url %}<a href='{{ login_url }}'>Log in</a>{% endif %}{% endif %}
-        </div>
+          <a class="brand" href="{% url index %}" title="Yet Another Description Generator">YADG</a>
+          <ul class="nav">
+            <li class="active"><a href="{% url index %}">Home</a></li>
+            <li><a href="{% url api_root %}">API</a></li>
+          </ul>
+          <!--<ul class="nav pull-right">
+              <li><a href="#settings">Settings</a></li>
+          </ul>-->
         </div>
       </div>
     </div>
