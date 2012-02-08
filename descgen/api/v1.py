@@ -94,8 +94,8 @@ class MakeQuery(View):
     
     It returns the following fields:
     
-    *`result_url` contains the api call for obtaining the result of the query.
-    *`result_id` contains only the unique identifier for the result. This is only needed if the client has to construct some url involving the id itself.
+    * `result_url` contains the api call for obtaining the result of the query.
+    * `result_id` contains only the unique identifier for the result. This is only needed if the client has to construct some url involving the id itself.
     """
      
     resource = InputFormResource
