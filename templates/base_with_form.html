@@ -154,7 +154,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             
                             var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
                             format_form.set('action','{% url get_result '121212' %}'.replace(/121212/,args.q_id));
-                            format_form.one('#id_f').on('change',changeFormat);
+                            format_form.one('#id_description_format').on('change',changeFormat);
                             
                             div.append(format_form);
                             
