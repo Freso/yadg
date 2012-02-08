@@ -68,7 +68,7 @@ def get_result(request,id):
                 result = formatter.format(data,format)
             if request.GET.has_key("xhr"):
                 return HttpResponse(json.dumps(('result',result),ensure_ascii=False), mimetype='application/json; charset=utf-8')
-            format_form = FormatForm(initial={'f':format})
+            format_form = FormatForm(initial={'description_format':format})
             return render(request,'result.html',{'result':result,'format_form':format_form,'format':format,'result_id':id})
         elif type == 'list':
             if request.GET.has_key("xhr"):
