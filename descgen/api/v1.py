@@ -151,16 +151,18 @@ class Result(View):
             task = TaskMeta.objects.get(task_id=id)
         except TaskMeta.DoesNotExist:
             return Response(status.HTTP_404_NOT_FOUND)
+            
+        format = self.PARAMS['description_format']
+        include_raw_data = self.PARAMS['include_raw_data']
+        
         result = {}
+        
         if task.status == 'SUCCESS':
             result['status'] = 'done'
             
             (type,data) = task.result
             if type == 'release':
                 result['type'] = 'release'
-                
-                format = self.PARAMS['description_format']
-                include_raw_data = self.PARAMS['include_raw_data']
                 
                 format = format if format != '' else FORMAT_DEFAULT
                 
