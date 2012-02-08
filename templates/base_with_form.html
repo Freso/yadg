@@ -235,13 +235,13 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 var date = new Date();
                 var timestamp = date.getTime();
                 
-                if (uri.charAt(uri.length-1) == '/') {
-                    uri += '?';
+                if (result_url.charAt(result_url.length-1) == '/') {
+                    result_url += '?';
                 } else {
-                    uri += '&';
+                    result_url += '&';
                 }
                 
-                uri += 'stupid_ie=' + timestamp;
+                result_url += 'stupid_ie=' + timestamp;
             }
             
             Y.io(result_url, cfg);
