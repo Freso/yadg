@@ -30,6 +30,19 @@ YUI().use('node','event','io','json-parse', function (Y) {
             submit.set('value','Fetch');
         }
         
+        function appendGetParam(url,param) {
+            if (url.charAt(url.length-1) == '/') {
+                    url += '?';
+            } else {
+                    url += '&';
+            }
+            return url += param;
+        }
+        
+        function appendFormatParam(url) {
+            return appendGetParam(url,"format=json");
+        }
+        
         function makeQueryFromInput(e) {
             e.preventDefault();
             if (input.get('value') != '') {
@@ -53,12 +66,11 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             busyStop();
                         }
                     },
-                    headers: { 'Accept': 'application/json' }
                 };
                 
                 busyStart(false);
-                // Start the transaction.
-                Y.io('{% url api_v1_makequery %}', cfg);
+                
+                Y.io(appendFormatParam('{% url api_v1_makequery %}'), cfg);
             }
         };
         
@@ -77,11 +89,10 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         busyStop();
                     }
                 },
-                headers: { 'Accept': 'application/json' }
             };
             
             busyStart(false);
-            Y.io(this.getAttribute('data-query-url'), cfg);
+            Y.io(appendFormatParam(this.getAttribute('data-query-url')), cfg);
         };
         
         function changeFormat(e) {
@@ -121,7 +132,6 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     format: format,
                     download_link: download_link
                 },
-                headers: { 'Accept': 'application/json' }
             };
             
             if (format in global_cache) {
@@ -132,7 +142,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 this.set('disabled',true);
                 format_form.append(loading_image);
                 
-                Y.io(url + '?description_format=' + encodeURIComponent(format), cfg);
+                Y.io(appendFormatParam(url + '?description_format=' + encodeURIComponent(format)), cfg);
             };
         }
         
@@ -227,7 +237,6 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     result_url: result_url,
                     result_id: result_id
                 },
-                headers: { 'Accept': 'application/json' }
             };
             
             //circumvent IE's ajax caching
@@ -235,16 +244,10 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 var date = new Date();
                 var timestamp = date.getTime();
                 
-                if (result_url.charAt(result_url.length-1) == '/') {
-                    result_url += '?';
-                } else {
-                    result_url += '&';
-                }
-                
-                result_url += 'stupid_ie=' + timestamp;
+                result_url = appendGetParam(result_url,'stupid_ie=' + timestamp)
             }
             
-            Y.io(result_url, cfg);
+            Y.io(appendFormatParam(result_url), cfg);
         };
         
         input.on('key', makeQueryFromInput, 'press:enter');
