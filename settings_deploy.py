@@ -186,5 +186,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 #configure session framework
-SESSION_ENGINE = "django.contrib.sessions.backends.file"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 31536000 # 1 year in seconds

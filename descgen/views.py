@@ -6,7 +6,7 @@ from descgen.scraper.factory import ScraperFactory,SCRAPER_DEFAULT
 from django.shortcuts import render,redirect
 from django.http import Http404,HttpResponse
 from django.views.generic.base import View
-from django.views.generic.edit import FormView,ProcessFormView
+from django.views.generic.edit import FormView
 
 from djcelery.models import TaskMeta
 
@@ -32,7 +32,7 @@ class IndexView(View):
                 
             return redirect('get_result',id=task.task_id)
         else:
-            form = InputForm(initial={'scraper':self.request.session.get("default_scraper", SCRAPER_DEFAULT)})
+            form = InputForm(initial={'scraper':ScraperFactory.get_valid_scraper(self.request.session.get("default_scraper", SCRAPER_DEFAULT))})
         return render(request,'index.html',{'input_form':form})
 
 

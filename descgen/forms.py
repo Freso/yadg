@@ -14,5 +14,5 @@ class ResultForm(forms.Form):
     include_raw_data = forms.BooleanField(required=False, label='Include raw data:', initial=False)
 
 class SettingsForm(forms.Form):
-    description_format = forms.ChoiceField(label='Default Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT, )#widget=forms.Select(attrs={'class':'auto_width'}))
-    scraper = forms.ChoiceField(label='Default Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT, )#widget=forms.Select(attrs={'class':'auto_width'}))
+    description_format = forms.ChoiceField(label='Default Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT)
+    scraper = forms.ChoiceField(label='Default Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT)
