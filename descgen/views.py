@@ -1,7 +1,6 @@
 from descgen.forms import InputForm,FormatForm,SettingsForm
-from descgen.tasks import get_search_results,get_release_info
-from descgen.formatter import Formatter,FORMATS,FORMAT_DEFAULT
-from descgen.scraper.factory import ScraperFactory,SCRAPER_DEFAULT
+from descgen.formatter import Formatter,FORMATS
+from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
 
 from django.shortcuts import render,redirect
 from django.http import Http404,HttpResponse
@@ -11,32 +10,23 @@ from django.views.generic.edit import FormView
 from djcelery.models import TaskMeta
 
 
-class IndexView(View):
+class IndexView(View, CreateTaskMixin):
     
     def get(self, request):
         form = InputForm(self.request.GET)
         if form.is_valid():
-            factory = ScraperFactory()
             input = form.cleaned_data['input']
             scraper = form.cleaned_data['scraper']
-            if not scraper:
-                scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
-            scraper = factory.get_valid_scraper(scraper)
-            release = factory.get_release_by_url(input)
-            if release:
-                task = get_release_info.delay(release)
-            else:
-                task = get_search_results.delay(factory.get_search(input,scraper))
-            #make sure a TaskMeta object for the created task exists
-            TaskMeta.objects.get_or_create(task_id=task.task_id)
+            
+            task = self.create_task(input=input, scraper=scraper)
                 
             return redirect('get_result',id=task.task_id)
         else:
-            form = InputForm(initial={'scraper':ScraperFactory.get_valid_scraper(self.request.session.get("default_scraper", SCRAPER_DEFAULT))})
+            form = InputForm(initial={'scraper':self.get_valid_scraper(None)})
         return render(request,'index.html',{'input_form':form})
 
 
-class ResultView(View):
+class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
     
     def get(self, request, id):
         try:
@@ -44,26 +34,28 @@ class ResultView(View):
         except TaskMeta.DoesNotExist:
             return render(request,'result_404.html', status=404)
         if task.status == 'SUCCESS':
-            (type,data) = task.result
+            (type,data,additional_data) = task.result
+            
+            if not additional_data['scraper']:
+                additional_data['scraper'] = self.get_valid_scraper(None)
+            input_form = InputForm(initial=additional_data)
+            
             if type == 'release':
-                formatter = Formatter()
-                
                 form = FormatForm(self.request.GET)
                 if form.is_valid():
                     format = form.cleaned_data['description_format']
                 else:
-                    format = self.request.session.get("default_format", FORMAT_DEFAULT)
-                format = formatter.get_valid_format(format)
+                    format = None
                 
-                result = formatter.format(data,format)
+                (format,result) = self.get_formatted_description(data,format)
                 
                 format_form = FormatForm(initial={'description_format':format})
                 
-                return render(request,'result.html',{'result':result,'result_id':id, 'format_form':format_form,'format':format,'result_id':id})
+                return render(request,'result.html',{'result':result,'result_id':id, 'format_form':format_form,'format':format,'result_id':id,'input_form':input_form})
             elif type == 'list':
-                return render(request,'result_list.html',{'scraper_results':data})
+                return render(request,'result_list.html',{'scraper_results':data,'input_form':input_form})
             elif type == '404':
-                return render(request,'result_id_not_found.html')
+                return render(request,'result_id_not_found.html',{'input_form':input_form})
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
             return render(request,'result_failed.html', status=503)
         else:
@@ -88,14 +80,14 @@ class DownloadResultView(View):
         return response
     
 
-class SettingsView(FormView):
+class SettingsView(FormView,GetDescriptionMixin,CreateTaskMixin):
     form_class = SettingsForm
     template_name = 'settings.html'
     
     def get_initial(self):
         initial = {
-            'scraper': ScraperFactory.get_valid_scraper(self.request.session.get("default_scraper", SCRAPER_DEFAULT)),
-            'description_format': Formatter.get_valid_format(self.request.session.get("default_format", FORMAT_DEFAULT))
+            'scraper': self.get_valid_scraper(None),
+            'description_format': self.get_valid_format(None)
         }
         return initial
     

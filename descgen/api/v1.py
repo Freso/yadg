@@ -9,9 +9,9 @@ from django.core.urlresolvers import reverse
 from django.utils.http import urlencode
 
 from descgen.forms import InputForm,ResultForm
-from descgen.scraper.factory import ScraperFactory, SCRAPER_CHOICES, SCRAPER_DEFAULT
-from descgen.tasks import get_search_results,get_release_info
-from descgen.formatter import Formatter, FORMAT_CHOICES, FORMAT_DEFAULT
+from descgen.scraper.factory import SCRAPER_CHOICES
+from descgen.formatter import FORMAT_CHOICES
+from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
 
 from djcelery.models import TaskMeta
 
@@ -48,7 +48,7 @@ class Root(View):
                 ]
 
 
-class ScraperList(View):
+class ScraperList(View,CreateTaskMixin):
     """
     This returns a list of all available scrapers.
     
@@ -65,12 +65,11 @@ class ScraperList(View):
     """
     
     def get(self, request):
-        default_scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
-        default_scraper = ScraperFactory.get_valid_scraper(default_scraper)
+        default_scraper = self.get_valid_scraper(None)
         return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==default_scraper},SCRAPER_CHOICES))
 
 
-class FormatList(View):
+class FormatList(View,GetDescriptionMixin):
     """
     This returns a list of all available description formats.
     
@@ -87,12 +86,11 @@ class FormatList(View):
     """
 
     def get(self, request):
-        default_format = self.request.session.get("default_format", FORMAT_DEFAULT)
-        default_format = Formatter.get_valid_format(default_format)
+        default_format = self.get_valid_format(None)
         return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==default_format},FORMAT_CHOICES))
 
 
-class MakeQuery(View):
+class MakeQuery(View, CreateTaskMixin):
     """
     This initiates a new query with the given parameters and returns the url for getting the result.
     
@@ -114,22 +112,10 @@ class MakeQuery(View):
         return "Make Query"
     
     def get(self, request):
-        factory = ScraperFactory()
-        
         input = self.PARAMS['input']
         scraper = self.PARAMS['scraper']
         
-        if not scraper:
-            scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
-        scraper = factory.get_valid_scraper(scraper)
-        
-        release = factory.get_release_by_url(input)
-        if release:
-            task = get_release_info.delay(release)
-        else:
-            task = get_search_results.delay(factory.get_search(input,scraper))
-        #make sure a TaskMeta object for the created task exists
-        TaskMeta.objects.get_or_create(task_id=task.task_id)
+        task = self.create_task(input=input, scraper=scraper)
         
         result = {
             'result_url': reverse('api_v1_result',args=[task.task_id]),
@@ -143,7 +129,7 @@ class MakeQuery(View):
         return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_makequery')+'?'+params})
 
 
-class Result(View):
+class Result(View, GetDescriptionMixin):
     """
     This returns the result of a query.
     
@@ -188,17 +174,13 @@ class Result(View):
         if task.status == 'SUCCESS':
             result['status'] = 'done'
             
-            (type,data) = task.result
+            (type,data,additional_data) = task.result
             if type == 'release':
                 result['type'] = 'release'
+
+                (format,description) = self.get_formatted_description(data, format)
                 
-                formatter = Formatter()
-                
-                if not format:
-                    format = self.request.session.get("default_format", FORMAT_DEFAULT)
-                format = formatter.get_valid_format(format)
-                
-                result['description'] = formatter.format(data,format)
+                result['description'] = description
                 result['description_format'] = format
                 
                 if include_raw_data:
