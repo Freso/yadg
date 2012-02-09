@@ -97,7 +97,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
         
         function changeFormat(e) {
             var format_form = this.get('parentNode'),
-                url = format_form.get('action'),
+                url = format_form.getAttribute('data-api-action'),
                 textarea = Y.Node.one('textarea#description_area'),
                 loading_image = Y.Node.create('<img id="format_loading" src="{{ STATIC_URL }}img/ajax-loader.gif" alt="Loading" />'),
                 format = this.get('value'),
@@ -171,6 +171,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                 
                                 var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
                                 format_form.set('action',args.result_url);
+                                format_form.setAttribute('data-api-action', args.result_url);
                                 format_form.one('#id_description_format').on('change',changeFormat);
                                 
                                 div.append(format_form);

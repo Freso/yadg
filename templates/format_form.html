@@ -1,4 +1,4 @@
-<form action="{{ request.path }}" method="get" class="form-inline pull-right" id="format_form">
+<form action="{{ request.path }}" method="get" class="form-inline pull-right" id="format_form"{% if result_id %} data-api-action="{% url api_v1_result result_id %}"{% endif %}>
 {{ format_form.description_format.label_tag|default:FORMAT_FORM.description_format.label_tag }}&nbsp;{{ format_form.description_format|default:FORMAT_FORM.description_format }}
 <button type="submit" class="btn" id="format_submit">Go</button>
 </form>

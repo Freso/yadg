@@ -55,7 +55,7 @@ class ResultView(View):
                 
                 format_form = FormatForm(initial={'description_format':format})
                 
-                return render(request,'result.html',{'result':result,'format_form':format_form,'format':format,'result_id':id})
+                return render(request,'result.html',{'result':result,'result_id':id, 'format_form':format_form,'format':format,'result_id':id})
             elif type == 'list':
                 return render(request,'result_list.html',{'scraper_results':data})
             elif type == '404':
