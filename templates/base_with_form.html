@@ -82,6 +82,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                 on: {
                     success: function(id, o, args) {
                         var response = Y.JSON.parse(o.responseText);
+                        input.set('value',args.release_url);
                         getResult(response.result_url, response.result_id);
                     },
                     failure: function(id, o, args) {
@@ -89,6 +90,9 @@ YUI().use('node','event','io','json-parse', function (Y) {
                         busyStop();
                     }
                 },
+                arguments: {
+                    release_url: this.getAttribute('data-release-url')
+                }
             };
             
             busyStart(false);
@@ -203,6 +207,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                         var li = Y.Node.create('<li></li>');
                                         var a = Y.Node.create('<a href="{% url index %}' + '?input=' + encodeURIComponent(release_url) +'">'+name+'</a>');
                                         a.setAttribute('data-query-url', query_url);
+                                        a.setAttribute('data-release-url', release_url);
                                         a.on('key', makeQueryFromLink, 'press:enter');
                                         a.on('click', makeQueryFromLink);
                                         
