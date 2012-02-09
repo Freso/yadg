@@ -185,3 +185,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request", #make request.path available in templates
     "descgen.context_processors.add_forms" #make an input_form available on all pages
 )
+
+#configure session framework
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 31536000 # 1 year in seconds
+SESSION_FILE_PATH = 'E:/temp/what/'

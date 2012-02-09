@@ -60,10 +60,14 @@ class ScraperList(View):
         </select>
     
     `default` specifies what scraper will be used if the scraper parameter is omitted on a query.
+    
+    **Note:** If the request includes a valid session cookie as set by the main site this api call will respect the saved defaults if any.
     """
     
     def get(self, request):
-        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==SCRAPER_DEFAULT},SCRAPER_CHOICES))
+        default_scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
+        default_scraper = ScraperFactory.get_valid_scraper(default_scraper)
+        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==default_scraper},SCRAPER_CHOICES))
 
 
 class FormatList(View):
@@ -78,10 +82,14 @@ class FormatList(View):
         </select>
     
     `default` specifies what description format will be used if the format parameter is omitted on a result query.
+    
+    **Note:** If the request includes a valid session cookie as set by the main site this api call will respect the saved defaults if any.
     """
 
     def get(self, request):
-        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==FORMAT_DEFAULT},FORMAT_CHOICES))
+        default_format = self.request.session.get("default_format", FORMAT_DEFAULT)
+        default_format = Formatter.get_valid_format(default_format)
+        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==default_format},FORMAT_CHOICES))
 
 
 class MakeQuery(View):
@@ -96,6 +104,8 @@ class MakeQuery(View):
     
     * `result_url` contains the api call for obtaining the result of the query.
     * `result_id` contains only the unique identifier for the result. This is only needed if the client has to construct some url involving the id itself.
+    
+    **Note:** If the request includes a valid session cookie as set by the main site this api call will respect the saved defaults if any.
     """
      
     resource = InputFormResource
@@ -105,8 +115,14 @@ class MakeQuery(View):
     
     def get(self, request):
         factory = ScraperFactory()
+        
         input = self.PARAMS['input']
         scraper = self.PARAMS['scraper']
+        
+        if not scraper:
+            scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
+        scraper = factory.get_valid_scraper(scraper)
+        
         release = factory.get_release_by_url(input)
         if release:
             task = get_release_info.delay(release)
@@ -137,7 +153,7 @@ class Result(View):
     
     If the query resulted in obtaining a specific release `type` will be `'release'` and the following fields will be present:
     
-    * `description_format` contains the format of the rendered description. This can be set by including `description_format=FORMAT` in the api call.
+    * `description_format` contains the format of the rendered description. This can be set by including `description_format=FORMAT` in the api call. If this parameter is not present the default format will be used.
     * `description` contains the rendered description.
     * if `include_raw_data=True` is specified then `raw_data` will contain the raw data as returned by the scraper
     
@@ -149,6 +165,8 @@ class Result(View):
     If the query tried to obtain a specific release but failed because it could not be found `type` will be `'release_not_found'`. The response will contain no further fields.
     
     **Note:** the parameters `include_raw_data` and `description_format` are ignored for all but `'release'`-Type results.
+    
+    **Note (2):** If the request includes a valid session cookie as set by the main site this api call will respect the saved defaults if any.
     """
     
     resource = FormatFormResource
@@ -174,9 +192,11 @@ class Result(View):
             if type == 'release':
                 result['type'] = 'release'
                 
-                format = format if format != '' else FORMAT_DEFAULT
-                
                 formatter = Formatter()
+                
+                if not format:
+                    format = self.request.session.get("default_format", FORMAT_DEFAULT)
+                format = formatter.get_valid_format(format)
                 
                 result['description'] = formatter.format(data,format)
                 result['description_format'] = format

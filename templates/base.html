@@ -56,12 +56,12 @@
         <div class="container">
           <a class="brand" href="{% url index %}" title="Yet Another Description Generator">YADG</a>
           <ul class="nav">
-            <li class="active"><a href="{% url index %}">Home</a></li>
+            <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url index %}">Home</a></li>
             <li><a href="{% url api_root %}">API</a></li>
           </ul>
-          <!--<ul class="nav pull-right">
-              <li><a href="#settings">Settings</a></li>
-          </ul>-->
+          <ul class="nav pull-right">
+              <li{% block settings_li_tags %}{% endblock %}><a href="{% url settings %}">Settings</a></li>
+          </ul>
         </div>
       </div>
     </div>

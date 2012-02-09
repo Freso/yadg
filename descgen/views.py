@@ -1,11 +1,12 @@
-from descgen.forms import InputForm,FormatForm
+from descgen.forms import InputForm,FormatForm,SettingsForm
 from descgen.tasks import get_search_results,get_release_info
 from descgen.formatter import Formatter,FORMATS,FORMAT_DEFAULT
-from descgen.scraper.factory import ScraperFactory
+from descgen.scraper.factory import ScraperFactory,SCRAPER_DEFAULT
 
 from django.shortcuts import render,redirect
 from django.http import Http404,HttpResponse
 from django.views.generic.base import View
+from django.views.generic.edit import FormView,ProcessFormView
 
 from djcelery.models import TaskMeta
 
@@ -18,6 +19,9 @@ class IndexView(View):
             factory = ScraperFactory()
             input = form.cleaned_data['input']
             scraper = form.cleaned_data['scraper']
+            if not scraper:
+                scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
+            scraper = factory.get_valid_scraper(scraper)
             release = factory.get_release_by_url(input)
             if release:
                 task = get_release_info.delay(release)
@@ -28,7 +32,7 @@ class IndexView(View):
                 
             return redirect('get_result',id=task.task_id)
         else:
-            form = InputForm()
+            form = InputForm(initial={'scraper':self.request.session.get("default_scraper", SCRAPER_DEFAULT)})
         return render(request,'index.html',{'input_form':form})
 
 
@@ -42,14 +46,14 @@ class ResultView(View):
         if task.status == 'SUCCESS':
             (type,data) = task.result
             if type == 'release':
-                form = FormatForm(self.request.GET)
+                formatter = Formatter()
                 
+                form = FormatForm(self.request.GET)
                 if form.is_valid():
                     format = form.cleaned_data['description_format']
                 else:
-                    format = FORMAT_DEFAULT
-                    
-                formatter = Formatter()
+                    format = self.request.session.get("default_format", FORMAT_DEFAULT)
+                format = formatter.get_valid_format(format)
                 
                 result = formatter.format(data,format)
                 
@@ -83,3 +87,19 @@ class DownloadResultView(View):
         response['Content-Disposition'] = 'attachment; filename="%s.txt"' % filename if filename else str(id + '-' + format)
         return response
     
+
+class SettingsView(FormView):
+    form_class = SettingsForm
+    template_name = 'settings.html'
+    
+    def get_initial(self):
+        initial = {
+            'scraper': ScraperFactory.get_valid_scraper(self.request.session.get("default_scraper", SCRAPER_DEFAULT)),
+            'description_format': Formatter.get_valid_format(self.request.session.get("default_format", FORMAT_DEFAULT))
+        }
+        return initial
+    
+    def form_valid(self, form):
+        self.request.session['default_format'] = form.cleaned_data['description_format']
+        self.request.session['default_scraper'] = form.cleaned_data['scraper']
+        return render(self.request,self.template_name,{'form':form, 'successful':True})

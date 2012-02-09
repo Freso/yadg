@@ -35,14 +35,6 @@ class ScraperFactoryError(Exception):
 
 class ScraperFactory(object):
     
-    def get_release_by_id(self,id,scraper):
-        if not scraper in SCRAPER:
-            raise ScraperFactoryError, u'no scraper "%s"' % scraper
-        
-        id = _SCRAPER_RELEASES[scraper].id_from_string(id)
-        
-        return _SCRAPER_RELEASES[scraper](id)
-    
     def get_release_by_url(self,url):
         release = None
         
@@ -64,3 +56,9 @@ class ScraperFactory(object):
             setattr(search,'SCRAPER',scraper)
         
         return search
+
+    @staticmethod
+    def get_valid_scraper(scraper):
+        if not scraper in SCRAPER:
+            scraper = SCRAPER_DEFAULT
+        return scraper

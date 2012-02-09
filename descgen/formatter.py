@@ -54,3 +54,9 @@ class Formatter(object):
             filename += data['title']
         unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore')
         return re.sub('[^\w\s-]', '', filename).strip()
+    
+    @staticmethod
+    def get_valid_format(format):
+        if not format in _FORMATS.keys():
+            format = FORMAT_DEFAULT
+        return format

@@ -166,13 +166,24 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                 div.addClass('well');
                                 div.insert(textarea,'replace');
                                 
-                                var download_link = Y.Node.create('<a href="{% url download_result "121212" "whatcd" %}" id="download_link" class="btn">Download as .txt</a>'.replace(/121212/,args.result_id));
+                                var download_link = Y.Node.create('<a href="{% url download_result "121212" "343434" %}" id="download_link" class="btn">Download as .txt</a>'.replace(/343434/,data.description_format).replace(/121212/,args.result_id));
                                 div.append(download_link);
                                 
                                 var format_form = Y.Node.create('{% with format_form=FORMAT_FORM %}{% spaceless %}{% include "format_form.html" %}{% endspaceless %}{% endwith %}');
                                 format_form.set('action',args.result_url);
                                 format_form.setAttribute('data-api-action', args.result_url);
                                 format_form.one('#id_description_format').on('change',changeFormat);
+                                
+                                format_form.one('#id_description_format').get("options").each( function() {
+                                    var selected = this.get('selected');
+                                    var value  = this.get('value');
+                                    
+                                    if (value == data.description_format) {
+                                        this.set('selected','selected');
+                                    } else {
+                                        this.removeAttribute('selected');
+                                    }
+                                });
                                 
                                 div.append(format_form);
                                 
