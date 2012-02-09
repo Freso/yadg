@@ -4,7 +4,7 @@ from descgen.formatter import Formatter,FORMATS,FORMAT_DEFAULT
 from descgen.scraper.factory import ScraperFactory
 
 from django.shortcuts import render,redirect
-from django.http import Http404
+from django.http import Http404,HttpResponse
 from django.views.generic.base import View
 
 from djcelery.models import TaskMeta
