@@ -57,7 +57,7 @@ class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
             elif type == '404':
                 return render(request,'result_id_not_found.html',{'input_form':input_form})
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
-            return render(request,'result_failed.html', status=503)
+            return render(request,'result_failed.html')
         else:
             return render(request,'result_waiting.html')
 

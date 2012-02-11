@@ -135,6 +135,8 @@ class Result(View, GetDescriptionMixin):
     
     If `status == 'waiting'` then the query has not yet been completed and the client should poll again in the future.
     
+    If `status == 'failed'` then the query could not be completed successfully. As this might be due to a temporary error the client is advised to repeat its query.
+    
     If `status == 'done'` then the server completed the query without an error and depending on the `type` the client can expect specific fields to be present in the response.
     
     If the query resulted in obtaining a specific release `type` will be `'release'` and the following fields will be present:
@@ -209,7 +211,7 @@ class Result(View, GetDescriptionMixin):
             elif type == '404':
                 result['type'] = 'release_not_found'
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
-            return ErrorResponse(status.HTTP_503_SERVICE_UNAVAILABLE,'the query could not be completed')
+            result['status'] = 'failed'
         else:
             result['status'] = 'waiting'
         return Response(content=result)

@@ -234,15 +234,16 @@ YUI().use('node','event','io','json-parse', function (Y) {
                                 subcontent.setContent(o.responseText);
                             }
                             busyStop();
+                        } else if (data.status == 'failed') {
+                            subcontent.setContent('<div class="alert alert-error">An error occured while retrieving the data. This might be a temporary problem. Try again in a few minutes.</div>');
+                            busyStop();
                         } else {
                             var delay = function() { getResult(args.result_url, args.result_id); };
                             window.setTimeout(delay, 1000);
                         }
                     },
                     failure: function(id, o, args) {
-                        if (o.status == 503) {
-                            subcontent.setContent('<div class="alert alert-error">An error occured while retrieving the data. This might be a temporary problem. Try again in a few minutes.</div>');
-                        } else if (o.status == 404) {
+                        if (o.status == 404) {
                             subcontent.setContent('<div class="alert alert-error">Something happened that should not happen. Please try again.</div>');
                         } else {
                             subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>');
