@@ -133,6 +133,8 @@ class Result(View, GetDescriptionMixin):
     """
     This returns the result of a query.
     
+    ***Important:*** Results of queries are purged periodically. Clients cannot assume that the current result will be available forever.
+    
     If `status == 'waiting'` then the query has not yet been completed and the client should poll again in the future.
     
     If `status == 'failed'` then the query could not be completed successfully. As this might be due to a temporary error the client is advised to repeat its query.
