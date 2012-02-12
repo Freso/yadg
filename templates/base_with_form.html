@@ -3,15 +3,54 @@
 {% block additionalHeaders %}<script src="http://yui.yahooapis.com/3.4.0/build/yui/yui-min.js"></script>
 
 <script type="text/javascript">
-YUI().use('node','event','io','json-parse', function (Y) {
+YUI().use('node','event','io','json-parse','history', function (Y) {
     Y.on('domready', function(e) {
-        // Access DOM elements.
         var submit = Y.one('#submit'),
             input   = Y.one('#id_input'),
             select = Y.one('#id_scraper'),
             form = Y.one('form'),
-            subcontent = Y.one('#subcontent');
-        var global_cache = {};
+            subcontent = Y.one('#subcontent'),
+            url_match = /\/result\/([\w\d-]+)$/.exec(window.location),
+            initial_result_id = '',
+            initial_result_url = '',
+            global_cache = {};
+        
+        // a little hacky solution to populate the initial state correctly, when we open a result url directly
+        if (url_match != null) {
+            initial_result_id = url_match[1];
+            initial_result_url = "{% url api_v1_result 232323 %}".replace(/232323/,initial_result_id);
+        }
+        
+        var history = new Y.History({
+            initialState: {
+                result_url: initial_result_url,
+                result_id: initial_result_id,
+                input: input.get('value'),
+                select: select.get('value')
+            }
+        });
+        
+        Y.on('history:change', function (e) {
+            var changed = e.changed,
+                removed = e.removed;
+            
+            if (changed.result_url && changed.result_id) {
+                var result_url = changed.result_url.newVal,
+                    result_id = changed.result_id.newVal;
+                
+                input.set('value', history.get('input'));
+                select.set('value', history.get('select'));
+                
+                if (result_url != '' && result_id != '') {
+                    busyStart();
+                    getResult(result_url, result_id);
+                } else if (history.get('error') != undefined) {
+                    subcontent.setContent(history.get('error'));
+                } else {
+                    subcontent.setContent('');
+                }
+            }
+        });
     
         function busyStart(onlyBar) {
             if (!onlyBar) {
@@ -55,6 +94,14 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     on: {
                         success: function(id, o, args) {
                             var response = Y.JSON.parse(o.responseText);
+                            
+                            history.add({
+                                input: args.input,
+                                select: args.select,
+                                result_url: response.result_url,
+                                result_id: response.result_id,
+                            }, {merge: false});
+                            
                             getResult(response.result_url, response.result_id);
                         },
                         failure: function(id, o, args) {
@@ -63,9 +110,22 @@ YUI().use('node','event','io','json-parse', function (Y) {
                             } else {
                                 subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>')
                             }
+                            
+                            history.add({
+                                input: args.input,
+                                select: args.select,
+                                result_url: '',
+                                result_id: '',
+                                error: subcontent.getContent(),
+                            }, {merge: false});
+                            
                             busyStop();
                         }
                     },
+                    arguments: {
+                        input: input.get('value'),
+                        select: select.get('value')
+                    }
                 };
                 
                 busyStart(false);
@@ -83,15 +143,34 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     success: function(id, o, args) {
                         var response = Y.JSON.parse(o.responseText);
                         input.set('value',args.release_url);
+                        
+                        history.add({
+                            input: input.get('value'),
+                            select: args.select,
+                            result_url: response.result_url,
+                            result_id: response.result_id,
+                        }, {merge: false});
+                        
                         getResult(response.result_url, response.result_id);
                     },
                     failure: function(id, o, args) {
                         subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>')
+                        
+                        history.add({
+                            input: args.input,
+                            select: args.select,
+                            result_url: '',
+                            result_id: '',
+                            error: subcontent.getContent(),
+                        }, {merge: false});
+                        
                         busyStop();
                     }
                 },
                 arguments: {
-                    release_url: this.getAttribute('data-release-url')
+                    release_url: this.getAttribute('data-release-url'),
+                    input: input.get('value'),
+                    select: select.get('value')
                 }
             };
             
@@ -244,7 +323,7 @@ YUI().use('node','event','io','json-parse', function (Y) {
                     },
                     failure: function(id, o, args) {
                         if (o.status == 404) {
-                            subcontent.setContent('<div class="alert alert-error">Something happened that should not happen. Please try again.</div>');
+                            subcontent.setContent('<div class="alert alert-error">I was unable to find the data you were looking for. Please realize that the results of your request are purged periodically. You can of course make a new one at any time.</div>');
                         } else {
                             subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>');
                         }
