@@ -66,6 +66,7 @@ class Release(DiscogsAPIBase):
         for artist_element in artist_elements:
             artist = artist_element.text_content()
             artist = self._remove_whitespace(artist)
+            artist = re.sub(u'(.*) \(\d+\)$', r'\1', artist)
             artist = self._swapsuffix(artist)
             artists.append({'name':artist,'type':'Main'})
         title = self._remove_whitespace(title_element[0].text_content())
@@ -158,6 +159,7 @@ class Release(DiscogsAPIBase):
                 for track_artist_element in track_artists_elements:
                     track_artist = track_artist_element.text_content()
                     track_artist = self._remove_whitespace(track_artist)
+                    track_artist = re.sub(u'(.*) \(\d+\)$', r'\1', track_artist)
                     track_artist = self._swapsuffix(track_artist)
                     track_artists.append({'name':track_artist,'type':'Main'})
                 #there might be featuring artists in the track column
@@ -179,6 +181,7 @@ class Release(DiscogsAPIBase):
                             for track_featuring_element in track_featuring_elements:
                                 track_feature = track_featuring_element.text_content()
                                 track_feature = self._remove_whitespace(track_feature)
+                                track_feature = re.sub(u'(.*) \(\d+\)$', r'\1', track_feature)
                                 track_feature = self._swapsuffix(track_feature)
                                 track_artists.append({'name':track_feature,'type':track_artist_type})
                 #get track title
