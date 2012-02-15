@@ -34,7 +34,8 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
             var changed = e.changed,
                 removed = e.removed;
             
-            if (changed.result_url && changed.result_id) {
+            // only do something, if we didn't change the history by ourselves
+            if (!(e.src === Y.HistoryBase.SRC_ADD) && changed.result_url && changed.result_id) {
                 var result_url = changed.result_url.newVal,
                     result_id = changed.result_id.newVal;
                 
@@ -341,7 +342,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                 var date = new Date();
                 var timestamp = date.getTime();
                 
-                result_url = appendGetParam(result_url,'stupid_ie=' + timestamp)
+                result_url = appendGetParam(result_url,'stupid_ie=' + timestamp);
             }
             
             Y.io(appendFormatParam(result_url), cfg);
