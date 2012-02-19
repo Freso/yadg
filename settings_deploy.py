@@ -188,3 +188,4 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 #configure session framework
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 31536000 # 1 year in seconds
+SESSION_COOKIE_HTTPONLY = False # make sure cookie is sent with ajax calls
