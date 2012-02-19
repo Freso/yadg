@@ -4,7 +4,7 @@ register = template.Library()
 
 @register.simple_tag
 def wrapartists(artists, artist_format_string, separator, last_separator):
-    output = ''
+    output = u''
     artist_count = len(artists)
     
     i = 0
