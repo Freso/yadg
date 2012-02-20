@@ -23,7 +23,7 @@ class GETFormResource(FormResource):
     
     def validate_request(self, data, files=None):
         """
-        Overwritten method to allow for to special fields.
+        Overwritten method to allow for the special fields.
         """
         
         return self._validate(data, files,allowed_extra_fields=(BaseRenderer._FORMAT_QUERY_PARAM,JSONPRenderer.callback_parameter,ResponseMixin._ACCEPT_QUERY_PARAM,'stupid_ie'))
@@ -39,6 +39,21 @@ class FormatFormResource(GETFormResource):
 class Root(View):
     """
     This is the entry point to the rest of the YADG API.
+    
+    All the APIs allow anonymous access, and can be navigated either through the browser or from the command line...
+    
+        bash: curl -X GET http://yadg.cc/api/v1/                           # (Use default renderer)
+        bash: curl -X GET http://yadg.cc/api/v1/ -H 'Accept: text/plain'   # (Use plaintext documentation renderer)
+    
+    The renderer can be chosen by standard HTTP accept header negotiation. A list of available renderers can be obtained by calling...
+    
+        bash: curl -X OPTIONS http://yadg.cc/api/v1/ -H 'Accept: text/plain'
+    
+    The renderer can be overridden by providing an additional `format` GET parameter.
+    
+    For `json-p` requests the optional GET parameter `callback` specifies the used callback function:
+    
+        bash: curl -X GET http://yadg.cc/api/v1/?callback=use_this_callback -H 'Accept: application/json-p'
     """
 
     def get(self, request):
