@@ -42,18 +42,18 @@ class Root(View):
     
     All the APIs allow anonymous access, and can be navigated either through the browser or from the command line...
     
-        bash: curl -X GET http://yadg.cc/api/v1/                           # (Use default renderer)
-        bash: curl -X GET http://yadg.cc/api/v1/ -H 'Accept: text/plain'   # (Use plaintext documentation renderer)
+        $ curl -X GET http://yadg.cc/api/v1/                           # (Use default renderer)
+        $ curl -X GET http://yadg.cc/api/v1/ -H 'Accept: text/plain'   # (Use plaintext documentation renderer)
     
     The renderer can be chosen by standard HTTP accept header negotiation. A list of available renderers can be obtained by calling...
     
-        bash: curl -X OPTIONS http://yadg.cc/api/v1/ -H 'Accept: text/plain'
+        $ curl -X OPTIONS http://yadg.cc/api/v1/ -H 'Accept: text/plain'
     
     The renderer can be overridden by providing an additional `format` GET parameter.
     
     For `json-p` requests the optional GET parameter `callback` specifies the used callback function:
     
-        bash: curl -X GET http://yadg.cc/api/v1/?callback=use_this_callback -H 'Accept: application/json-p'
+        $ curl -X GET http://yadg.cc/api/v1/?callback=use_this_callback -H 'Accept: application/json-p'
     """
 
     def get(self, request):
