@@ -204,8 +204,8 @@ class Result(View, GetDescriptionMixin):
                 
                 if include_raw_data:
                     # we have to make sure that there are no non-string keys in the dict
-                    disc_keys = data['discs'].keys()
-                    if disc_keys >= 1:
+                    if data.has_key('discs'):
+                        disc_keys = data['discs'].keys()
                         max_digits = len(str(len(disc_keys)))
                         for disc_key in disc_keys:
                             data['discs']['disc_' + str(disc_key).zfill(max_digits)] = data['discs'][disc_key]
