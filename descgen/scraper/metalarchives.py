@@ -25,6 +25,9 @@ class Release(MetalarchivesAPIBase):
         self._object_id = str(id)
         self._data = {}
         self.release_url = self._get_link()
+        
+        #stupid work around for april fools joke
+        self._headers['Cookie'] = 'af=1'
 
     def _get_link(self,release_artist='',release_name=''):
         return 'http://www.metal-archives.com/albums/%s/%s/%d' %(release_artist,release_name,self.id)
