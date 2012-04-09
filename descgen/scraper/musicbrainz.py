@@ -189,6 +189,10 @@ class Release(MusicBrainzAPIBase):
                         length_span = length_span[0]
                         track_length = self._remove_whitespace(length_span.text_content())
                         
+                        #make sure the track length is valid
+                        if '?' in track_length:
+                            track_length = ''
+                        
                         data['discs'][disc_number].append((track_number,track_artists,track_title,track_length))
         
         data['link'] = self.release_url
