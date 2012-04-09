@@ -165,7 +165,7 @@ class Release(MusicBrainzAPIBase):
                         else:
                             track_number = '0'
                         
-                        title_a = title_td.xpath('./a')
+                        title_a = title_td.cssselect('a[rel="mo:publication_of"]')
                         if len(title_a) != 1:
                             self._raise_exception(u'could not get track title')
                         title_a = title_a[0]
