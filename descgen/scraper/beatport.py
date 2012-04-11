@@ -63,7 +63,7 @@ class Release(BeatportAPIBase):
             #get all real 'Artists' (not 'Remixers', etc.)
             real_artists = []
             for artist in release['artists']:
-                if artist['type'] == 'Artist' and artist['name']:
+                if artist['type'].lower() == 'artist' and artist['name']:
                     real_artists.append({'name':artist['name'],'type':'Main'})
             #we assume that it is a Various Artists release if the release type is 'Album'
             #and the number of 'Artists' (not 'Remixers') is greater 1
@@ -85,9 +85,10 @@ class Release(BeatportAPIBase):
                     track_additional_artists = []
                     for track_artist_candidate in track['artists']:
                         if track_artist_candidate['name']:
-                            if track_artist_candidate['type'] == 'Artist':
+                            track_artist_type = track_artist_candidate['type'].lower()
+                            if track_artist_type == 'artist':
                                 track_main_artists.append({'name':track_artist_candidate['name'],'type':'Main'})
-                            elif track_artist_candidate['type'] == 'Remixer':
+                            elif track_artist_type == 'remixer':
                                 track_additional_artists.append({'name':track_artist_candidate['name'],'type':'Remixer'})
                     if track_main_artists == artists:
                         track_artists = track_additional_artists
