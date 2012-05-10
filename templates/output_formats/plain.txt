@@ -1,4 +1,4 @@
-{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}{% with main_artists=artists|artistsbytype:"Main" %}{% wrapartists main_artists "%s" ", " " & " %}{% endwith %} – {{ title }}
+{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}{% load dictaccess %}{% with main_artists=artists|artistsbytype:"Main" %}{% wrapartists main_artists "%s" ", " " & " %}{% endwith %} – {{ title }}
 
 {% if label %}Label: {% for l in label %}{{ l }}{% if not forloop.last %}, {% endif %}{% endfor %}
 {% endif %}{% if catalog %}Catalog#: {{ catalog|join:", " }}
@@ -11,7 +11,7 @@
 {% if discs.items|length == 1 %}Tracklist
 {% endif %}{% for cd,tracks in discs|sorteditems %}{% if discs.items|length > 1 %}{% if not forloop.first %}
 
-{% endif %}Disc {{ cd }}
+{% endif %}Disc {{ cd }}{% if discTitles and discTitles|get:cd %}: {{ discTitles|get:cd }}{% endif %}
 {% endif %}{% for number,artists,tracktitle,duration in tracks %}{{ number }}{% if number|isdigit %}.{% else %} -{% endif %}{% with main_track_artists=artists|artistsbytype:"Main" %}{% if main_track_artists %} {% wrapartists main_track_artists "%s" ", " " & " %} -{% endif %}{% endwith %} {{ tracktitle }}{% with feature=artists|artistsbytype:"Feature" %}{% if feature %} (feat. {% wrapartists feature "%s" ", " " & " %}){% endif %}{% endwith %}{% if duration %} ({{ duration }}){% endif %}{% if not forloop.last %}
 {% endif %}{% endfor %}{% endfor %}{% if link %}
 

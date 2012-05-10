@@ -224,12 +224,20 @@ class Release(BaseRelease):
                 if not m:
                     self.raise_exception(u'could not determine disc number')
                 disc_number = int(m.group(0))
-                discs_containers[disc_number] = disc_div
+                discs_containers[disc_number] = {'div':disc_div, 'caption':caption_a.text_content()}
             return discs_containers
         return {}
 
+    def get_disc_title(self, discContainer):
+        caption = discContainer['caption']
+        caption = u':'.join(caption.split(u':')[1:])
+        caption = self.remove_whitespace(caption)
+        if caption:
+            return caption
+        return None
+
     def get_track_containers(self, discContainer):
-        track_rows = discContainer.cssselect('span > tr')
+        track_rows = discContainer['div'].cssselect('span > tr')
         return map(lambda x: x.cssselect('td'), track_rows)
 
     def get_track_number(self, trackContainer):

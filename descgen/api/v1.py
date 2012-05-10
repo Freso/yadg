@@ -204,13 +204,14 @@ class Result(View, GetDescriptionMixin):
                 
                 if include_raw_data:
                     # we have to make sure that there are no non-string keys in the dict
-                    if data.has_key('discs'):
-                        disc_keys = data['discs'].keys()
-                        max_digits = len(str(len(disc_keys)))
-                        for disc_key in disc_keys:
-                            data['discs']['disc_' + str(disc_key).zfill(max_digits)] = data['discs'][disc_key]
-                            del data['discs'][disc_key]
-                    result['raw_data'] = data;
+                    for potential in ('discs', 'discTitles'):
+                        if data.has_key(potential):
+                            keys = data[potential].keys()
+                            max_digits = len(str(len(keys)))
+                            for key in keys:
+                                data[potential]['disc_' + str(key).zfill(max_digits)] = data[potential][key]
+                                del data[potential][key]
+                        result['raw_data'] = data;
             elif type == 'list':
                 result['type'] = 'release_list'
                 

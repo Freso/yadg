@@ -181,6 +181,12 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
         """
         return {}
 
+    def get_disc_title(self, discContainer):
+        """
+        This method should return the title of the given disc as a string or None.
+        """
+        return None
+
     def get_track_containers(self, discContainer):
         """
         This method should return a list where each entry is a kwarg dict that will be passed to the get_track_*
@@ -261,8 +267,14 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
 
         discContainers = self.get_disc_containers()
         discs = {}
+        discTitles = {}
         for discIndex in discContainers:
             discs[discIndex] = []
+
+            discTitle = self.get_disc_title(discContainers[discIndex])
+            if discTitle:
+                discTitles[discIndex] = discTitle
+
             trackContainers = self.get_track_containers(discContainers[discIndex])
 
             for trackContainer in trackContainers:
@@ -274,6 +286,8 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
                 discs[discIndex].append((trackNumber, trackArtists, trackTitle, trackLength))
         if discs:
             data['discs'] = discs
+        if discTitles:
+            data['discTitles'] = discTitles
 
         return data
 
