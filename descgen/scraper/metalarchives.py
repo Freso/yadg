@@ -1,88 +1,115 @@
 # coding=utf-8
 import lxml.html,re,json
-from base import APIBase
+from base import BaseRelease, BaseSearch, BaseAPIError
 
 
 READABLE_NAME = 'Metal-Archives'
 
 
-class MetalarchivesAPIError(Exception):
+class MetalarchivesAPIError(BaseAPIError):
     pass
 
 
-class MetalarchivesAPIBase(APIBase):
-    
+class Release(BaseRelease):
+
     _base_url = 'http://www.metal-archives.com/'
-    _exception = MetalarchivesAPIError
+    url_regex = '^http://(?:www\.)?metal-archives\.com/albums/(.*?)/(.*?)/(\d+)$'
+    exception = MetalarchivesAPIError
 
-
-class Release(MetalarchivesAPIBase):
-    
-    def __init__(self, id):
-        MetalarchivesAPIBase.__init__(self)
+    def __init__(self, id, release_artist = '', release_name = ''):
         self.id = id
-        self._url_appendix = '/albums///%d' % id
-        self._object_id = str(id)
-        self._data = {}
-        self.release_url = self._get_link()
 
-    def _get_link(self,release_artist='',release_name=''):
-        return 'http://www.metal-archives.com/albums/%s/%s/%d' %(release_artist,release_name,self.id)
-        
-    def _extract_infos(self):
-        data = {}
-        
+        self._release_artist = release_artist
+        self._release_name = release_name
+
+        self._info_dict = None
+
+    def __unicode__(self):
+        return u'<MetalarchivesRelease: id=%d>' % self.id
+
+    @staticmethod
+    def _get_args_from_match(match):
+        return (int(match.group(3)), match.group(1), match.group(2))
+
+    def get_url(self):
+        return self._base_url + 'albums///%d' % self.id
+
+    def get_release_url(self):
+        return self._base_url + 'albums/%s/%s/%d' %(self._release_artist,self._release_name,self.id)
+
+    def _get_info_dict(self):
+        if self._info_dict is None:
+            self._info_dict = {}
+            info_dl = self.parsed_response.cssselect('div#album_info dl')
+            for dl in info_dl:
+                children = dl.getchildren()
+                if len(children) % 2 == 1:
+                    self.raise_exception(u'album info dl has uneven number of children')
+                while children:
+                    dt = children[0].text_content()
+                    dd = self.remove_whitespace(children[1].text_content())
+                    children = children[2:]
+                    if dt =='Type:':
+                        self._info_dict['format'] = dd
+                    elif dt == 'Release date:':
+                        self._info_dict['released'] = dd
+                    elif dt =='Label:':
+                        self._info_dict['label'] = [dd,]
+        return self._info_dict
+
+    def prepare_response_content(self, content):
         #get the raw response content and parse it
         #we explicitely decode the response content to unicode
-        content = self._response.content.decode('utf-8')
-        doc = lxml.html.document_fromstring(content)
-        
+        self.parsed_response = lxml.html.document_fromstring(content.decode('utf-8'))
+
         #stupid website doesn't send correct http status code
-        h3_404 = doc.cssselect('h3')
+        h3_404 = self.parsed_response.cssselect('h3')
         for candidate in h3_404:
             if candidate.text_content() == 'Error 404':
-                raise self._exception, u'404'
-        
-        title_h1 = doc.cssselect('div#album_info h1.album_name')
+                self.raise_exception(u'404')
+
+    def get_release_date(self):
+        info_dict = self._get_info_dict()
+        if info_dict.has_key('released'):
+            return info_dict['released']
+        return None
+
+    def get_release_format(self):
+        info_dict = self._get_info_dict()
+        if info_dict.has_key('format'):
+            return info_dict['format']
+        return None
+
+    def get_labels(self):
+        info_dict = self._get_info_dict()
+        if info_dict.has_key('label'):
+            return info_dict['label']
+        return []
+
+    def get_release_title(self):
+        title_h1 = self.parsed_response.cssselect('div#album_info h1.album_name')
         if len(title_h1) != 1:
-            self._raise_exception(u'could not find album title h1')
+            self.raise_exception(u'could not find album title h1')
         title_h1 = title_h1[0]
-        
-        data['title'] = self._remove_whitespace(title_h1.text_content())
-        
-        artists_h2 = doc.cssselect('div#album_info h2.band_name')
+        return self.remove_whitespace(title_h1.text_content())
+
+    def get_release_artists(self):
+        artists_h2 = self.parsed_response.cssselect('div#album_info h2.band_name')
         if len(artists_h2) == 0:
-            self._raise_exception(u'could not find artist h2')
+            self.raise_exception(u'could not find artist h2')
         artists = []
         for artist_h2 in artists_h2:
-            artists.append({'name':self._remove_whitespace(artist_h2.text_content()),'type':'Main'})
-        
-        data['artists'] = artists
-        
-        data['title'] = self._remove_whitespace(title_h1.text_content())
-        
-        info_dl = doc.cssselect('div#album_info dl')
-        for dl in info_dl:
-            children = dl.getchildren()
-            if len(children) % 2 == 1:
-                self._raise_exception(u'album info dl has uneven number of children')
-            while children:
-                dt = children[0].text_content()
-                dd = self._remove_whitespace(children[1].text_content())
-                children = children[2:]
-                if dt =='Type:':
-                    data['format'] = dd
-                elif dt == 'Release date:':
-                    data['released'] = dd
-                elif dt =='Label:':
-                    data['label'] = [dd,]
-        
-        tracklist_table = doc.cssselect('div#album_tabs_tracklist table.table_lyrics tbody')
+            artist_name = self.remove_whitespace(artist_h2.text_content())
+            artists.append(self.format_artist(artist_name, self.ARTIST_TYPE_MAIN))
+        return artists
+
+    def get_disc_containers(self):
+        tracklist_table = self.parsed_response.cssselect('div#album_tabs_tracklist table.table_lyrics tbody')
         if len(tracklist_table) != 1:
-            self._raise_exception(u'could not find tracklist table')
+            self.raise_exception(u'could not find tracklist table')
         tracklist_table = tracklist_table[0]
         table_rows = tracklist_table.cssselect('tr')
-        discs = {}
+        disc_containers = {}
         disc_number = 1
         for row in table_rows:
             columns = row.cssselect('td')
@@ -92,127 +119,100 @@ class Release(MetalarchivesAPIBase):
                 if m:
                     disc_number = int(m.group(1))
             elif len(columns) == 4:
-                (track_number_td,track_title_td,track_length_td,lyrics_td) = columns
-                
-                m = re.search('(\d+)(?:\.)?',track_number_td.text_content())
-                if m:
-                    track_number_without_zeros = m.group(1).lstrip('0')
-                    if track_number_without_zeros:
-                        track_number = track_number_without_zeros
-                    else:
-                        track_number = '0'
-                else:
-                    self._raise_exception(u'could not extract track number')
-                    
-                track_title = self._remove_whitespace(track_title_td.text_content())
-                
-                track_length = self._remove_whitespace(track_length_td.text_content())
-                
-                if not discs.has_key(disc_number):
-                    discs[disc_number] = []
-                
-                discs[disc_number].append((track_number,[],track_title,track_length))
+                if not disc_containers.has_key(disc_number):
+                    disc_containers[disc_number] = []
+
+                disc_containers[disc_number].append(columns)
             else:
                 continue
-        
-        data['discs'] = discs
-        
-        data['link'] = self.release_url
-        
-        return data
-    
-    @property
-    def data(self):
-        if not self._data:
-            self._data = self._extract_infos()
-        return self._data
-    
-    @staticmethod
-    def release_from_url(url):
-        m = re.match('^http://(?:www\.)?metal-archives\.com/albums/(?:.*?/){0,2}(\d+)$',url)
+        return disc_containers
+
+    def get_track_containers(self, discContainer):
+        return discContainer
+
+    def get_track_number(self, trackContainer):
+        (track_number_td,track_title_td,track_length_td,lyrics_td) = trackContainer
+        m = re.search('(\d+)(?:\.)?',track_number_td.text_content())
         if m:
-            release = Release(int(m.group(1)))
-            release.release_url = url
-            return release
+            track_number_without_zeros = m.group(1).lstrip('0')
+            if track_number_without_zeros:
+                track_number = track_number_without_zeros
+            else:
+                track_number = '0'
         else:
-            return None
-    
-    @staticmethod
-    def id_from_string(string_id):
-        m = re.search('\D',string_id)
-        if m:
-            raise ValueError
-        id = int(string_id)
-        return id
-    
+            self.raise_exception(u'could not extract track number')
+        return track_number
+
+    def get_track_title(self, trackContainer):
+        (track_number_td,track_title_td,track_length_td,lyrics_td) = trackContainer
+        track_title = self.remove_whitespace(track_title_td.text_content())
+        return track_title
+
+    def get_track_length(self, trackContainer):
+        (track_number_td,track_title_td,track_length_td,lyrics_td) = trackContainer
+        track_length = self.remove_whitespace(track_length_td.text_content())
+        return track_length
+
+
+class Search(BaseSearch):
+
+    url = 'http://www.metal-archives.com/search/ajax-album-search/'
+    exception = MetalarchivesAPIError
+
     def __unicode__(self):
-        return u'<MetalarchivesRelease: id=%d>' % self.id
+        return u'<MetalarchivesSearch: term="' + self.search_term + u'">'
 
+    def get_params(self):
+        return {'field':'title', 'query':self.search_term}
 
-class Search(MetalarchivesAPIBase):
-    
-    def __init__(self, term):
-        MetalarchivesAPIBase.__init__(self)
-        self._term = term
-        self._url_appendix = 'search/ajax-album-search/'
-        self._object_id = u'"' + term + u'"'
-        self._params = {'field':'title', 'query':term}
-        self._releases = []
-    
-    def _extract_releases(self):
-        releases = []
-        
-        content = self._response.content
+    def prepare_response_content(self, content):
         try:
-            response = json.loads(content)
+            self.parsed_response = json.loads(content)
         except:
-            self._raise_exception(u'invalid server response')
-        
-        if (response.has_key('aaData') and len(response['aaData']) == 0) or not response.has_key('aaData'):
-            return releases
-        
-        for entry in response['aaData'][:25]:
-            (artists_html,title_html,type,date_html) = entry
-            
-            artists_div = lxml.html.fragment_fromstring(artists_html, create_parent="div")
-            title_div = lxml.html.fragment_fromstring(title_html, create_parent="div")
-            date_div = lxml.html.fragment_fromstring(date_html, create_parent="div")
-            
-            date = date_div.text_content()
-            date = self._remove_whitespace(date)
-            
-            artists_a = artists_div.cssselect('a')
-            if len(artists_a) == 0:
-                self._raise_exception(u'could not extract artists')
-            artists = []
-            for artist_a in artists_a:
-                artists.append(self._remove_whitespace(artist_a.text_content()))
-                
-            title_a = title_div.cssselect('a')
-            if len(title_a) != 1:
-                self._raise_exception(u'could not extract release title')
-            title_a = title_a[0]
-            
-            title = title_a.text_content()
-            
-            release = Release.release_from_url(title_a.attrib['href'])
-            
-            info_components = filter(lambda x: x, [date,type])
-            
-            info = u' | '.join(info_components)
-            
-            #compile release name
-            name = u', '.join(artists) + u' \u2013 ' + title
-            #add result to list
-            releases.append({'name':name,'info':info,'release':release})
-            
-        return releases
-    
-    @property
-    def releases(self):
-        if not self._releases:
-            self._releases = self._extract_releases()
-        return self._releases
-    
-    def __unicode__(self):
-        return u'<MetalarchivesSearch: term="' + self._term + u'">'
+            self.raise_exception(u'invalid server response')
+
+    def get_release_containers(self):
+        if self.parsed_response.has_key('aaData'):
+            return self.parsed_response['aaData'][:25]
+        return []
+
+    def get_release_name(self,releaseContainer):
+        (artists_html,title_html,type,date_html) = releaseContainer
+        artists_div = lxml.html.fragment_fromstring(artists_html, create_parent="div")
+        title_div = lxml.html.fragment_fromstring(title_html, create_parent="div")
+
+        artists_a = artists_div.cssselect('a')
+        if len(artists_a) == 0:
+            self.raise_exception(u'could not extract artists')
+
+        artists = []
+        for artist_a in artists_a:
+            artists.append(self.remove_whitespace(artist_a.text_content()))
+
+        title_a = title_div.cssselect('a')
+        if len(title_a) != 1:
+            self.raise_exception(u'could not extract release title')
+        title_a = title_a[0]
+        title = title_a.text_content()
+
+        return u', '.join(artists) + u' \u2013 ' + title
+
+    def get_release_info(self,releaseContainer):
+        (artists_html,title_html,type,date_html) = releaseContainer
+        date_div = lxml.html.fragment_fromstring(date_html, create_parent="div")
+
+        date = date_div.text_content()
+        date = self.remove_whitespace(date)
+
+        info_components = filter(lambda x: x, [date,type])
+
+        return u' | '.join(info_components)
+
+    def get_release_instance(self,releaseContainer):
+        (artists_html,title_html,type,date_html) = releaseContainer
+        title_div = lxml.html.fragment_fromstring(title_html, create_parent="div")
+        title_a = title_div.cssselect('a')
+        if len(title_a) != 1:
+            self.raise_exception(u'could not extract release title')
+        title_a = title_a[0]
+        return Release.release_from_url(title_a.attrib['href'])
