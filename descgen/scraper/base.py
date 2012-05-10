@@ -98,7 +98,7 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
 
     @property
     def release_url(self):
-        if self._release_url:
+        if self._release_url is not None:
             return self._release_url
         return self.get_release_url()
 
@@ -261,7 +261,7 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
         if releaseCountry:
             data['country'] = releaseCountry
 
-        releaseUrl = self.get_release_url()
+        releaseUrl = self.release_url
         if releaseUrl:
             data['link'] = releaseUrl
 
