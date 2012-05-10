@@ -170,7 +170,7 @@ class Search(BaseSearch):
             #get all real 'Artists' (not 'Remixers', etc.)
             real_artists = []
             for artist in releaseContainer['artists']:
-                if artist['type'] == 'Artist' and artist['name']:
+                if artist['type'].lower() == 'artist' and artist['name']:
                     real_artists.append(artist['name'])
                 #we assume that it is a Various Artists release if the release type is 'Album'
             #and the number of 'Artists' (not 'Remixers') is greater 1
