@@ -17,6 +17,6 @@ def get_release_info(release, additional_data):
         return ('release',release.data,additional_data)
     except SCRAPER_EXCEPTIONS as e:
         if unicode(e).startswith(u"404"):
-            return ('404', None, {})
+            return ('404', None, additional_data)
         else:
             raise e
