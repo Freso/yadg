@@ -211,7 +211,7 @@ class Result(View, GetDescriptionMixin):
                             for key in keys:
                                 data[potential]['disc_' + str(key).zfill(max_digits)] = data[potential][key]
                                 del data[potential][key]
-                        result['raw_data'] = data;
+                    result['raw_data'] = data;
             elif type == 'list':
                 result['type'] = 'release_list'
                 
