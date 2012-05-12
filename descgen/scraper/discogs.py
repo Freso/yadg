@@ -142,11 +142,19 @@ class Release(BaseRelease):
         if len(artist_elements) == 0:
             self.raise_exception(u'could not find artist elements')
         artists = []
+        is_feature = False
         for artist_element in artist_elements:
             artist = artist_element.text_content()
             artist = self.remove_whitespace(artist)
             artist = self._prepare_artist_name(artist)
-            artists.append(self.format_artist(artist, self.ARTIST_TYPE_MAIN))
+            if is_feature:
+                # we assume every artist after "feat." is a feature
+                artist_type = self.ARTIST_TYPE_FEATURE
+            elif 'feat.' in artist_element.tail:
+                # all artists after this one are features
+                artist_type = self.ARTIST_TYPE_MAIN
+                is_feature = True
+            artists.append(self.format_artist(artist, artist_type))
         return artists
 
     def get_genres(self):

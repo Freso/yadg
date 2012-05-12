@@ -1,4 +1,4 @@
-{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}[size=4][b]{% with main_artists=artists|artistsbytype:"Main" %}{% if main_artists|length_is:"1" and main_artists|first == "Various" %}{{ main_artists|first }}{% else %}{% wrapartists main_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %} – {{ title }}[/b][/size]
+{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}[size=4][b]{% with main_artists=artists|artistsbytype:"Main" %}{% if main_artists|length_is:"1" and main_artists|first == "Various" %}{{ main_artists|first }}{% else %}{% wrapartists main_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %}{% with featured_artists=artists|artistsbytype:"Feature" %}{% if featured_artists %} feat. {% wrapartists featured_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %} – {{ title }}[/b][/size]
 {% if label %}[b]Label:[/b] {{ label|join:", " }}
 {% endif %}{% if catalog %}[b]Catalog#:[/b] {{ catalog|join:", " }}
 {% endif %}{% if country %}[b]Country:[/b] {{ country }}

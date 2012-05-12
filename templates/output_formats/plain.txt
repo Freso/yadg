@@ -1,4 +1,4 @@
-{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}{% load dictaccess %}{% with main_artists=artists|artistsbytype:"Main" %}{% wrapartists main_artists "%s" ", " " & " %}{% endwith %} – {{ title }}
+{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}{% load dictaccess %}{% with main_artists=artists|artistsbytype:"Main" %}{% wrapartists main_artists "%s" ", " " & " %}{% endwith %}{% with featured_artists=artists|artistsbytype:"Feature" %}{% if featured_artists %} feat. {% wrapartists featured_artists "%s" ", " " & " %}{% endif %}{% endwith %} – {{ title }}
 
 {% if label %}Label: {% for l in label %}{{ l }}{% if not forloop.last %}, {% endif %}{% endfor %}
 {% endif %}{% if catalog %}Catalog#: {{ catalog|join:", " }}
