@@ -98,7 +98,7 @@ class Release(BaseRelease):
                     labels.append(split[0])
                 else:
                     #we just have a label or to many components, so don't change anything
-                    labels.append(c)
+                    labels.append(label_component)
             return labels
         return []
 

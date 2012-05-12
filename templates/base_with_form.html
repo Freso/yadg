@@ -133,7 +133,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                 
                 Y.io(appendFormatParam('{% url api_v1_makequery %}'), cfg);
             }
-        };
+        }
         
         function makeQueryFromLink(e) {
             e.preventDefault();
@@ -177,7 +177,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
             
             busyStart(false);
             Y.io(appendFormatParam(this.getAttribute('data-query-url')), cfg);
-        };
+        }
         
         function changeFormat(e) {
             var format_form = this.get('parentNode'),
@@ -227,7 +227,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                 format_form.append(loading_image);
                 
                 Y.io(appendFormatParam(appendGetParam(url,'description_format=' + encodeURIComponent(format))), cfg);
-            };
+            }
         }
         
         function getResult(result_url, result_id) {
@@ -297,7 +297,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                                         
                                         ul.append(li);
                                     }
-                                };
+                                }
                                 
                                 if (ul.all('*').size() != 0) {
                                     var div = Y.Node.create('<div></div>');
@@ -346,7 +346,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
             }
             
             Y.io(appendFormatParam(result_url), cfg);
-        };
+        }
         
         input.on('key', makeQueryFromInput, 'press:enter');
         submit.on('key', makeQueryFromInput, 'press:enter');

@@ -1,5 +1,5 @@
 from djangorestframework.views import View
-from djangorestframework.response import Response,ErrorResponse
+from djangorestframework.response import Response
 from djangorestframework import status
 from djangorestframework.resources import FormResource
 from djangorestframework.mixins import ResponseMixin
@@ -211,11 +211,11 @@ class Result(View, GetDescriptionMixin):
                             for key in keys:
                                 data[potential]['disc_' + str(key).zfill(max_digits)] = data[potential][key]
                                 del data[potential][key]
-                    result['raw_data'] = data;
+                    result['raw_data'] = data
             elif type == 'list':
                 result['type'] = 'release_list'
                 
-                release_count = 0;
+                release_count = 0
                 
                 for releases in data.values():
                     for entry in releases:

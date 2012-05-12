@@ -1,5 +1,5 @@
 from django import forms
-from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT,ScraperFactory
+from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 
 class InputForm(forms.Form):
