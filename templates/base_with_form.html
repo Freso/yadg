@@ -155,7 +155,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                         getResult(response.result_url, response.result_id);
                     },
                     failure: function(id, o, args) {
-                        subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>')
+                        subcontent.setContent('<div class="alert alert-error">A general error occured. Please try again later.</div>');
                         
                         history.add({
                             input: args.input,
@@ -292,7 +292,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                                         a.on('click', makeQueryFromLink);
                                         
                                         li.append(a);
-                                        li.append('<br />')
+                                        li.append('<br />');
                                         li.append('<span class="label">' + info + '</label>');
                                         
                                         ul.append(li);
@@ -302,7 +302,7 @@ YUI().use('node','event','io','json-parse','history', function (Y) {
                                 if (ul.all('*').size() != 0) {
                                     var div = Y.Node.create('<div></div>');
                                     div.addClass('well');
-                                    div.setContent(ul)
+                                    div.setContent(ul);
                                     
                                     subcontent.setContent(div);
                                 } else {
