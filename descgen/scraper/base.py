@@ -9,10 +9,7 @@ class ExceptionMixin(object):
     exception = BaseAPIError
 
     def get_exception(self):
-        if self.exception:
-            return self.exception
-        else:
-            return None
+        return self.exception
 
     def raise_exception(self, message):
         raise self.get_exception(), u'%s [%s]' % (message, unicode(self))
@@ -46,7 +43,7 @@ class RequestMixin(object):
         return self.post_data
 
     def get_response(self):
-        if not self._cached_response:
+        if self._cached_response is None:
             if self.get_request_method() == self.REQUEST_METHOD_POST:
                 r = requests.post(url=self.get_url(), data=self.get_post_data(), params=self.get_params(), headers=self.get_headers())
             else:
