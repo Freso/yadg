@@ -150,10 +150,11 @@ class Release(BaseRelease):
             if is_feature:
                 # we assume every artist after "feat." is a feature
                 artist_type = self.ARTIST_TYPE_FEATURE
-            elif 'feat.' in artist_element.tail:
-                # all artists after this one are features
+            else:
                 artist_type = self.ARTIST_TYPE_MAIN
-                is_feature = True
+                if 'feat.' in artist_element.tail:
+                    # all artists after this one are features
+                    is_feature = True
             artists.append(self.format_artist(artist, artist_type))
         return artists
 
