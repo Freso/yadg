@@ -246,7 +246,7 @@ class Release(BaseRelease):
         else:
             self.raise_exception(u'track row has not the right amount of columns')
 
-        track_number_span = track_number_td.cssselect('span')
+        track_number_span = track_number_td.cssselect('span[property="mo:track_number"]')
         if len(track_number_span) != 1:
             self.raise_exception(u'could not get tracknumber')
         track_number_span = track_number_span[0]
@@ -296,7 +296,7 @@ class Release(BaseRelease):
             length_td = trackContainer[-1]
         else:
             self.raise_exception(u'track row has not the right amount of columns')
-        length_span = length_td.cssselect('span')
+        length_span = length_td.cssselect('span[property="mo:duration"]')
         if len(length_span) != 1:
             self.raise_exception(u'could not get track length')
         length_span = length_span[0]
