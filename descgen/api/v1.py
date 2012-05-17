@@ -5,13 +5,13 @@ from djangorestframework.resources import FormResource
 from djangorestframework.mixins import ResponseMixin
 from djangorestframework.renderers import BaseRenderer,JSONPRenderer
 
-from django.core.urlresolvers import reverse
 from django.utils.http import urlencode
 
 from descgen.forms import InputForm,ResultForm
 from descgen.scraper.factory import SCRAPER_CHOICES
 from descgen.formatter import FORMAT_CHOICES
 from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
+from descgen.reverse import reverse
 
 from djcelery.models import TaskMeta
 
@@ -57,9 +57,9 @@ class Root(View):
     """
 
     def get(self, request):
-        return [{'name': 'Format List', 'url': reverse('api_v1_formatlist')},
-                {'name': 'Scraper List', 'url': reverse('api_v1_scraperlist')},
-                {'name': 'Make Query', 'url': reverse('api_v1_makequery')},
+        return [{'name': 'Format List', 'url': reverse('api_v1_formatlist', request=self.request)},
+                {'name': 'Scraper List', 'url': reverse('api_v1_scraperlist', request=self.request)},
+                {'name': 'Make Query', 'url': reverse('api_v1_makequery', request=self.request)},
                 ]
 
 
@@ -133,7 +133,7 @@ class MakeQuery(View, CreateTaskMixin):
         task = self.create_task(input=input, scraper=scraper)
         
         result = {
-            'result_url': reverse('api_v1_result',args=[task.task_id]),
+            'result_url': reverse('api_v1_result', args=[task.task_id], request=self.request),
             'result_id': task.task_id
         }
         
@@ -141,7 +141,7 @@ class MakeQuery(View, CreateTaskMixin):
     
     def post(self, request):
         params = urlencode(self.CONTENT)
-        return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_makequery')+'?'+params})
+        return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_makequery', request=self.request)+'?'+params})
 
 
 class Result(View, GetDescriptionMixin):
@@ -220,7 +220,7 @@ class Result(View, GetDescriptionMixin):
                 for releases in data.values():
                     for entry in releases:
                         entry['release_url'] = entry['release'].release_url
-                        entry['query_url'] = reverse('api_v1_makequery') + '?' + urlencode({'input':entry['release'].release_url})
+                        entry['query_url'] = reverse('api_v1_makequery', request=self.request) + '?' + urlencode({'input':entry['release'].release_url})
                         del entry['release']
                         release_count += 1
                 
@@ -236,4 +236,4 @@ class Result(View, GetDescriptionMixin):
             
     def post(self, request, id):
         params = urlencode(self.CONTENT)
-        return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_result', args=(id,))+'?'+params})
+        return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_result', args=(id,), request=self.request)+'?'+params})
