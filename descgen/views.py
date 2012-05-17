@@ -1,10 +1,9 @@
 from descgen.forms import InputForm,FormatForm,SettingsForm
 from descgen.formatter import Formatter,FORMATS
 from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
-from descgen.reverse import reverse
 
-from django.shortcuts import render
-from django.http import Http404,HttpResponse, HttpResponseRedirect
+from django.shortcuts import render,redirect
+from django.http import Http404,HttpResponse
 from django.views.generic.base import View
 from django.views.generic.edit import FormView
 
@@ -20,8 +19,8 @@ class IndexView(View, CreateTaskMixin):
             scraper = form.cleaned_data['scraper']
             
             task = self.create_task(input=input, scraper=scraper)
-
-            return HttpResponseRedirect(reverse('get_result', kwargs={'id':task.task_id}, request=self.request))
+                
+            return redirect('get_result',id=task.task_id)
         else:
             form = InputForm(initial={'scraper':self.get_valid_scraper(None)})
         return render(request,'index.html',{'input_form':form})
