@@ -121,9 +121,12 @@ class Release(BaseRelease):
         if len(title_element) != 1:
             self.raise_exception(u'could not find title element')
         title_element = title_element[0]
-        title = self.remove_whitespace(title_element.text_content())
+        title = title_element.text_content()
         #right now this contains 'artist - title', so remove 'artist'
-        title = title.split(u' \u2013 ')[1]
+        title = title.split(u'–')
+        if len(title) != 2:
+            self.raise_exception('could not split release title')
+        title = self.remove_whitespace(title[1])
         if title:
             return title
         return None
