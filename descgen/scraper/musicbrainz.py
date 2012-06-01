@@ -62,18 +62,19 @@ class Release(BaseRelease):
                     self._labels = []
 
                 for li in label_li:
-                    spans = li.cssselect('span')
-                    if len(spans) > 2 or len(spans) == 0:
-                        self.raise_exception(u'could not get label and catalog# from list entry')
-                    elif len(spans) == 1:
-                        label_span = spans[0]
-                        catalog_span = None
+                    label_a = li.cssselect('a[rel="mo:label"]')
+                    if len(label_a) == 1:
+                        label_a = label_a[0]
                     else:
-                        (label_span,catalog_span) = spans
-                    label_a = label_span.cssselect('a')
-                    if len(label_a) != 1:
-                        self.raise_exception(u'could not get label link from list')
-                    label_a = label_a[0]
+                        #if we cannot find the label we assume something is wrong
+                        self.raise_exception('could not find label link in label li')
+
+                    catalog_span = li.cssselect('span[property="mo:catalogue_number"]')
+                    if len(catalog_span) == 1:
+                        catalog_span = catalog_span[0]
+                    else:
+                        catalog_span = None
+
                     self._labels.append(self.remove_whitespace(label_a.text_content()))
                     if catalog_span is not None:
                         catalog_span_content = self.remove_whitespace(catalog_span.text_content())
