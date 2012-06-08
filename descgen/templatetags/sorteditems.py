@@ -5,10 +5,11 @@ register = template.Library()
 @register.filter
 def sorteditems(value):
     items = []
-    #sort keys
-    keys = value.keys()
-    keys.sort()
-    #build (key,value) list
-    for key in keys:
-        items.append((key,value[key]))
+    if value is not None:
+        #sort keys
+        keys = value.keys()
+        keys.sort()
+        #build (key,value) list
+        for key in keys:
+            items.append((key,value[key]))
     return items
