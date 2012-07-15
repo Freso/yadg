@@ -32,6 +32,17 @@ class RequestMixin(object):
 
     _cached_response = None
 
+    def _make_request(self, method, url, params, headers, post_data):
+        """
+        The internal method that makes the actual request and returns a response object. This should normally not be used
+        directly.
+        """
+        if method == self.REQUEST_METHOD_POST:
+            r = requests.post(url=url, data=post_data, params=params, headers=headers)
+        else:
+            r = requests.get(url=url, params=params, headers=headers)
+        return r
+
     def raise_request_exception(self, message):
         raise StatusCodeError(message)
 
@@ -52,10 +63,7 @@ class RequestMixin(object):
 
     def get_response(self):
         if self._cached_response is None:
-            if self.get_request_method() == self.REQUEST_METHOD_POST:
-                r = requests.post(url=self.get_url(), data=self.get_post_data(), params=self.get_params(), headers=self.get_headers())
-            else:
-                r = requests.get(url=self.get_url(), params=self.get_params(), headers=self.get_headers())
+            r = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data())
             if r.status_code == 200:
                 self._cached_response = r
             else:
