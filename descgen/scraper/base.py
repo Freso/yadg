@@ -95,6 +95,12 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
     _data = None
     _release_url = None
 
+    def raise_request_exception(self, message):
+        """
+        Make sure the RequestMixin uses ExceptionMixin
+        """
+        self.raise_exception(message)
+
     @property
     def data(self):
         if self._data is None:
@@ -313,6 +319,12 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
 
 class BaseSearch(ExceptionMixin, RequestMixin, UtilityMixin):
     _releases = None
+
+    def raise_request_exception(self, message):
+        """
+        Make sure the RequestMixin uses ExceptionMixin
+        """
+        self.raise_exception(message)
 
     def __init__(self, searchTerm):
         """
