@@ -1,7 +1,4 @@
-import descgen.scraper.discogs as discogs
-import descgen.scraper.musicbrainz as musicbrainz
-import descgen.scraper.beatport as beatport
-import descgen.scraper.metalarchives as metalarchives
+import discogs, musicbrainz, beatport, metalarchives
 
 _SCRAPERS = {
     'discogs':discogs,
