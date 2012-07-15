@@ -15,6 +15,11 @@ class ExceptionMixin(object):
         raise self.get_exception(), u'%s [%s]' % (message, unicode(self))
 
 
+class StatusCodeError(requests.RequestException):
+    """The request returned a status code that was not 200"""
+    pass
+
+
 class RequestMixin(object):
     REQUEST_METHOD_POST = 'post'
     REQUEST_METHOD_GET = 'get'
@@ -26,6 +31,9 @@ class RequestMixin(object):
     post_data = None
 
     _cached_response = None
+
+    def raise_request_exception(self, message):
+        raise StatusCodeError(message)
 
     def get_url(self):
         return self.url
@@ -51,7 +59,7 @@ class RequestMixin(object):
             if r.status_code == 200:
                 self._cached_response = r
             else:
-                self.raise_exception('%d' % (r.status_code if r.status_code else 500)) #make sure we don't crash
+                self.raise_request_exception('%d' % (r.status_code if r.status_code else 500)) #make sure we don't crash
         return self._cached_response
 
 
