@@ -1,7 +1,4 @@
-import descgen.scraper.discogs as discogs
-import descgen.scraper.musicbrainz as musicbrainz
-import descgen.scraper.beatport as beatport
-import descgen.scraper.metalarchives as metalarchives
+import discogs, musicbrainz, beatport, metalarchives
 
 _SCRAPERS = {
     'discogs':discogs,
@@ -12,7 +9,7 @@ _SCRAPERS = {
 
 _SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
 
-_SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),_SCRAPERS))
+_SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
 
 SCRAPER = _SCRAPERS.keys()
 

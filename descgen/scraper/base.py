@@ -15,6 +15,11 @@ class ExceptionMixin(object):
         raise self.get_exception(), u'%s [%s]' % (message, unicode(self))
 
 
+class StatusCodeError(requests.RequestException):
+    """The request returned a status code that was not 200"""
+    pass
+
+
 class RequestMixin(object):
     REQUEST_METHOD_POST = 'post'
     REQUEST_METHOD_GET = 'get'
@@ -26,6 +31,20 @@ class RequestMixin(object):
     post_data = None
 
     _cached_response = None
+
+    def _make_request(self, method, url, params, headers, post_data):
+        """
+        The internal method that makes the actual request and returns a response object. This should normally not be used
+        directly.
+        """
+        if method == self.REQUEST_METHOD_POST:
+            r = requests.post(url=url, data=post_data, params=params, headers=headers)
+        else:
+            r = requests.get(url=url, params=params, headers=headers)
+        return r
+
+    def raise_request_exception(self, message):
+        raise StatusCodeError(message)
 
     def get_url(self):
         return self.url
@@ -44,14 +63,11 @@ class RequestMixin(object):
 
     def get_response(self):
         if self._cached_response is None:
-            if self.get_request_method() == self.REQUEST_METHOD_POST:
-                r = requests.post(url=self.get_url(), data=self.get_post_data(), params=self.get_params(), headers=self.get_headers())
-            else:
-                r = requests.get(url=self.get_url(), params=self.get_params(), headers=self.get_headers())
+            r = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data())
             if r.status_code == 200:
                 self._cached_response = r
             else:
-                self.raise_exception('%d' % (r.status_code if r.status_code else 500)) #make sure we don't crash
+                self.raise_request_exception('%d' % (r.status_code if r.status_code else 500)) #make sure we don't crash
         return self._cached_response
 
 
@@ -86,6 +102,12 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
 
     _data = None
     _release_url = None
+
+    def raise_request_exception(self, message):
+        """
+        Make sure the RequestMixin uses ExceptionMixin
+        """
+        self.raise_exception(message)
 
     @property
     def data(self):
@@ -305,6 +327,12 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
 
 class BaseSearch(ExceptionMixin, RequestMixin, UtilityMixin):
     _releases = None
+
+    def raise_request_exception(self, message):
+        """
+        Make sure the RequestMixin uses ExceptionMixin
+        """
+        self.raise_exception(message)
 
     def __init__(self, searchTerm):
         """
