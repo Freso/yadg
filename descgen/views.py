@@ -95,3 +95,6 @@ class SettingsView(FormView,GetDescriptionMixin,CreateTaskMixin):
         self.request.session['default_format'] = form.cleaned_data['description_format']
         self.request.session['default_scraper'] = form.cleaned_data['scraper']
         return render(self.request,self.template_name,{'form':form, 'successful':True})
+
+def csrf_failure(request, reason=""):
+    return render(request, 'csrf_failure.html')
