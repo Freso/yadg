@@ -191,3 +191,6 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 31536000 # 1 year in seconds
 SESSION_FILE_PATH = 'E:/temp/what/'
 SESSION_COOKIE_HTTPONLY = False # make sure cookie is sent with ajax calls
+
+#set a custum csrf_failure view
+CSRF_FAILURE_VIEW = "descgen.views.csrf_failure"
