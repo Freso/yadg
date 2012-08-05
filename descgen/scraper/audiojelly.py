@@ -1,5 +1,5 @@
 # coding=utf-8
-import lxml.html,sys
+import lxml.html
 from base import BaseRelease, BaseSearch, BaseAPIError
 
 
