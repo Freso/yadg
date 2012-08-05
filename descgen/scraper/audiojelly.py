@@ -116,7 +116,7 @@ class Release(BaseRelease):
                 genre = self.remove_whitespace(genre)
                 if genre:
                     genre = genre.split(' / ')
-                    genres.extend(genre)
+                    genres.extend(filter(lambda x: x,genre))
             return genres
         return []
 
