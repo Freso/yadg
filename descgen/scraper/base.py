@@ -29,18 +29,19 @@ class RequestMixin(object):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0.2) Gecko/20100101 Firefox/6.0.2'}
     request_method = REQUEST_METHOD_GET
     post_data = None
+    request_kwargs = {}
 
     _cached_response = None
 
-    def _make_request(self, method, url, params, headers, post_data):
+    def _make_request(self, method, url, params, headers, post_data, kwargs):
         """
         The internal method that makes the actual request and returns a response object. This should normally not be used
         directly.
         """
         if method == self.REQUEST_METHOD_POST:
-            r = requests.post(url=url, data=post_data, params=params, headers=headers)
+            r = requests.post(url=url, data=post_data, params=params, headers=headers, **kwargs)
         else:
-            r = requests.get(url=url, params=params, headers=headers)
+            r = requests.get(url=url, params=params, headers=headers, **kwargs)
         return r
 
     def raise_request_exception(self, message):
@@ -61,9 +62,15 @@ class RequestMixin(object):
     def get_post_data(self):
         return self.post_data
 
+    def get_request_kwargs(self):
+        return self.request_kwargs
+
+    def get_response_content(self, response):
+        return response.text
+
     def get_response(self):
         if self._cached_response is None:
-            r = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data())
+            r = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data(), kwargs=self.get_request_kwargs())
             if r.status_code == 200:
                 self._cached_response = r
             else:
@@ -242,7 +249,7 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
 
         response = self.get_response()
 
-        self.prepare_response_content(response.content)
+        self.prepare_response_content(self.get_response_content(response))
 
         releaseDate = self.get_release_date()
         if releaseDate:

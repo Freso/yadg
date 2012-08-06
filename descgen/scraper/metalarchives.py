@@ -59,8 +59,7 @@ class Release(BaseRelease):
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        self.parsed_response = lxml.html.document_fromstring(content.decode('utf-8'))
+        self.parsed_response = lxml.html.document_fromstring(content)
 
         #stupid website doesn't send correct http status code
         h3_404 = self.parsed_response.cssselect('h3')
