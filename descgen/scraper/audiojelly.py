@@ -37,7 +37,7 @@ class Release(BaseRelease):
         return self.get_url()
 
     def _separate_multiple_artists(self, artist_string):
-        artists = re.split('\\s*?(?:,|&)\\s*?', artist_string)
+        artists = re.split('\\s*?(?:,|&|with)\\s*?', artist_string)
         artists = map(self.remove_whitespace, artists)
         return artists
 
