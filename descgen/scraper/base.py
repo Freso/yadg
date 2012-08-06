@@ -391,7 +391,7 @@ class BaseSearch(ExceptionMixin, RequestMixin, UtilityMixin):
 
         response = self.get_response()
 
-        self.prepare_response_content(response.content)
+        self.prepare_response_content(self.get_response_content(response))
 
         releaseContainers = self.get_release_containers()
         for releaseContainer in releaseContainers:
