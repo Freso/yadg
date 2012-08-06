@@ -24,7 +24,7 @@ class Release(BaseRelease):
         self._release_name = release_name
 
     def __unicode__(self):
-        return u'<AudiojellyRelease: id=%d>' % self.id
+        return u'<AudiojellyRelease: id=%d, name="%s">' % (self.id, self._release_name)
 
     @staticmethod
     def _get_args_from_match(match):
@@ -203,18 +203,31 @@ class Search(BaseSearch):
     url = _base_url + '/search/all/'
     exception = AudiojellyAPIError
 
+    _not_found = False
+
     def __unicode__(self):
         return u'<AudiojellySearch: term="' + self.search_term + u'">'
 
     def get_params(self):
         return {'view':'releases', 'q':self.search_term}
 
+    # Warning: The following is ugly hack territory. The stupid site apparently returns a 500 status code if it cannot
+    # find at least one release with the given search term.
+    # So instead of raising an exception with a 500 status code, we remember that there was nothing found
+    def raise_exception(self, message):
+        if message.startswith('500'):
+            self._not_found = True
+        else:
+            super(Search, self).raise_exception(message)
+
     def prepare_response_content(self, content):
-        #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        self.parsed_response = lxml.html.document_fromstring(content)
+        if not self._not_found:
+            #get the raw response content and parse it
+            self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):
+        if self._not_found:
+            return []
         return self.parsed_response.cssselect('div.relInfo')[:25]
 
     def get_release_name(self,releaseContainer):
