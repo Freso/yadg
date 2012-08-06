@@ -16,6 +16,8 @@ class Release(BaseRelease):
     url_regex = '^http://(?:www\.)?audiojelly\.com/releases/(.*?)/(\d+)$'
     exception = AudiojellyAPIError
 
+    _various_artists_aliases = ['Various', 'Various Artists']
+
     def __init__(self, id, release_name):
         self.id = id
 
@@ -34,16 +36,23 @@ class Release(BaseRelease):
     def get_release_url(self):
         return self.get_url()
 
+    def _separate_multiple_artists(self, artist_string):
+        artists = re.split('\\s*?(?:,|&)\\s*?', artist_string)
+        artists = map(self.remove_whitespace, artists)
+        return artists
+
     def _split_artists(self, artist_string):
         formatted_artists = []
         artists = re.split('\\s*?(?:ft\\.?|feat\\.?|featuring)\\s*?', artist_string)
-        artists = map(self.remove_whitespace, artists)
-        main_artist = artists[0]
-        formatted_artists.append(self.format_artist(main_artist, self.ARTIST_TYPE_MAIN))
+        main_artists = self._separate_multiple_artists(artists[0])
+        for main_artist in main_artists:
+            formatted_artists.append(self.format_artist(main_artist, self.ARTIST_TYPE_MAIN))
         if len(artists) > 1:
             featuring_artists = artists[1:]
-            for featuring_artist in featuring_artists:
-                formatted_artists.append(self.format_artist(featuring_artist, self.ARTIST_TYPE_FEATURE))
+            for featuring_artist_string in featuring_artists:
+                featuring_artists = self._separate_multiple_artists(featuring_artist_string)
+                for featuring_artist in featuring_artists:
+                    formatted_artists.append(self.format_artist(featuring_artist, self.ARTIST_TYPE_FEATURE))
         return formatted_artists
 
     def prepare_response_content(self, content):
@@ -114,7 +123,7 @@ class Release(BaseRelease):
                 artist = anchor.text_content()
                 artist = self.remove_whitespace(artist)
                 if artist:
-                    if artist in ['Various', 'Various Artists']:
+                    if artist in self._various_artists_aliases:
                         artists.append(self.format_artist(self.ARTIST_NAME_VARIOUS, self.ARTIST_TYPE_MAIN))
                     else:
                         artists.extend(self._split_artists(artist))
@@ -165,7 +174,7 @@ class Release(BaseRelease):
                 for anchor in artist_anchors:
                     artist = anchor.text_content()
                     artist = self.remove_whitespace(artist)
-                    if artist:
+                    if artist and not artist in self._various_artists_aliases:
                         artists.extend(self._split_artists(artist))
                 return artists
         return []
