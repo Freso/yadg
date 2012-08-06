@@ -164,4 +164,65 @@ class Release(BaseRelease):
 
 
 class Search(BaseSearch):
-    pass
+
+    _base_url = 'http://www.junodownload.com'
+    url = 'http://www.junodownload.com/betasearch/'
+    exception = JunodownloadAPIError
+
+    def __unicode__(self):
+        return u'<JunodownloadSearch: term="' + self.search_term + u'">'
+
+    def get_params(self):
+        return {'solrorder':'relevancy', 'submit-search':'SEARCH', 'q[all][]':self.search_term}
+
+    def prepare_response_content(self, content):
+        #get the raw response content and parse it
+        self.parsed_response = lxml.html.document_fromstring(content)
+
+    def get_release_containers(self):
+        return self.parsed_response.cssselect('div.productlist_widget_product_detail')[:25]
+
+    def get_release_name(self,releaseContainer):
+        components = []
+        release_artist_div = releaseContainer.cssselect('div.productlist_widget_product_artists')
+        if len(release_artist_div) == 1:
+            release_artists = release_artist_div[0].text_content()
+            release_artists = self.remove_whitespace(release_artists)
+            if release_artists:
+                release_artists = u', '.join(release_artists.split('/'))
+                components.append(release_artists)
+        release_title_div = releaseContainer.cssselect('div.productlist_widget_product_title')
+        if len(release_title_div) == 1:
+            release_title = release_title_div[0].text_content()
+            release_title = self.remove_whitespace(release_title)
+            if release_title:
+                components.append(release_title)
+        if components:
+            return u' \u2013 '.join(components)
+        self.raise_exception(u'could not determine release name')
+
+    def get_release_info(self,releaseContainer):
+        components = []
+        label_div = releaseContainer.cssselect('div.productlist_widget_product_label')
+        if len(label_div) == 1:
+            label = label_div[0].text_content()
+            label = self.remove_whitespace(label)
+            if label:
+                components.append(label)
+        additional_info_div = releaseContainer.cssselect('div.productlist_widget_product_preview_buy')
+        if len(additional_info_div) == 1:
+            additional_info = additional_info_div[0].text_content()
+            additional_infos = additional_info.split('\n')
+            additional_infos = filter(lambda x: x, map(self.remove_whitespace, additional_infos))
+            if additional_infos:
+                components.extend(additional_infos)
+        if components:
+            return u' | '.join(components)
+        return None
+
+    def get_release_instance(self,releaseContainer):
+        release_anchor = releaseContainer.cssselect('div.productlist_widget_product_title a')
+        if len(release_anchor) != 1:
+            self.raise_exception(u'could not find release link anchor')
+        release_link = self._base_url + release_anchor[0].attrib['href']
+        return Release.release_from_url(release_link)
