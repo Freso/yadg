@@ -211,7 +211,6 @@ class Search(BaseSearch):
     def get_params(self):
         return {'view':'releases', 'q':self.search_term}
 
-
     # Warning: The following is ugly hack territory. The stupid site apparently returns a 500 status code if it cannot
     # find at least one release with the given search term.
     # So instead of raising an exception with a 500 status code, we remember that there was nothing found
