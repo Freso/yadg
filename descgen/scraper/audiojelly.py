@@ -57,8 +57,7 @@ class Release(BaseRelease):
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        self.parsed_response = lxml.html.document_fromstring(content.decode('utf-8'))
+        self.parsed_response = lxml.html.document_fromstring(content)
 
         self._label_dict = dict(map(lambda x: (x.getprevious().text_content().lower(), x),filter(lambda x: x.getprevious() is not None,self.parsed_response.cssselect('label + span.spec'))))
         self._track_artists_equal_release_artist = True
@@ -213,7 +212,7 @@ class Search(BaseSearch):
     def prepare_response_content(self, content):
         #get the raw response content and parse it
         #we explicitely decode the response content to unicode
-        self.parsed_response = lxml.html.document_fromstring(content.decode('utf-8'))
+        self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):
         return self.parsed_response.cssselect('div.relInfo')[:25]
