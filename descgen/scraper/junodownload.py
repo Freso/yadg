@@ -90,8 +90,6 @@ class Release(BaseRelease):
     def get_release_artists(self):
         artist_anchors = self.parsed_response.cssselect('div#topbar_bread div.breadcrumb_text h1 a')
         artist_anchors = filter(lambda x: x.attrib['href'].startswith('/artists/'), artist_anchors)
-        if len(artist_anchors) == 0:
-            self.raise_exception(u'could not find artist anchors')
         artists = []
         is_feature = False
         has_various = False
@@ -221,7 +219,7 @@ class Search(BaseSearch):
         return None
 
     def get_release_instance(self,releaseContainer):
-        release_anchor = releaseContainer.cssselect('div.productlist_widget_product_title a')
+        release_anchor = releaseContainer.cssselect('div.productlist_widget_product_title span a')
         if len(release_anchor) != 1:
             self.raise_exception(u'could not find release link anchor')
         release_link = self._base_url + release_anchor[0].attrib['href']
