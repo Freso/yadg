@@ -1,5 +1,5 @@
 # coding=utf-8
-import lxml.html
+import lxml.html, re
 from base import BaseRelease, BaseSearch, BaseAPIError
 
 
@@ -33,6 +33,18 @@ class Release(BaseRelease):
 
     def get_release_url(self):
         return self.get_url()
+
+    def _split_artists(self, artist_string):
+        formatted_artists = []
+        artists = re.split('\\s*?(?:ft\\.?|feat\\.?|featuring)\\s*?', artist_string)
+        artists = map(self.remove_whitespace, artists)
+        main_artist = artists[0]
+        formatted_artists.append(self.format_artist(main_artist, self.ARTIST_TYPE_MAIN))
+        if len(artists) > 1:
+            featuring_artists = artists[1:]
+            for featuring_artist in featuring_artists:
+                formatted_artists.append(self.format_artist(featuring_artist, self.ARTIST_TYPE_FEATURE))
+        return formatted_artists
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
@@ -102,7 +114,10 @@ class Release(BaseRelease):
                 artist = anchor.text_content()
                 artist = self.remove_whitespace(artist)
                 if artist:
-                    artists.append(self.format_artist(self.ARTIST_NAME_VARIOUS if artist == 'Various' else artist, self.ARTIST_TYPE_MAIN))
+                    if artist in ['Various', 'Various Artists']:
+                        artists.append(self.format_artist(self.ARTIST_NAME_VARIOUS, self.ARTIST_TYPE_MAIN))
+                    else:
+                        artists.extend(self._split_artists(artist))
             return artists
         else:
             self.raise_exception(u'could not find artist span')
@@ -115,7 +130,7 @@ class Release(BaseRelease):
                 genre = anchor.text_content()
                 genre = self.remove_whitespace(genre)
                 if genre:
-                    genre = genre.split(' / ')
+                    genre = re.split('\\s*?(?:/|,)\\s*?', genre)
                     genres.extend(filter(lambda x: x,genre))
             return genres
         return []
@@ -151,7 +166,7 @@ class Release(BaseRelease):
                     artist = anchor.text_content()
                     artist = self.remove_whitespace(artist)
                     if artist:
-                        artists.append(self.format_artist(artist,self.ARTIST_TYPE_MAIN))
+                        artists.extend(self._split_artists(artist))
                 return artists
         return []
 
