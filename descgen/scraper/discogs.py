@@ -48,8 +48,6 @@ class Release(BaseRelease):
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        content = content.decode('utf-8')
         doc = lxml.html.document_fromstring(content)
 
         #get the div that contains all the information we want
@@ -291,8 +289,6 @@ class Search(BaseSearch):
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        content = content.decode('utf-8')
         self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):

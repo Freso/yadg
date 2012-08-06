@@ -86,8 +86,7 @@ class Release(BaseRelease):
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        self.parsed_response = lxml.html.document_fromstring(content.decode('utf-8'))
+        self.parsed_response = lxml.html.document_fromstring(content)
 
         #get the content div
         content_div = self.parsed_response.cssselect('div#content')
@@ -322,8 +321,6 @@ class Search(BaseSearch):
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
-        #we explicitely decode the response content to unicode
-        content = content.decode('utf-8')
         self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):
