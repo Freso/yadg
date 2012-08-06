@@ -70,11 +70,9 @@ class RequestMixin(object):
 
     def get_response(self):
         if self._cached_response is None:
-            r = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data(), kwargs=self.get_request_kwargs())
-            if r.status_code == 200:
-                self._cached_response = r
-            else:
-                self.raise_request_exception('%d' % (r.status_code if r.status_code else 500)) #make sure we don't crash
+            self._cached_response = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data(), kwargs=self.get_request_kwargs())
+            if self._cached_response.status_code != 200:
+                self.raise_request_exception('%d' % (self._cached_response.status_code if self._cached_response.status_code else 500)) #make sure we don't crash
         return self._cached_response
 
 
