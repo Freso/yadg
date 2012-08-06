@@ -175,4 +175,63 @@ class Release(BaseRelease):
 
 
 class Search(BaseSearch):
-    pass
+
+    _base_url = 'http://www.audiojelly.com'
+    url = _base_url + '/search/all/'
+    exception = AudiojellyAPIError
+
+    def __unicode__(self):
+        return u'<AudiojellySearch: term="' + self.search_term + u'">'
+
+    def get_params(self):
+        return {'view':'releases', 'q':self.search_term}
+
+    def prepare_response_content(self, content):
+        #get the raw response content and parse it
+        #we explicitely decode the response content to unicode
+        self.parsed_response = lxml.html.document_fromstring(content.decode('utf-8'))
+
+    def get_release_containers(self):
+        return self.parsed_response.cssselect('div.relInfo')[:25]
+
+    def get_release_name(self,releaseContainer):
+        release_artist_anchor = releaseContainer.cssselect('div.relArtistName a')
+        if len(release_artist_anchor) == 0:
+            self.raise_exception(u'could not extract release artist')
+        artists = []
+        for artist_anchor in release_artist_anchor:
+            artist = artist_anchor.text_content()
+            artist = self.remove_whitespace(artist)
+            if artist:
+                artists.append(artist)
+        release_title_anchor = releaseContainer.cssselect('div.relReleaseName a')
+        if len(release_title_anchor) != 1:
+            self.raise_exception(u'could not get release name anchor')
+        release_title = release_title_anchor[0].text_content()
+        release_title = self.remove_whitespace(release_title)
+        return u', '.join(artists) + u' \u2013 ' + release_title
+
+    def get_release_info(self,releaseContainer):
+        components = []
+        label_div = releaseContainer.cssselect('div.relLabel')
+        if len(label_div) == 1:
+            label = label_div[0].text_content()
+            label = self.remove_whitespace(label)
+            if label:
+                components.append(label)
+        genre_div = releaseContainer.cssselect('div.relGenre')
+        if len(genre_div) == 1:
+            genre = genre_div[0].text_content()
+            genre = self.remove_whitespace(genre)
+            if genre:
+                components.append(genre)
+        if components:
+            return u' | '.join(components)
+        return None
+
+    def get_release_instance(self,releaseContainer):
+        release_title_anchor = releaseContainer.cssselect('div.relReleaseName a')
+        if len(release_title_anchor) != 1:
+            self.raise_exception(u'could not get release name anchor')
+        release_url = self._base_url + release_title_anchor[0].attrib['href']
+        return Release.release_from_url(release_url)
