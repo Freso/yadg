@@ -15,6 +15,7 @@ class Release(BaseRelease):
     _base_url = 'http://www.metal-archives.com/'
     url_regex = '^http://(?:www\.)?metal-archives\.com/albums/(.*?)/(.*?)/(\d+)$'
     exception = MetalarchivesAPIError
+    forced_response_encoding = 'utf-8'
 
     def __init__(self, id, release_artist = '', release_name = ''):
         self.id = id
@@ -36,12 +37,6 @@ class Release(BaseRelease):
 
     def get_release_url(self):
         return self._base_url + 'albums/%s/%s/%d' %(self._release_artist,self._release_name,self.id)
-
-    # the webserver doesn't send the correct encoding in the response headers,
-    # so we set them here manually
-    def get_response_content(self, response):
-        response.encoding = 'utf-8'
-        return super(Release, self).get_response_content(response)
 
     def _get_info_dict(self):
         if self._info_dict is None:
@@ -163,18 +158,13 @@ class Search(BaseSearch):
 
     url = 'http://www.metal-archives.com/search/ajax-album-search/'
     exception = MetalarchivesAPIError
+    forced_response_encoding = 'utf-8'
 
     def __unicode__(self):
         return u'<MetalarchivesSearch: term="' + self.search_term + u'">'
 
     def get_params(self):
         return {'field':'title', 'query':self.search_term}
-
-    # the webserver doesn't send the correct encoding in the response headers,
-    # so we set them here manually
-    def get_response_content(self, response):
-        response.encoding = 'utf-8'
-        return super(Search, self).get_response_content(response)
 
     def prepare_response_content(self, content):
         try:
