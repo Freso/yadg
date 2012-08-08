@@ -37,6 +37,12 @@ class Release(BaseRelease):
     def get_release_url(self):
         return self._base_url + 'albums/%s/%s/%d' %(self._release_artist,self._release_name,self.id)
 
+    # the webserver doesn't send the correct encoding in the response headers,
+    # so we set them here manually
+    def get_response_content(self, response):
+        response.encoding = 'utf-8'
+        return super(Release, self).get_response_content(response)
+
     def _get_info_dict(self):
         if self._info_dict is None:
             self._info_dict = {}
@@ -163,6 +169,12 @@ class Search(BaseSearch):
 
     def get_params(self):
         return {'field':'title', 'query':self.search_term}
+
+    # the webserver doesn't send the correct encoding in the response headers,
+    # so we set them here manually
+    def get_response_content(self, response):
+        response.encoding = 'utf-8'
+        return super(Search, self).get_response_content(response)
 
     def prepare_response_content(self, content):
         try:
