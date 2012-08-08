@@ -30,6 +30,7 @@ class RequestMixin(object):
     request_method = REQUEST_METHOD_GET
     post_data = None
     request_kwargs = {}
+    forced_response_encoding = None
 
     _cached_response = None
 
@@ -65,6 +66,9 @@ class RequestMixin(object):
     def get_request_kwargs(self):
         return self.request_kwargs
 
+    def get_forced_response_encoding(self):
+        return self.forced_response_encoding
+
     def get_response_content(self, response):
         return response.text
 
@@ -73,6 +77,9 @@ class RequestMixin(object):
             self._cached_response = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data(), kwargs=self.get_request_kwargs())
             if self._cached_response.status_code != 200:
                 self.raise_request_exception('%d' % (self._cached_response.status_code if self._cached_response.status_code else 500)) #make sure we don't crash
+            forced_encoding = self.get_forced_response_encoding()
+            if forced_encoding:
+                self._cached_response.encoding = forced_encoding
         return self._cached_response
 
 
