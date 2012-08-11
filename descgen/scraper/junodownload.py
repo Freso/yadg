@@ -13,7 +13,7 @@ class JunodownloadAPIError(BaseAPIError):
 class Release(BaseRelease):
 
     _base_url = 'http://www.junodownload.com/'
-    url_regex = '^http://(?:www\.)?junodownload\.com/products/(.*?)/(.*?)/$'
+    url_regex = '^http://(?:www\.)?junodownload\.com/products/([^/]*)/([^/]*)/?$'
     exception = JunodownloadAPIError
     request_kwargs = {'allow_redirects':False}
 
