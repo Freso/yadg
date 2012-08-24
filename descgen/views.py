@@ -1,5 +1,4 @@
 from descgen.forms import InputForm,FormatForm,SettingsForm
-from descgen.formatter import Formatter,FORMATS
 from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
 
 from django.shortcuts import render,redirect
@@ -8,6 +7,8 @@ from django.views.generic.base import View
 from django.views.generic.edit import FormView
 
 from djcelery.models import TaskMeta
+
+import unicodedata, re
 
 
 class IndexView(View, CreateTaskMixin):
@@ -48,12 +49,13 @@ class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
                     format = None
                 
                 (format,result) = self.get_formatted_description(data,format)
+                release_title = self.get_formatted_release_title(data)
                 
                 format_form = FormatForm(initial={'description_format':format})
                 
-                return render(request,'result.html',{'result':result, 'result_id':id, 'format_form':format_form, 'format':format, 'input_form':input_form})
+                return render(request,'result.html',{'result':result, 'result_id':id, 'release_title':release_title, 'additional_data':additional_data, 'format_form':format_form, 'format':format, 'input_form':input_form})
             elif type == 'list':
-                return render(request,'result_list.html',{'scraper_results':data,'input_form':input_form})
+                return render(request,'result_list.html',{'scraper_results':data, 'additional_data':additional_data, 'input_form':input_form})
             elif type == '404':
                 return render(request,'result_id_not_found.html',{'input_form':input_form})
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
@@ -62,21 +64,19 @@ class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
             return render(request,'result_waiting.html')
 
 
-class DownloadResultView(View):
+class DownloadResultView(View, GetDescriptionMixin):
     
-    def get(self, request, id, format):
+    def get(self, request, id, format, title):
         try:
             task = TaskMeta.objects.get(task_id=id)
         except TaskMeta.DoesNotExist:
             raise Http404
-        if task.status != 'SUCCESS' or task.result[0] != 'release' or not format in FORMATS:
+        format_cleaned = self.get_valid_format(format)
+        if task.status != 'SUCCESS' or task.result[0] != 'release' or format_cleaned != format:
             raise Http404
         data = task.result[1]
-        formatter = Formatter()
-        result = formatter.format(data,format)
-        filename = formatter.get_filename(data)
+        (format, result) = self.get_formatted_description(data, format)
         response = HttpResponse(result,mimetype='text/plain; charset=utf-8')
-        response['Content-Disposition'] = 'attachment; filename="%s.txt"' % filename if filename else str(id + '-' + format)
         return response
     
 

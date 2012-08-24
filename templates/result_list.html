@@ -1,12 +1,15 @@
 {% extends "base_with_form.html" %}
 
+{% block title %}Search result – {% endblock %}
+
 {% block subcontent %}{% if scraper_results %}<div class="well">
     <ul id="release_list">
     {% for scraper,release_list in scraper_results.items %}{% for entry in release_list %}
-    <li><a href="{% url index %}?input={{ entry.release.release_url|urlencode:"" }}" data-query-url="{% url api_v1_makequery %}?input={{ entry.release.release_url|urlencode:"" }}" data-release-url="{{ entry.release.release_url }}">{{ entry.name }}</a><br /><span class="label">{{ entry.info }}</span></li>
+    <li><a href="{% url index %}?input={{ entry.release.release_url|urlencode:"" }}">{{ entry.name }}</a><br /><span class="label">{{ entry.info }}</span></li>
     {% endfor %}{% endfor %}
     </ul></div>
     {% else %}
     <div class="alert alert-error">Sorry, there were no matches.</div>
     {% endif %}
-{% endblock %}
+
+    {% include "perma_link.html" %}{% endblock %}
