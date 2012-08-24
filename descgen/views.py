@@ -66,7 +66,7 @@ class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
 
 class DownloadResultView(View, GetDescriptionMixin):
     
-    def get(self, request, id, format):
+    def get(self, request, id, format, title):
         try:
             task = TaskMeta.objects.get(task_id=id)
         except TaskMeta.DoesNotExist:
@@ -75,19 +75,8 @@ class DownloadResultView(View, GetDescriptionMixin):
         if task.status != 'SUCCESS' or task.result[0] != 'release' or format_cleaned != format:
             raise Http404
         data = task.result[1]
-        result = self.get_formatted_description(data, format)
-        filename = self.get_formatted_release_title(data)
-        # asciify the filename and clean it up
-        unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore')
-        filename = re.sub(r'[^\w\s\-&,.]', '', filename).strip()
-        if filename == '-':
-            filename = str(id + '-' + format)
-        elif filename.startswith('-'):
-            filename = filename[1:].strip()
-        elif filename.endswith('-'):
-            filename = filename[:-1].strip()
+        (format, result) = self.get_formatted_description(data, format)
         response = HttpResponse(result,mimetype='text/plain; charset=utf-8')
-        response['Content-Disposition'] = 'attachment; filename="%s.txt"' % filename
         return response
     
 
