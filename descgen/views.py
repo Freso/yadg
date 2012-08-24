@@ -49,10 +49,11 @@ class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
                     format = None
                 
                 (format,result) = self.get_formatted_description(data,format)
+                release_title = self.get_formatted_release_title(data)
                 
                 format_form = FormatForm(initial={'description_format':format})
                 
-                return render(request,'result.html',{'result':result, 'result_id':id, 'format_form':format_form, 'format':format, 'input_form':input_form})
+                return render(request,'result.html',{'result':result, 'result_id':id, 'release_title':release_title, 'format_form':format_form, 'format':format, 'input_form':input_form})
             elif type == 'list':
                 return render(request,'result_list.html',{'scraper_results':data,'input_form':input_form})
             elif type == '404':
