@@ -1,0 +1,1 @@
+{% load absoluteurl %}{% load urlencode %}<div class="well"><label for="result_permalink_input">Permalink to this result:</label><input readonly="readonly" type="text" value="{% absolute_url request "index" %}?{{ additional_data|real_urlencode }}" id="result_permalink_input" /></div>

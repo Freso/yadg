@@ -53,9 +53,9 @@ class ResultView(View, GetDescriptionMixin, CreateTaskMixin):
                 
                 format_form = FormatForm(initial={'description_format':format})
                 
-                return render(request,'result.html',{'result':result, 'result_id':id, 'release_title':release_title, 'format_form':format_form, 'format':format, 'input_form':input_form})
+                return render(request,'result.html',{'result':result, 'result_id':id, 'release_title':release_title, 'additional_data':additional_data, 'format_form':format_form, 'format':format, 'input_form':input_form})
             elif type == 'list':
-                return render(request,'result_list.html',{'scraper_results':data,'input_form':input_form})
+                return render(request,'result_list.html',{'scraper_results':data, 'additional_data':additional_data, 'input_form':input_form})
             elif type == '404':
                 return render(request,'result_id_not_found.html',{'input_form':input_form})
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
