@@ -41,7 +41,10 @@ class GetDescriptionMixin(object):
         format = self.get_valid_format(format)
         
         return (format,self.formatter.format(data,format))
-    
+
+    def get_formatted_release_title(self, data):
+        return self.formatter.get_release_title(data)
+
     def get_valid_format(self, format):
         if not format:
             format = self.request.session.get("default_format", FORMAT_DEFAULT)

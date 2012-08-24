@@ -1,0 +1,1 @@
+{% load artistsbytype %}{% load wrapartists %}{% with main_artists=artists|artistsbytype:"Main" %}{% wrapartists main_artists "%s" ", " " & " %}{% endwith %}{% with featured_artists=artists|artistsbytype:"Feature" %}{% if featured_artists %} feat. {% wrapartists featured_artists "%s" ", " " & " %}{% endif %}{% endwith %} - {{ title }}
