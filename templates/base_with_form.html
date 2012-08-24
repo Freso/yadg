@@ -1,24 +1,22 @@
 {% extends "base.html" %}
 
-{% block additionalHeaders %}<script src="http://yui.yahooapis.com/3.4.1/build/yui/yui-min.js"></script>
+{% block additionalHeaders %}<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="{{ STATIC_URL }}js/bootstrap-tooltip.min.js"></script>
 
 <script type="text/javascript">
-YUI().use('node','event', function (Y) {
-    Y.on('domready', function(e) {
-        var format_select = Y.all('#id_description_format');
-        format_select.each(function(node,index,nodelist) {
-            node.on('change',function(e) {
-                e.preventDefault();
-                Y.one('#format_form').submit();
-            });
-        });
+$(document).ready(function() {
+    $('html').addClass('jquery-js-enabled');
 
-        Y.all('#result_permalink_input').each(function(node,index,nodelist) {
-            node.on('focus',function(e){
-                e.preventDefault();
-                node.select();
-            });
-        });
+    $('#permalink_tooltip').tooltip();
+
+    $('#id_description_format').change(function(e) {
+        e.preventDefault();
+        $('#format_form').submit();
+    });
+
+    $('#result_permalink_input').focus(function(e) {
+        e.preventDefault();
+        $(this).select();
     });
 });
 </script>
