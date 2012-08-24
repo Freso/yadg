@@ -3,4 +3,4 @@
 {% block title%}{{ release_title }} – {% endblock %}
 
 {% block subcontent %}<div class="well"><textarea id="description_area">{{ result }}</textarea>
-<a href="{% url download_result result_id format %}" id="download_link" class="btn">Download as .txt</a> {% include "format_form.html" %}</div>{% endblock %}
+<a href="{% url download_result result_id format release_title %}" id="download_link" class="btn">Download as .txt</a> {% include "format_form.html" %}</div>{% endblock %}
