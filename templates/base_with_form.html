@@ -12,6 +12,13 @@ YUI().use('node','event', function (Y) {
                 Y.one('#format_form').submit();
             });
         });
+
+        Y.all('#result_permalink_input').each(function(node,index,nodelist) {
+            node.on('focus',function(e){
+                e.preventDefault();
+                node.select();
+            });
+        });
     });
 });
 </script>
