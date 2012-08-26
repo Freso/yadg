@@ -34,7 +34,7 @@ class Release(BaseRelease):
     def _split_infos(self, info_string):
         components = info_string.split(',')
         #remove leading and trailing whitespace
-        components = map(lambda x: x.rstrip().lstrip(), components)
+        components = map(lambda x: x.strip(), components)
         #remove empty elements
         components = filter(lambda x: x, components)
         return components
@@ -162,13 +162,13 @@ class Release(BaseRelease):
     def get_genres(self):
         if self.additional_infos.has_key('genre'):
             genre_string = self.additional_infos['genre']
-            return self._split_infos(genre_string)
+            return map(lambda x: x.strip(' &'),self._split_infos(genre_string))
         return []
 
     def get_styles(self):
         if self.additional_infos.has_key('style'):
             style_string = self.additional_infos['style']
-            return self._split_infos(style_string)
+            return map(lambda x: x.strip(' &'),self._split_infos(style_string))
         return []
 
     def get_disc_containers(self):
