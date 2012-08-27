@@ -65,7 +65,7 @@ class Release(BaseRelease):
     def get_release_date(self):
         release_date_span = self.parsed_response.cssselect('div#left-stack li.release-date span.label')
         if len(release_date_span) != 1:
-            self.raise_exception('could not find release data span')
+            self.raise_exception(u'could not find release data span')
         release_date = release_date_span[0].tail
         release_date = self.remove_whitespace(release_date)
         if release_date:
@@ -75,7 +75,7 @@ class Release(BaseRelease):
     def get_release_title(self):
         title_h1 = self.parsed_response.cssselect('div#title h1')
         if len(title_h1) != 1:
-            self.raise_exception('could not find release title h1')
+            self.raise_exception(u'could not find release title h1')
         title = title_h1[0].text_content()
         title = self.remove_whitespace(title)
         if title:
@@ -86,7 +86,7 @@ class Release(BaseRelease):
         artists = []
         artist_h2 = self.parsed_response.cssselect('div#title h2')
         if len(artist_h2) != 1:
-            self.raise_exception('could not find artist h2')
+            self.raise_exception(u'could not find artist h2')
         artist_h2 = artist_h2[0]
         if artist_h2.text_content() == 'Various Artists':
             artists.append(self.format_artist(self.ARTIST_NAME_VARIOUS, self.ARTIST_TYPE_MAIN))
@@ -134,7 +134,7 @@ class Release(BaseRelease):
     def get_track_number(self, trackContainer):
         track_num_span = trackContainer.cssselect('td.index span.index span')
         if len(track_num_span) != 1:
-            self.raise_exception('could not get track number span')
+            self.raise_exception(u'could not get track number span')
         track_num = track_num_span[0].text_content()
         track_num = self.remove_whitespace(track_num)
         if track_num:
@@ -159,7 +159,7 @@ class Release(BaseRelease):
     def get_track_title(self, trackContainer):
         track_title_td = trackContainer.cssselect('td.name')
         if len(track_title_td) != 1:
-            self.raise_exception('could not find track title td')
+            self.raise_exception(u'could not find track title td')
         track_title = track_title_td[0].text_content()
         track_title = self.remove_whitespace(track_title)
         if track_title:
@@ -169,7 +169,7 @@ class Release(BaseRelease):
     def get_track_length(self, trackContainer):
         track_length_td = trackContainer.cssselect('td.time')
         if len(track_length_td) != 1:
-            self.raise_exception('could not find track length td')
+            self.raise_exception(u'could not find track length td')
         track_length = track_length_td[0].text_content()
         track_length = self.remove_whitespace(track_length)
         if track_length:
