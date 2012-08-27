@@ -231,22 +231,19 @@ class Release(BaseRelease):
             track_artist = self.remove_whitespace(track_artist)
             track_artist = self._prepare_artist_name(track_artist)
             track_artists.append(self.format_artist(track_artist, self.ARTIST_TYPE_MAIN))
-            #there might be featuring artists in the track column
+        #there might be featuring artists in the track column
         blockquote = track.cssselect('blockquote')
         if len(blockquote) == 1:
             blockquote = blockquote[0]
-            serialized = lxml.etree.tostring(blockquote, encoding='utf-8').decode('utf-8')
-            serialized = serialized.replace(u'<blockquote>',u'').replace(u'</blockquote>',u'')
-            lines = serialized.split(u'<br/>')
-            lines = map(lambda x: self.remove_whitespace(x), lines)
-            for line in lines:
-                if re.match(u'(?s).*(Featuring|Remix).*\u2013.*',line):
-                    if u'Featuring' in line:
+            extra_artist_spans = blockquote.cssselect('span.tracklist_extra_artist_span')
+            for extra_artist_span in extra_artist_spans:
+                span_text = extra_artist_span.text_content()
+                if re.match(u'(?s).*(Featuring|Remix).*\u2013.*', span_text):
+                    if u'Featuring' in span_text:
                         track_artist_type = self.ARTIST_TYPE_FEATURE
-                    elif u'Remix' in line:
+                    elif u'Remix' in span_text:
                         track_artist_type = self.ARTIST_TYPE_REMIXER
-                    div =  lxml.html.fragment_fromstring(line, create_parent='div')
-                    track_featuring_elements = div.cssselect('a')
+                    track_featuring_elements = extra_artist_span.cssselect('a')
                     for track_featuring_element in track_featuring_elements:
                         track_feature = track_featuring_element.text_content()
                         track_feature = self.remove_whitespace(track_feature)
