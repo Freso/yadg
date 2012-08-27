@@ -12,25 +12,25 @@ class iTunesAPIError(BaseAPIError):
 
 class Release(BaseRelease):
 
-    _base_url = 'http://itunes.apple.com/us/album/'
-    url_regex = '^http(?:s)?://itunes\.apple\.com/\w{2}/album/([^/]*)/([^\?]+)[^/]*$'
+    _base_url = 'http://itunes.apple.com/%s/album/'
+    url_regex = '^http(?:s)?://itunes\.apple\.com/(\w{2})/album/([^/]*)/([^\?]+)[^/]*$'
     exception = iTunesAPIError
 
     exclude_genres = ['music',]
 
-    def __init__(self, release_name, id):
+    def __init__(self, store, release_name, id):
         self.id = id
-
+        self.store = store
         self._release_name = release_name
 
     def __unicode__(self):
-        return u'<iTunesRelease: id=%s>' % self.id
+        return u'<iTunesRelease: id=%s, store=%s>' % (self.id, self.store)
 
     def get_url(self):
-        return self._base_url + '/' + self.id
+        return self._base_url % self.store + '/' + self.id
 
     def get_release_url(self):
-        return self._base_url + self._release_name + '/' + self.id + '?ign-mpt=uo%3D4'
+        return self._base_url % self.store + self._release_name + '/' + self.id + '?ign-mpt=uo%3D4'
 
     def get_params(self):
         return {'ign-mpt':'uo%3D4'}
@@ -45,10 +45,9 @@ class Release(BaseRelease):
         self.parsed_response = lxml.html.document_fromstring(content)
 
         #if the release does not exist, the website wants to connect to iTunes
-        ps = self.parsed_response.cssselect('p.subtitle')
-        for p in ps:
-            if p.text_content() == 'Connecting to the iTunes Store.':
-                self.raise_exception(u'404')
+        warning_div = self.parsed_response.cssselect('div.loadingbox')
+        if len(warning_div) == 1:
+            self.raise_exception(u'404')
 
         #we have to check if the track artist of each track equals the release artist
         artist_h2 = self.parsed_response.cssselect('div#title h2')
