@@ -156,10 +156,10 @@ class Release(BaseRelease):
         return track_artists
 
     def get_track_title(self, trackContainer):
-        track_title_td = trackContainer.cssselect('td.name')
-        if len(track_title_td) != 1:
+        track_title_span = trackContainer.cssselect('td.name span span.text')
+        if len(track_title_span) != 1:
             self.raise_exception(u'could not find track title td')
-        track_title = track_title_td[0].text_content()
+        track_title = track_title_span[0].text_content()
         track_title = self.remove_whitespace(track_title)
         if track_title:
             return track_title
