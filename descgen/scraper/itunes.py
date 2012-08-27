@@ -13,7 +13,7 @@ class iTunesAPIError(BaseAPIError):
 class Release(BaseRelease):
 
     _base_url = 'http://itunes.apple.com/%s/album/'
-    url_regex = '^http(?:s)?://itunes\.apple\.com/(\w{2})/album/([^/]*)/([^\?]+)[^/]*$'
+    url_regex = '^http(?:s)?://itunes\.apple\.com/(\w{2,4})/album/([^/]*)/([^\?]+)[^/]*$'
     exception = iTunesAPIError
 
     exclude_genres = ['music',]
