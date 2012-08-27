@@ -1,4 +1,4 @@
-import discogs, musicbrainz, beatport, metalarchives, audiojelly, junodownload
+import discogs, musicbrainz, beatport, metalarchives, audiojelly, junodownload, itunes
 
 _SCRAPERS = {
     'discogs':discogs,
@@ -7,6 +7,7 @@ _SCRAPERS = {
     'metalarchives':metalarchives,
     'audiojelly':audiojelly,
     'junodownload':junodownload,
+    'itunes':itunes,
 }
 
 _SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
@@ -27,6 +28,7 @@ SCRAPER_EXCEPTIONS = (
     metalarchives.MetalarchivesAPIError,
     audiojelly.AudiojellyAPIError,
     junodownload.JunodownloadAPIError,
+    itunes.iTunesAPIError,
 )
 
 
