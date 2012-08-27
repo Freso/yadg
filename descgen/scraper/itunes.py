@@ -44,6 +44,12 @@ class Release(BaseRelease):
         #get the raw response content and parse it
         self.parsed_response = lxml.html.document_fromstring(content)
 
+        #if the release does not exist, the website wants to connect to iTunes
+        ps = self.parsed_response.cssselect('p.subtitle')
+        for p in ps:
+            if p.text_content() == 'Connecting to the iTunes Store.':
+                self.raise_exception(u'404')
+
         #we have to check if the track artist of each track equals the release artist
         artist_h2 = self.parsed_response.cssselect('div#title h2')
         track_artist_tds = self.parsed_response.cssselect('table.tracklist-table tbody tr td.artist')
