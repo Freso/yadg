@@ -51,7 +51,7 @@ class Release(BaseRelease):
 
         #we have to check if the track artist of each track equals the release artist
         artist_h2 = self.parsed_response.cssselect('div#title h2')
-        track_artist_tds = self.parsed_response.cssselect('table.tracklist-table tbody tr td.artist')
+        track_artist_tds = self.parsed_response.cssselect('table.tracklist-table tbody tr.song.music td.artist')
         self._release_artist_equal_track_artists = True
         if len(artist_h2) == 1:
             release_artist = artist_h2[0].text_content()
@@ -110,7 +110,7 @@ class Release(BaseRelease):
 
     def get_disc_containers(self):
         discs = {}
-        tracklist_trs = self.parsed_response.cssselect('table.tracklist-table tbody tr')
+        tracklist_trs = self.parsed_response.cssselect('table.tracklist-table tbody tr.song.music')
         for tracklist_tr in tracklist_trs:
             children = tracklist_tr.getchildren()
             if len(children) != 6:
