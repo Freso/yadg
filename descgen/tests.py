@@ -254,7 +254,7 @@ class MusicbrainzTest(TestCase):
                                   ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
                                    u'Paracetamoltr\xe4ume', '8:37'),
                                   ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'},
-                                          {'type': 'Main', 'name': u'Ralph M\xfcller'}],
+                                          {'type': 'Feature', 'name': u'Ralph M\xfcller'}],
                                    u'Auszug aus \u201eTremendista\u201c', '24:33'),
                                   ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
                                    'Campari O', '2:39')],

@@ -267,18 +267,18 @@ class Release(BaseRelease):
         else:
             self.raise_exception(u'track row has not the right amount of columns')
         track_artists = []
-        track_artists_names = []
         if artist_td is not None:
             track_artist_links = artist_td.cssselect('a')
             if len(track_artist_links) == 0:
                 self.raise_exception(u'could not get track artists')
+            is_feature = False
             for track_artist_a in track_artist_links:
                 track_artist = self.remove_whitespace(track_artist_a.text_content())
                 if track_artist == 'Various Artists':
                     track_artist = self.ARTIST_NAME_VARIOUS
-                if not track_artist in track_artists_names:
-                    track_artists.append(self.format_artist(track_artist, self.ARTIST_TYPE_MAIN))
-                    track_artists_names.append(track_artist)
+                track_artists.append(self.format_artist(track_artist, self.ARTIST_TYPE_MAIN if not is_feature else self.ARTIST_TYPE_FEATURE))
+                if track_artist_a.tail and u'feat.' in track_artist_a.tail:
+                    is_feature = True
         return track_artists
 
     def get_track_title(self, trackContainer):
