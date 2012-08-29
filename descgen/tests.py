@@ -577,7 +577,8 @@ class JunodownloadTest(TestCase):
                     ('3', [], 'Westbam - The Original Feelings (continuous DJ mix)', '1:09:03'),
                     ('4', [], "Westbam - Don't Look Back In Anger (short mix)", '03:21'),
                     ('5', [], 'The Love Committee - Love Rules', '06:52'), (
-                    '6', [], 'WestBam & The Love Committee - Love Is Everywhere (New Location) (original mix)', '07:19')
+                        '6', [], 'WestBam & The Love Committee - Love Is Everywhere (New Location) (original mix)',
+                        '07:19')
                     , ('7', [], 'WestBam & The Love Committee - Highway To Love (Final remix)', '07:40'),
                     ('8', [], 'WestBam & The Love Committee - United States Of Love', '07:01'),
                     ('9', [], 'Dr Motte & Westbam presents - Sunshine', '04:04'),
@@ -663,5 +664,221 @@ class JunodownloadTest(TestCase):
             r.data
             self.assertFalse(True)
         except junodownload.JunodownloadAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
+
+
+class ITunesTest(TestCase):
+    def test_simple_album(self):
+        expected = {'title': 'Love (Remastered)', 'released': '1985', 'discs': {
+            1: [('1', [], 'Nirvana', '5:26'), ('2', [], 'Big Neon Glitter', '4:51'), ('3', [], 'Love', '5:29'),
+                ('4', [], 'Brother Wolf, Sister Moon', '6:47'), ('5', [], 'Rain', '3:56'), ('6', [], 'Phoenix', '5:06'),
+                ('7', [], 'Hollow Man', '4:45'), ('8', [], 'Revolution', '5:26'),
+                ('9', [], 'She Sells Sanctuary', '4:23'), ('10', [], 'Black Angel', '5:22')]},
+                    'link': 'http://itunes.apple.com/us/album/love-remastered/id3022929?ign-mpt=uo%3D4',
+                    'artists': [{'type': 'Main', 'name': 'The Cult'}],
+                    'genre': ['Rock', 'Adult Alternative', 'Hard Rock', 'Alternative', 'Goth Rock', 'College Rock']}
+
+        r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/love-remastered/id3022929?ign-mpt=uo%3D4')
+
+        self.assertEqual(expected, r.data)
+
+    def test_multiple_cds(self):
+        expected = {'title': 'Requiembryo', 'released': 'Mar 29, 2003', 'discs': {
+            1: [('1', [], u'\xf7Ff\xe4hrte', '5:55'), ('2', [], 'Coming Home', '4:47'),
+                ('3', [], 'De Profundis', '3:53'), ('4', [], u'Pavor Diurnus (Fremde Tr\xe4ume 1)', '1:23'),
+                ('5', [], 'Duett (Das Minnellied der Incubi)', '4:37'), ('6', [], 'Schmetterflug', '2:58'),
+                ('7', [], 'Frostbrand', '5:22'), ('8', [], 'Ich bin ein wahrer Satan', '5:55'),
+                ('9', [], 'Erinnerungen eines Fremden', '2:16'), ('10', [], 'Raserei', '5:13'),
+                ('11', [], 'Das Erwachen', '7:03'), ('12', [], 'Erinnerungen eines Fremden (Reprise)', '1:23'),
+                ('13', [], 'Finger Weg! Finger!', '3:37')], 2: [('1', [], 'Requiem 01 - Introitus Interruptus', '3:21'),
+                ('2', [], 'Requiem 02 - Kyrie Elesion Mercy', '3:47'),
+                ('3', [], 'Requiem 03 - Kyrie Litani Agnus Die', '2:34'),
+                ('4', [], 'Requiem 04 - Die arIse (Sequenz)', '5:28'),
+                ('5', [], 'Requiem 05 - Nimm Mich! (Suffertorium)', '3:33'),
+                ('6', [], 'Requiem 06 - Sanctus/ Benedictus', '2:38'), ('7', [], 'Requiem 07 - Lux Aeterna', '0:52'),
+                ('8', [], 'Requiem 08 - Hymnus Heaven', '2:55'), ('9', [], 'Requiem 09 - Exsequien Hell', '2:42'),
+                ('10', [], 'Nekrolog', '5:00'), ('11', [], u'Pavor Nocturnis (Fremde Tr\xe4ume 2)', '1:04'),
+                ('12', [], 'Biotopia', '6:26'), ('13', [], 'How Far Would You Go?', '4:06'),
+                ('14', [], 'Nie Mehr', '6:03'), ('15', [], u'Off\xe4hrte (Reprise)', '1:17')]},
+                    'link': 'http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4',
+                    'artists': [{'type': 'Main', 'name': 'ASP'}],
+                    'genre': ['Rock', 'Alternative', 'Goth Rock', 'Metal']}
+
+        r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4')
+
+        self.assertEqual(expected, r.data)
+
+    def test_various_artists(self):
+        expected = {'title': '2011 Warped Tour Compilation', 'released': 'Jun 07, 2011', 'discs': {
+            1: [('1', [{'type': 'Main', 'name': 'Paramore'}], "For a Pessimist, I'm Pretty Optimistic", '3:48'),
+                ('2', [{'type': 'Main', 'name': 'A Day to Remember'}], 'All Signs Point to Lauderdale', '3:17'),
+                ('3', [{'type': 'Main', 'name': 'Set Your Goals'}], 'Certain', '3:01'),
+                ('4', [{'type': 'Main', 'name': 'The Devil Wears Prada'}], 'Anatomy', '3:46'),
+                ('5', [{'type': 'Main', 'name': 'Asking Alexandria'}], 'Closure', '3:58'),
+                ('6', [{'type': 'Main', 'name': 'Attack Attack! (US)'}], 'A for Andrew', '3:22'),
+                ('7', [{'type': 'Main', 'name': 'Big D and the Kids Table'}], 'Modern American Gypsy', '2:38'),
+                ('8', [{'type': 'Main', 'name': 'Vonnegutt'}], 'Bright Eyes', '3:20'),
+                ('9', [{'type': 'Main', 'name': 'Moving Mountains'}], 'Where Two Bodies Lie', '4:17'),
+                ('10', [{'type': 'Main', 'name': 'The Wonder Years'}], "Don't Let Me Cave In", '3:23'),
+                ('11', [{'type': 'Main', 'name': 'Neo Geo'}], "Can't Catch Me", '3:24'),
+                ('12', [{'type': 'Main', 'name': 'Hellogoodbye'}], 'Finding Something to Do', '2:55'),
+                ('13', [{'type': 'Main', 'name': 'Family Force 5'}], 'Wobble', '3:42'),
+                ('14', [{'type': 'Main', 'name': 'Abandon All Ships'}], 'Take One Last Breath', '3:39'),
+                ('15', [{'type': 'Main', 'name': 'Of Mice & Men'}], 'Purified', '3:35'),
+                ('16', [{'type': 'Main', 'name': 'Veara'}], 'Pull Your Own Weight', '2:55'),
+                ('17', [{'type': 'Main', 'name': 'The Dangerous Summer'}], 'Good Things', '3:38'),
+                ('18', [{'type': 'Main', 'name': 'Every Avenue'}], "Tell Me I'm a Wreck", '3:39'),
+                ('19', [{'type': 'Main', 'name': 'A Skylit Drive'}], 'Too Little Too Late', '3:11'),
+                ('20', [{'type': 'Main', 'name': 'Big Chocolate'}], 'Sound of My Voice (feat. Weerd Science)', '3:30'),
+                ('21', [{'type': 'Main', 'name': 'The Dance Party'}], "Sasha Don't Sleep", '3:27'),
+                ('22', [{'type': 'Main', 'name': 'Street Dogs'}], 'Punk Rock and Roll', '2:34'),
+                ('23', [{'type': 'Main', 'name': 'Blacklist Royals'}], 'Riverside', '2:55'),
+                ('24', [{'type': 'Main', 'name': 'Elway'}], 'Whispers In a Shot Glass', '1:39'),
+                ('25', [{'type': 'Main', 'name': 'The Copyrights'}], 'Worn Out Passport', '2:05'),
+                ('26', [{'type': 'Main', 'name': 'Against Me!'}], 'Because of the Shame', '4:20'),
+                ('27', [{'type': 'Main', 'name': 'Lucero'}], "I Don't Wanna Be the One", '3:09'),
+                ('28', [{'type': 'Main', 'name': 'August Burns Red'}], 'Meddler', '3:53'),
+                ('29', [{'type': 'Main', 'name': 'Dance Gavin Dance'}], 'Pounce Bounce', '2:26'),
+                ('30', [{'type': 'Main', 'name': 'Larry and His Flask'}], 'Blood Drunk', '3:34'),
+                ('31', [{'type': 'Main', 'name': 'River City Extension'}], 'Our New Intelligence', '3:54'),
+                ('32', [{'type': 'Main', 'name': 'Brothers Of Brazil'}], 'Samba Around the Clock', '2:39'),
+                ('33', [{'type': 'Main', 'name': 'Lionize'}], 'Your Trying to Kill Me', '2:48'),
+                ('34', [{'type': 'Main', 'name': 'The Agrrolites'}], 'Complicated Girl', '2:04'),
+                ('35', [{'type': 'Main', 'name': 'The Black Pacific'}], 'The System', '2:43'),
+                ('36', [{'type': 'Main', 'name': 'Sharks'}], 'It All Relates', '3:10'),
+                ('37', [{'type': 'Main', 'name': 'The Menzingers'}], 'Deep Sleep', '2:37'),
+                ('38', [{'type': 'Main', 'name': 'Go Radio'}], 'Any Other Heart', '3:52'),
+                ('39', [{'type': 'Main', 'name': 'There for Tomorrow'}], 'The Joyride', '4:09'),
+                ('40', [{'type': 'Main', 'name': 'Places and Numbers'}], 'Notes from the Dead Zone', '3:05'),
+                ('41', [{'type': 'Main', 'name': 'Grieves'}], 'Bloody Poetry', '3:21'),
+                ('42', [{'type': 'Main', 'name': 'I Set My Friends On Fire'}], 'It Comes Naturally', '3:36'),
+                ('43', [{'type': 'Main', 'name': 'Woe, Is Me'}], '[&] Delinquents', '2:55'),
+                ('44', [{'type': 'Main', 'name': 'Miss May I'}], 'Relentless Chaos', '3:25'),
+                ('45', [{'type': 'Main', 'name': 'Motionless In White'}], 'Creatures', '3:47'),
+                ('46', [{'type': 'Main', 'name': 'The Word Alive'}], '2012', '3:01'),
+                ('47', [{'type': 'Main', 'name': 'Sick of Sarah'}], 'Autograph', '3:13'),
+                ('48', [{'type': 'Main', 'name': 'The Darlings'}], 'Hypnotize', '3:13'),
+                ('49', [{'type': 'Main', 'name': 'To Your Demised'}], 'The Exposed', '3:29'),
+                ('50', [{'type': 'Main', 'name': 'No Reservations'}], 'Continental', '3:31'),
+                ('51', [{'type': 'Main', 'name': 'Winds Of Plauge'}], 'California', '3:28'),
+                ('52', [{'type': 'Main', 'name': "That's Outrageous!"}], '#Winning', '2:42'),
+                ('53', [{'type': 'Main', 'name': 'Eyes Set To Kill'}], 'The Secrets Between', '3:47'),
+                ('54', [{'type': 'Main', 'name': 'Verah Falls'}], 'A Family Affair', '5:21'),
+                ('55', [{'type': 'Main', 'name': 'The Human Abstract'}], 'Horizon to Zenith', '4:19')]},
+                    'link': 'http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4',
+                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Alternative']}
+
+        r = itunes.Release.release_from_url(
+            'http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4')
+
+        self.assertEqual(expected, r.data)
+
+    def test_non_us_store(self):
+        expected = {'title': u'Puissance Ra\xef RnB 2011', 'released': '14 mars 2011', 'discs': {1: [(
+        '1', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Alger Casa Tunis...Ou Paris (Feat. Ap Du 113 & Reda Taliani)',
+        '4:23'), ('2', [{'type': 'Main', 'name': "L'Algerino"}], 'Marseille By Night', '3:40'),
+            ('3', [{'type': 'Main', 'name': 'El Matador'}], 'Allez Allez (Feat. Amar)', '3:30'),
+            ('4', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Bolly Rai (Feat. Tlf, Rayan & Amal)', '3:45'),
+            ('5', [{'type': 'Main', 'name': 'Hasni'}], 'Rani Mourak', '3:54'),
+            ('6', [{'type': 'Main', 'name': 'Zinou le Parisien'}], 'Enti Balouta', '3:48'),
+            ('7', [{'type': 'Main', 'name': 'Black Barbie'}], 'Amour Kabyle (Feat. Alilou)', '3:51'),
+            ('8', [{'type': 'Main', 'name': 'Cheb Sahraoui'}], 'Hasni', '3:50'),
+            ('9', [{'type': 'Main', 'name': 'Marsaoui'}], 'Petitates', '3:53'),
+            ('10', [{'type': 'Main', 'name': 'Rimitti'}], 'Hina Ou Hina', '3:58'),
+            ('11', [{'type': 'Main', 'name': 'Rachida'}], "Ya H'Bibi", '3:48'),
+            ('12', [{'type': 'Main', 'name': 'Ouarda'}], "Haya N'Aaaoulou", '3:47'),
+            ('13', [{'type': 'Main', 'name': 'Chaba Djenet'}], 'Jalouse', '4:14'),
+            ('14', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Always On My Mind (Feat. Big Ali & Mohamed Lamine)', '3:20'),
+            ('15', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Chehal Fia Houssad Yehadrou', '4:06'),
+            ('16', [{'type': 'Main', 'name': 'Cheb Abbes'}], "L'Histoire Maak Bdate", '4:15'),
+            ('17', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Habssine', '4:12'),
+            ('18', [{'type': 'Main', 'name': 'Cheba Faiza'}], 'Mathawache Alia', '4:16'),
+            ('19', [{'type': 'Main', 'name': 'Faycal'}], 'Manfoutakche Explosif Mix By Dj Meyd', '4:40'), (
+            '20', [{'type': 'Main', 'name': 'DJ Idsa'}],
+            'Tout Le Monde Danse (Remix) [Feat. Jesse Matador & Amal & Dollarman]', '3:40'),
+            ('21', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Rai Afrika (Feat. Big Ali)', '3:07'),
+            ('22', [{'type': 'Main', 'name': 'Sixieme Sens'}], 'Citoyens Du Monde (Exclus) [Feat. Rahib]', '4:27'),
+            ('23', [{'type': 'Main', 'name': 'Cheb Fouzi'}], 'On Va Danser (Feat. Alibi Montana)', '3:24'),
+            ('24', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Hit The Rai Floor (Feat. Big Ali & Cheb Akil)', '3:44'),
+            ('25', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Laab Baid', '3:12'),
+            ('26', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Manbghiche Alik (Feat. Mc Harage & Dj Faouzi)', '4:12'),
+            ('27', [{'type': 'Main', 'name': 'Houari Manar'}], 'One Two Three Khala Galbi Yevibri', '4:05'),
+            ('28', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Bla Bik', '3:58'),
+            ('29', [{'type': 'Main', 'name': 'Ouarda'}], 'Bouya', '3:58'),
+            ('30', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Chicoter (Feat. Jacky Brown & Akil)', '4:01'),
+            ('31', [{'type': 'Main', 'name': 'Faycal'}], 'Mathawsich Alia By Dj Zahir', '2:23'),
+            ('32', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Ya Loukane Galbak', '3:57'),
+            ('33', [{'type': 'Main', 'name': 'Hasni Seghir'}], 'Gouli Wine Rak Anaya Nejika', '4:59'), (
+            '34', [{'type': 'Main', 'name': 'Dj Goldfingers'}], 'La Corniche (Feat. Tunisiano & Zahouania) [Remix]',
+            '4:03'),
+            ('35', [{'type': 'Main', 'name': 'Elephant Man'}], 'Bullit (Feat. Mokobe Du 113 & Sheryne)', '3:21'),
+            ('36', [{'type': 'Main', 'name': 'Rachida'}], 'Aar Rabi', '4:59'),
+            ('37', [{'type': 'Main', 'name': 'Hasni'}], 'Ayet Manaalam', '5:13'),
+            ('38', [{'type': 'Main', 'name': 'Shyneze'}], 'All Rai On Me (Feat. Mohamed Lamine)', '3:23'),
+            ('39', [{'type': 'Main', 'name': 'Swen'}], 'Emmene Moi (Feat. Najim)', '3:43'),
+            ('40', [{'type': 'Main', 'name': "L'Algerino"}], "M'Zia (Feat. Reda Taliani)", '3:54')], 2: [
+            ('1', [{'type': 'Main', 'name': 'Algeria United'}], '1 2 3 Viva Algeria', '4:39'),
+            ('2', [{'type': 'Main', 'name': 'Milano & Torino'}], 'Fort Fort', '3:24'),
+            ('3', [{'type': 'Main', 'name': 'Hasni'}], 'Consulat', '3:52'),
+            ('4', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Ca Passe Ou Ca Casse (Feat. Tunisiano)', '3:06'),
+            ('5', [{'type': 'Main', 'name': 'Cheb Sahraoui'}], 'Pas De Chance', '4:07'),
+            ('6', [{'type': 'Main', 'name': 'Marsaoui'}], 'Rani Mara Hna', '4:06'),
+            ('7', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Adabtek Nti Bizarre', '4:03'),
+            ('8', [{'type': 'Main', 'name': 'Chaba Djenet'}], 'Kedab', '4:11'),
+            ('9', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Achekek Abonne Duo Avec Abbes', '3:40'),
+            ('10', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Fidel (Feat. Amine Dib)', '3:50'),
+            ('11', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Bafana Bafana', '4:44'),
+            ('12', [{'type': 'Main', 'name': 'Ouarda'}], 'Dalmouni', '3:55'),
+            ('13', [{'type': 'Main', 'name': 'Rachida'}], 'Sabat El Ouarda', '4:05'),
+            ('14', [{'type': 'Main', 'name': 'Rimitti'}], 'Rah Glaibi Andak', '3:43'),
+            ('15', [{'type': 'Main', 'name': 'Zinou le Parisien'}], 'Ma Nebghik', '4:31'),
+            ('16', [{'type': 'Main', 'name': 'Cheba Faiza'}], 'Galbi 4 Giga', '3:59'),
+            ('17', [{'type': 'Main', 'name': 'Cheba Kheira'}], 'Dayarni Fi Ainih', '3:44'),
+            ('18', [{'type': 'Main', 'name': 'Faycal'}], 'Nesimik Omri Youy Youy', '3:56'),
+            ('19', [{'type': 'Main', 'name': 'Hasni Seghir'}], 'Andi Madama', '3:39'),
+            ('20', [{'type': 'Main', 'name': 'Houari Manar'}], 'Charikat Non Tehleb', '3:37'),
+            ('21', [{'type': 'Main', 'name': 'Khaled'}], 'Aicha', '4:15'),
+            ('22', [{'type': 'Main', 'name': 'Amina'}], u'Le Dernier Qui A Parl\xe9', '3:16'),
+            ('23', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Josephine', '4:07'),
+            ('24', [{'type': 'Main', 'name': 'Onb'}], 'Bnet Paris', '4:13'),
+            ('25', [{'type': 'Main', 'name': 'Ofra Haza'}], 'Im Nin Alu-2000', '3:30'),
+            ('26', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Ki Yaajabni Houbi', '4:01'),
+            ('27', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Mali Mali (Feat. Chabba Djenet)', '4:05'),
+            ('28', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Ntiya Omri Ntiya Ma Vie Version Salsa', '4:14'),
+            ('29', [{'type': 'Main', 'name': 'Faycal'}], 'Dour Dour', '4:07'),
+            ('30', [{'type': 'Main', 'name': 'Houari Manar'}], 'Wajh Ghnas', '4:03'),
+            ('31', [{'type': 'Main', 'name': 'Houary Dauphin'}], 'Maniche Aaref Chta Srali', '3:43'),
+            ('32', [{'type': 'Main', 'name': 'Mahfoud'}], 'One Two Three (Feat. Sonia & Univers)', '3:54'),
+            ('33', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Shrouha Fort', '3:49'),
+            ('34', [{'type': 'Main', 'name': 'Zinou le Parisien'}], 'Chira Malha', '4:00'),
+            ('35', [{'type': 'Main', 'name': 'Hasni'}], 'Yaghazal', '4:02'),
+            ('36', [{'type': 'Main', 'name': 'Marsaoui'}], 'Chouli', '4:03'),
+            ('37', [{'type': 'Main', 'name': 'Rimitti'}], 'Liyah Liyah', '4:10'),
+            ('38', [{'type': 'Main', 'name': 'Rachida'}], 'Salou Salou', '3:51'),
+            ('39', [{'type': 'Main', 'name': 'Ouarda'}], 'Gendarme', '3:45'),
+            ('40', [{'type': 'Main', 'name': 'Rayan'}], 'Dana Dana (Feat. Rima)', '4:04')]},
+                    'link': 'http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770',
+                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Musiques du monde', 'Musique']}
+
+        r = itunes.Release.release_from_url('http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770')
+
+        self.assertEqual(expected, r.data)
+
+    def test_404(self):
+        r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/blubb/id999999999999')
+        try:
+            r.data
+            self.assertFalse(True)
+        except itunes.iTunesAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
+
+    def test_non_us_404(self):
+        r = itunes.Release.release_from_url('http://itunes.apple.com/fr/album/blubb/id999999999999')
+        try:
+            r.data
+            self.assertFalse(True)
+        except itunes.iTunesAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
