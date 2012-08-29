@@ -162,6 +162,14 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_404(self):
+        r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/12345')
+        try:
+            r.data
+        except discogs.DiscogsAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
+
 
 class MusicbrainzTest(TestCase):
     def test_simple_album(self):
