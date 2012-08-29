@@ -163,7 +163,7 @@ class DiscogsTest(TestCase):
         self.assertEqual(expected, r.data)
 
     def test_404(self):
-        r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/12345')
+        r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/999999999')
         try:
             r.data
             self.assertFalse(True)
@@ -387,19 +387,20 @@ class BeatportTest(TestCase):
         expected = {'title': u'DJ Tunes Compilation', 'format': u'Album', 'label': [u'Carlo Cavalli Music Group'],
                     'released': u'2012-01-05', 'catalog': [u'CMG117'], 'discs': {
                 1: [('1', [{'type': 'Main', 'name': u'Sam Be-Kay'}], u'Forever Loved', u'5:20'), (
-                '2', [{'type': 'Main', 'name': u'Eros Locatelli'}, {'type': 'Remixer', 'name': u'Alex Faraci'}],
-                u'Sweep [Alex Faraci Remix]', u'6:38'), ('3', [{'type': 'Main', 'name': u'Babette Duwez'},
+                    '2', [{'type': 'Main', 'name': u'Eros Locatelli'}, {'type': 'Remixer', 'name': u'Alex Faraci'}],
+                    u'Sweep [Alex Faraci Remix]', u'6:38'), ('3', [{'type': 'Main', 'name': u'Babette Duwez'},
                         {'type': 'Main', 'name': u'Joel Reichert'}, {'type': 'Remixer', 'name': u'David Ahumada'}],
-                                                         u'Humo Y Neon [David Ahumada Remix]', u'4:58'), (
-                '4', [{'type': 'Main', 'name': u'Alex Faraci'}, {'type': 'Remixer', 'name': u'Massimo Russo'}],
-                u'Night Melody [Massimo Russo La Guitarra Remix]', u'6:17'),
+                                                             u'Humo Y Neon [David Ahumada Remix]', u'4:58'), (
+                    '4', [{'type': 'Main', 'name': u'Alex Faraci'}, {'type': 'Remixer', 'name': u'Massimo Russo'}],
+                    u'Night Melody [Massimo Russo La Guitarra Remix]', u'6:17'),
                     ('5', [{'type': 'Main', 'name': u'Fingers Clear'}], u'30 m [Original mix]', u'6:33'),
                     ('6', [{'type': 'Main', 'name': u'Erion Gjuzi'}], u'Just Begin', u'7:09'),
                     ('7', [{'type': 'Main', 'name': u'Dany Cohiba'}], u'Achakkar [Original mix]', u'6:28'), (
-                    '8', [{'type': 'Main', 'name': u'Massimo Russo'}, {'type': 'Remixer', 'name': u'Italianbeat Guys'}],
-                    u'Raveline [Italianbeat Guys Remix]', u'6:46'), (
-                    '9', [{'type': 'Main', 'name': u'Jurgen Cecconi'}, {'type': 'Main', 'name': u'Beethoven Tbs'}],
-                    u'Grey 2 Fade feat. Babette Duwez [Jurgen Cecconi Mix]', u'10:53'),
+                        '8',
+                        [{'type': 'Main', 'name': u'Massimo Russo'}, {'type': 'Remixer', 'name': u'Italianbeat Guys'}],
+                        u'Raveline [Italianbeat Guys Remix]', u'6:46'), (
+                        '9', [{'type': 'Main', 'name': u'Jurgen Cecconi'}, {'type': 'Main', 'name': u'Beethoven Tbs'}],
+                        u'Grey 2 Fade feat. Babette Duwez [Jurgen Cecconi Mix]', u'10:53'),
                     ('10', [{'type': 'Main', 'name': u'Carlo Cavalli'}], u'Tanzmania', u'7:00')]},
                     'link': 'http://www.beatport.com/release/dj-tunes-compilation/851318',
                     'artists': [{'type': 'Main', 'name': 'Various'}],
@@ -415,5 +416,52 @@ class BeatportTest(TestCase):
             r.data
             self.assertFalse(True)
         except beatport.BeatportAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
+
+
+class MetalarchivesTest(TestCase):
+    def test_simple_album(self):
+        expected = {'title': 'Century Child', 'format': 'Full-length', 'label': ['Spinefarm Records'],
+                    'released': 'June 24th, 2002', 'discs': {
+                1: [('1', [], 'Bless the Child', '06:12'), ('2', [], 'End of all Hope', '03:55'),
+                    ('3', [], 'Dead to the World', '04:20'), ('4', [], 'Ever Dream', '04:44'),
+                    ('5', [], 'Slaying the Dreamer', '04:32'), ('6', [], 'Forever Yours', '03:50'),
+                    ('7', [], 'Ocean Soul', '04:15'), ('8', [], 'Feel for You', '03:55'),
+                    ('9', [], 'The Phantom of the Opera', '04:10'), ('10', [], 'Beauty of the Beast', '10:22')]},
+                    'link': 'http://www.metal-archives.com/albums/Nightwish/Century_Child/3719',
+                    'artists': [{'type': 'Main', 'name': 'Nightwish'}]}
+
+        r = metalarchives.Release.release_from_url('http://www.metal-archives.com/albums/Nightwish/Century_Child/3719')
+
+        self.assertEqual(expected, r.data)
+
+    def test_multiple_cds(self):
+        expected = {'title': 'Black Symphony', 'format': 'Live album', 'label': ['Roadrunner Records'],
+                    'released': 'September 22nd, 2008', 'discs': {
+                1: [('1', [], 'Ouverture', '07:43'), ('2', [], "Jillian (I'd Give My Heart)", '04:39'),
+                    ('3', [], 'The Howling', '06:31'), ('4', [], 'Stand My Ground', '04:33'),
+                    ('5', [], 'The Cross', '05:22'), ('6', [], 'What Have You Done?', '04:58'),
+                    ('7', [], 'Hand Of Sorrow', '05:40'), ('8', [], 'The Heart Of Everything', '05:48'),
+                    ('9', [], 'Forgiven', '04:53'), ('10', [], 'Somewhere', '04:24'),
+                    ('11', [], 'The Swan Song', '04:00'), ('12', [], 'Memories', '04:03')],
+                2: [('1', [], 'Our Solemn Hour', '05:22'), ('2', [], 'The Other Half (Of Me)', '05:04'),
+                    ('3', [], 'Frozen', '06:00'), ('4', [], 'The Promise', '04:32'), ('5', [], 'Angels', '08:15'),
+                    ('6', [], 'Mother Earth', '04:02'), ('7', [], 'The Truth Beneath The Rose', '07:23'),
+                    ('8', [], 'Deceiver of Fools', '07:38'), ('9', [], 'All I Need', '04:55'),
+                    ('10', [], 'Ice Queen', '07:15')]},
+                    'link': 'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779',
+                    'artists': [{'type': 'Main', 'name': 'Within Temptation'}]}
+
+        r = metalarchives.Release.release_from_url('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
+
+        self.assertEqual(expected, r.data)
+
+    def test_404(self):
+        r = metalarchives.Release.release_from_url('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/999999999')
+        try:
+            r.data
+            self.assertFalse(True)
+        except metalarchives.MetalarchivesAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
