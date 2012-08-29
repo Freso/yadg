@@ -508,8 +508,8 @@ class AudiojellyTest(TestCase):
         expected = {'title': 'Plus Various I', 'label': ['Sound Academy Plus'], 'released': '2012-04-01',
                     'catalog': ['SAP042'], 'discs': {
                 1: [('1', [{'type': 'Main', 'name': 'Can Yuksel'}], 'With You Forever (Original Mix)', '07:08'), (
-                '2', [{'type': 'Main', 'name': 'Ismael Casimiro'}, {'type': 'Main', 'name': 'Borja Maneje'}],
-                'Electro Deep (Gokhan Guneyli Remix)', '08:48'),
+                    '2', [{'type': 'Main', 'name': 'Ismael Casimiro'}, {'type': 'Main', 'name': 'Borja Maneje'}],
+                    'Electro Deep (Gokhan Guneyli Remix)', '08:48'),
                     ('3', [{'type': 'Main', 'name': 'Roby B.'}], 'Deal (Original Mix)', '06:45'),
                     ('4', [{'type': 'Main', 'name': 'Serdar Ors'}], 'Musica (Can Yuksel Remix)', '06:11')]},
                     'link': 'http://www.audiojelly.com/releases/plus-various-i/230282',
@@ -525,5 +525,143 @@ class AudiojellyTest(TestCase):
             r.data
             self.assertFalse(True)
         except audiojelly.AudiojellyAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
+
+
+class JunodownloadTest(TestCase):
+    def test_simple_album(self):
+        expected = {'title': 'Love', 'label': ['3 Beat'], 'released': '3 July, 2011', 'catalog': ['3BEAT 051'],
+                    'discs': {1: [('1', [], 'Love (UK radio edit)', '02:31'), ('2', [], 'Love (club mix)', '04:59'),
+                        ('3', [], 'Love (eSquire radio edit)', '03:53'), ('4', [], 'Love (eSquire mix)', '05:57'),
+                        ('5', [], 'Love (7th Heaven radio edit)', '03:50'), ('6', [], 'Love (7th Heaven mix)', '06:34'),
+                        ('7', [], 'Love (Dandeej mix)', '05:15'), ('8', [], 'Love (DJ Andi mix)', '05:41'),
+                        ('9', [], 'Love (Klubfiller mix)', '06:35'), ('10', [], 'Love (Klubfiller dub mix)', '06:29')]},
+                    'link': 'http://www.junodownload.com/products/love/1774811-02/',
+                    'artists': [{'type': 'Main', 'name': 'Inna'}], 'genre': ['Funky', 'Club House']}
+
+        r = junodownload.Release.release_from_url('http://www.junodownload.com/products/love/1774811-02/')
+
+        self.assertEqual(expected, r.data)
+
+    def test_featuring_main_artist(self):
+        expected = {'title': 'Love', 'label': ['Staff Productions'], 'released': '12 November, 2010',
+                    'catalog': ['SFP 012'], 'discs': {1: [('1', [], 'Love (original Miami mix)', '05:01'),
+                ('2', [], "Love (Mustafa's Deep Piano mix)", '05:08'),
+                ('3', [], 'Love (D-Malice Afro-edit vocal)', '06:21'),
+                ('4', [], 'Love (RY meets Mustafa vocal mix)', '06:05'),
+                ('5', [], 'Love (Ospina & Oscar P remix)', '06:05'),
+                ('6', [], 'Love (Ospina & Oscar P Drum dub)', '06:05'), ('7', [], 'Love (Steven Stone remix)', '06:29'),
+                ('8', [], 'Love (David Mateo & Rafix club mix)', '04:57'),
+                ('9', [], 'Love (Rafael Yapudjian Meets RyB remix)', '07:29'),
+                ('10', [], 'Love (acoustic mix)', '03:52'),
+                ('11', [], 'Love (D-Malice Afro edit instrumental)', '06:21'),
+                ('12', [], 'Love (Ospina & Oscar P intru-mental)', '06:05'),
+                ('13', [], 'Love (Steven Stone instrumental remix)', '06:28'),
+                ('14', [], 'Love (David Mateo & Rafix radio club mix instrumental)', '04:57'),
+                ('15', [], 'Love (Rafael Yapudjian Meets RyB dub remix)', '07:29'),
+                ('16', [], 'Love (RY Meets Mustafa instrumental mix)', '06:05')]},
+                    'link': 'http://www.junodownload.com/products/love/1662955-02/',
+                    'artists': [{'type': 'Main', 'name': 'Mustafa'}, {'type': 'Feature', 'name': 'Tasita D mour'}],
+                    'genre': ['Broken Beat', 'Nu Jazz', 'Nu Soul']}
+
+        r = junodownload.Release.release_from_url('http://www.junodownload.com/products/love/1662955-02/')
+
+        self.assertEqual(expected, r.data)
+
+    def test_mixed_various_main_artists(self):
+        expected = {'title': 'A Love Story 89-10 (unmixed tracks)', 'label': ['Bass Planet Germany'],
+                    'released': '21 July, 2010', 'catalog': ['425011 7613280'], 'discs': {
+                1: [('1', [], 'Westbam - Official Anthems (continuous DJ mix)', '1:03:00'),
+                    ('2', [], 'Westbam - Love Sounds 3000 (continuous DJ mix)', '1:19:27'),
+                    ('3', [], 'Westbam - The Original Feelings (continuous DJ mix)', '1:09:03'),
+                    ('4', [], "Westbam - Don't Look Back In Anger (short mix)", '03:21'),
+                    ('5', [], 'The Love Committee - Love Rules', '06:52'), (
+                    '6', [], 'WestBam & The Love Committee - Love Is Everywhere (New Location) (original mix)', '07:19')
+                    , ('7', [], 'WestBam & The Love Committee - Highway To Love (Final remix)', '07:40'),
+                    ('8', [], 'WestBam & The Love Committee - United States Of Love', '07:01'),
+                    ('9', [], 'Dr Motte & Westbam presents - Sunshine', '04:04'),
+                    ('10', [], 'Dr Motte & Westbam presents - One World One Future', '03:42'),
+                    ('11', [], "The Love Committee - You Can't Stop Us", '06:47'),
+                    ('12', [], 'Dr Motte & Westbam presents - Loveparade 2000', '03:28'),
+                    ('13', [], 'Dr Motte & Westbam presents - Music Is The Key', '08:19'),
+                    ('14', [], "Felix - Don't You Want Me (Hooj mix)", '05:55'),
+                    ('15', [], 'Blake Baxter - One More Time', '04:14'),
+                    ('16', [], 'The Break Boys - My House Is Your House (Miami Beach Break mix)', '06:20'),
+                    ('17', [], 'The Love Committee - We Feel Love', '05:34'),
+                    ('18', [], 'Paul & Fritz Kalkbrenner - Sky And Sand (Berlin Calling mix)', '03:59'),
+                    ('19', [], 'The Love Committee - Access Peace', '07:11'),
+                    ('20', [], 'Westbam - Spoon (unvergesslisch)', '06:59'), ('21', [], 'Westbam - Escalate', '06:27'),
+                    ('22', [], 'Deekline & Ed Solo - Handz Up (Stantons Warriors remix Westbam edit)', '04:48'),
+                    ('23', [], 'Westbam - Fake Blue Eyes', '04:33'),
+                    ('24', [], 'Moguai & Westbam - Original Hardcore EP', '04:48'),
+                    ('25', [], 'Jewelz - Get Down', '06:01'),
+                    ('26', [], 'Tom Wax & Strobe - Cantate (Lalai Lala) (radio mix)', '03:22'),
+                    ('27', [], 'Smash Hifi - Take You Back (VIP edit)', '05:02'),
+                    ('28', [], 'Elite Force & Hatiras & JELO & Vandal & Stanton Warriors - MAD', '07:08'),
+                    ('29', [], 'Mom & Dad - Judas (Dem Slackers remix)', '04:28'),
+                    ('30', [], 'DJ Icey - Yeah Right', '04:57'), ('31', [], 'Westbam - Sage Sage', '04:40'),
+                    ('32', [], 'Felix Cartal - Love', '05:14'),
+                    ('33', [], 'Westbam - Hard Times (Westbam edit)', '03:45'),
+                    ('34', [], 'Deadmau5 - Strobe (Plump DJs remix)', '05:43'),
+                    ('35', [], 'Members Of Mayday - Make My Day (short mix)', '03:28'),
+                    ('36', [], 'Boris Dlugosch - Bangkok', '05:23'), ('37', [], 'Westbam - Yeah Bla Whatever', '05:55'),
+                    ('38', [], 'Elite Force & Daniele Papini & Harnessnoise - Harness The Nonsense', '06:12'),
+                    ('39', [], 'Tom De Neef Presents Jacksquad - Boavista', '07:33'),
+                    ('40', [], 'Dennis Ferrer - Hey Hey (radio edit)', '03:09'),
+                    ('41', [], "Steve Aoki - I'm In The House (feat Zuper Blahq)", '03:19'),
+                    ('42', [], 'Peter Licht - Sonnendeck (Deck 5 mix)', '03:20'),
+                    ('43', [], 'Orbital - Chime (extended version)', '12:40'),
+                    ('44', [], 'Format 1 - Solid Session', '04:21'),
+                    ('45', [], 'Fierce Ruling Diva - Rubb It In', '05:05'),
+                    ('46', [], 'X-101 - Sonic Destroyer', '05:00'), ('47', [], 'Marusha - Ravechannel', '03:36'),
+                    ('48', [], 'DJ Dick - Malefactor', '06:16'), ('49', [], 'Westbam - My Life Of Crime', '05:13'),
+                    ('50', [], 'Westbam - Mr Peanut', '05:43'), ('51', [], 'Westbam - Endlos', '21:20'),
+                    ('52', [], 'The Nighttripper - Tone Explotation', '05:10'),
+                    ('53', [], 'Vein Melter - Hypnotized', '08:41'),
+                    ('54', [], 'Dr Mottes Euphorhythm - Patrik', '05:35'),
+                    ('55', [], 'Westbam - Super Old School Mix', '10:47'),
+                    ('56', [], 'Westbam & Nena - Oldschool Baby (piano mix)', '05:58'),
+                    ('57', [], 'Richie Rich - Salsa House', '06:59')]},
+                    'link': 'http://www.junodownload.com/products/a-love-story-89-10-unmixed-tracks/1609583-02/',
+                    'artists': [{'type': 'Main', 'name': 'Westbam'}], 'genre': ['Funky', 'Club House']}
+
+        r = junodownload.Release.release_from_url(
+            'http://www.junodownload.com/products/a-love-story-89-10-unmixed-tracks/1609583-02/')
+
+        self.assertEqual(expected, r.data)
+
+    def test_various_artists(self):
+        expected = {'title': '2008 MOST USEFUL TOOLS', 'label': ['NuZone Tools'], 'released': '30 December, 2008',
+                    'catalog': ['NZT 015'], 'discs': {
+                1: [('1', [], 'Sygma - Nightlights', '08:42'), ('2', [], "Adolfo Morrone - I'm Nervhouse", '07:35'),
+                    ('3', [], 'Jonathan Carey - The Science Of Music', '05:54'),
+                    ('4', [], 'Lorenzo Venturini - New Era', '06:55'),
+                    ('5', [], 'E-Mark - Anthem For Deejays Part 2', '07:00'),
+                    ('6', [], 'Alex Spadoni - Sunset', '07:31'),
+                    ('7', [], 'Jordan Baxxter feat Aedo - What It Feels Like For A Girl?', '07:50'),
+                    ('8', [], 'Hildebrand - Raindrops', '08:39'), ('9', [], 'Dario Maffia - Phaelon', '09:05'),
+                    ('10', [], 'Emerald Coast - Exhausted', '05:38'), ('11', [], 'Sygma - Children', '08:59'),
+                    ('12', [], 'GoldSaint - Tonight', '06:45'), ('13', [], 'Peter Santos - Back To You', '07:34'),
+                    ('14', [], 'Oscar Burnside - Dark Side', '05:34'), ('15', [], 'GoldSaint - Recharge', '08:30'),
+                    ('16', [], 'Luca Lux - Wildest Dream', '07:08'), ('17', [], 'SimoX DJ - Star', '05:17'),
+                    ('18', [], 'Greek S - The Sound (09 mix)', '08:37'),
+                    ('19', [], 'Various - Mixed Tools 2008 (Part 1 - mixed by Sygma)', '41:34'),
+                    ('20', [], 'Various - Mixed Tools 2008 (Part 2 - mixed by Peter Santos)', '38:54')]},
+                    'link': 'http://www.junodownload.com/products/2008-most-useful-tools/1384246-02/',
+                    'genre': ['Progressive House'], 'artists': [{'type': 'Main', 'name': 'Various'}]}
+
+        r = junodownload.Release.release_from_url(
+            'http://www.junodownload.com/products/2008-most-useful-tools/1384246-02/')
+
+        self.assertEqual(expected, r.data)
+
+    def test_404(self):
+        r = junodownload.Release.release_from_url(
+            'http://www.junodownload.com/products/2008-most-useful-tools/99999999/')
+        try:
+            r.data
+            self.assertFalse(True)
+        except junodownload.JunodownloadAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
