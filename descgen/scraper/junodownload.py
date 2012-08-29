@@ -17,7 +17,7 @@ class Release(BaseRelease):
     exception = JunodownloadAPIError
     request_kwargs = {'allow_redirects':False}
 
-    _various_artists_aliases = ['Various']
+    _various_artists_aliases = ['various']
 
     def __init__(self, release_name, id):
         self.id = id
@@ -88,15 +88,24 @@ class Release(BaseRelease):
         return None
 
     def get_release_artists(self):
+        in_breadcrumbs = True
         artist_anchors = self.parsed_response.cssselect('div#topbar_bread div.breadcrumb_text h1 a')
         artist_anchors = filter(lambda x: x.attrib['href'].startswith('/artists/'), artist_anchors)
+        if not artist_anchors:
+            #apparently the artist is not always part of the breadcrumbs
+            artist_anchors = self.parsed_response.cssselect('div#product_heading_artist a')
+            artist_anchors = filter(lambda x: x.attrib['href'].startswith('/artists/'), artist_anchors)
+            in_breadcrumbs = False
         artists = []
         is_feature = False
         has_various = False
         for artist_anchor in artist_anchors:
             artist_name = artist_anchor.text_content()
             artist_name = self.remove_whitespace(artist_name)
-            if artist_name in self._various_artists_aliases:
+            if not in_breadcrumbs:
+                #do some rudimentary capitalizing if we did not get the artists from the breadcrumbs
+                artist_name = u' '.join(map(lambda x: x.capitalize(), artist_name.split()))
+            if artist_name.lower() in self._various_artists_aliases:
                 has_various = True
             elif artist_name:
                 if is_feature:
