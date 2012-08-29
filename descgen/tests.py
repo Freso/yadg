@@ -161,3 +161,187 @@ class DiscogsTest(TestCase):
         r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/3700493')
 
         self.assertEqual(expected, r.data)
+
+
+class MusicbrainzTest(TestCase):
+    def test_simple_album(self):
+        expected = {'title': 'Hast Du mich vermisst? Der schwarze Schmetterling, Teil I', 'country': 'Germany',
+                    'format': 'CD, Album', 'label': ['Trisol'], 'released': '2004-09-23', 'catalog': ['TRI 070 CD'],
+                    'discs': {1: [('1', [], 'Intro: In meiner Vorstellung', '4:34'),
+                        ('2', [], 'Schwarzer Schmetterling', '4:50'), ('3', [], 'Where Do the Gods Go', '3:46'),
+                        ('4', [], 'Dancing', '5:45'), ('5', [], u'K\xfcss mich', '5:11'),
+                        ('6', [], 'Sing Child', '3:58'), ('7', [], 'Teach Me War', '3:45'),
+                        ('8', [], 'Imbecile Anthem', '3:42'),
+                        ('9', [], 'Und wir tanzten (Ungeschickte Liebesbriefe)', '5:04'), ('10', [], 'Blinded', '7:24'),
+                        ('11', [], 'Where Do the Gods Go (re-unleashed club edit)', '4:39')]},
+                    'link': 'http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b',
+                    'artists': [{'type': 'Main', 'name': 'ASP'}]}
+
+        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
+
+        self.assertEqual(expected, r.data)
+
+    def test_multiple_cds(self):
+        expected = {'title': 'Once in a Lifetime', 'country': 'Germany', 'format': u'4\xd7CD, Album + Live',
+                    'label': ['Trisol'], 'released': '2007-05-25', 'catalog': ['TRI 303 CD'],
+                    'discs': {1: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Once in a Lifetime, Part 1', '5:51'),
+                        ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                         u'A Dead Man\u2019s Song', '5:12'),
+                        ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Versuchung',
+                         '5:45'),
+                        ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Torn', '5:04'),
+                        ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Demon Love',
+                         '4:32'),
+                        ('6', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                         'The Paperhearted Ghost', '4:43'),
+                        ('7', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                         'A Tale of Real Love', '5:16'),
+                        ('8', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Hunger', '4:49'),
+                        ('9', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                         'The Truth About Snow-White', '4:00'),
+                        (
+                            '10', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                            'She Wore Shadows'
+                            , '4:36'),
+                        ('11', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                         'Und wir tanzten (Ungeschickte Liebesbriefe)', '5:17'),
+                        ('12', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                         'Once in a Lifetime, Part 2 (reprise)', '2:44')],
+                              2: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   u'K\xfcss mich', '6:24'),
+                                  ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Silence - Release', '3:45'),
+                                  ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Solitude', '3:40'),
+                                  ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Die Ballade von der Erweckung', '8:47'),
+                                  ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Another Conversation', '3:21'),
+                                  ('6', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Sing Child', '7:29'),
+                                  ('7', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Ich will brennen', '5:00'),
+                                  (
+                                      '8', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                      'Toscana'
+                                      , '6:14'),
+                                  (
+                                      '9', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                      'Ride On'
+                                      , '3:42'),
+                                  ('10', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Hometown', '3:01'),
+                                  (
+                                      '11', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                      'Werben'
+                                      , '4:53'),
+                                  ('12', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Once in a Lifetime, Part 3 (Finale)', '10:08')],
+                              3: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   u'H\xe4sslich', '2:25'),
+                                  ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Backstage (All Areas)', '9:33'),
+                                  ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   u'Paracetamoltr\xe4ume', '8:37'),
+                                  ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'},
+                                          {'type': 'Main', 'name': u'Ralph M\xfcller'}],
+                                   u'Auszug aus \u201eTremendista\u201c', '24:33'),
+                                  ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Campari O', '2:39')],
+                              4: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Sicamore Trees (ASP soundcheck out-take)', '1:34'),
+                                  ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Demon Love', '4:35'),
+                                  ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'The Truth About Snow-White', '4:35'),
+                                  ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'She Wore Shadows', '5:19'),
+                                  ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Sing Child', '7:49'),
+                                  ('6', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Hometown', '3:41'),
+                                  (
+                                      '7', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                      'Hunger',
+                                      '4:34'),
+                                  ('8', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'Silence - Release', '3:28'),
+                                  ('9', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
+                                   'She Moved Through the Fair (ASP soundcheck out-take)', '2:00')]},
+                    'link': 'http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb',
+                    'artists': [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}]}
+
+        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+
+        self.assertEqual(expected, r.data)
+
+    def test_various_artists(self):
+        expected = {'title': 'Gothic File 11', 'country': 'Germany', 'format': 'CD, Album + Compilation',
+                    'label': ['Batbeliever Releases'], 'released': '2010', 'catalog': ['BAT 065'], 'discs': {
+                1: [('1', [{'type': 'Main', 'name': 'Spectra Paris'}], 'Carrie Satan', '5:12'),
+                    ('2', [{'type': 'Main', 'name': 'Absurd Minds'}], 'Countdown', '4:13'),
+                    ('3', [{'type': 'Main', 'name': 'Nachtmahr'}], u'M\xe4dchen in Uniform (Faderhead remix)', '3:53'),
+                    ('4', [{'type': 'Main', 'name': 'Noisuf-X'}], 'Fucking Invective', '4:33'),
+                    ('5', [{'type': 'Main', 'name': ':wumpscut:'}], 'Loyal to My Hate (Solar Fake remix)', '4:24'),
+                    ('6', [{'type': 'Main', 'name': 'KiEw'}], 'Melancholie (382edit)', '3:52'),
+                    ('7', [{'type': 'Main', 'name': 'Mantus'}], 'Gegen die Welt', '4:47'),
+                    ('8', [{'type': 'Main', 'name': 'Oomph!'}], "Ready or Not (I'm Coming)", '3:22'),
+                    ('9', [{'type': 'Main', 'name': 'Rob Zombie'}], 'What?', '2:46'),
+                    ('10', [{'type': 'Main', 'name': 'Megaherz'}], 'Ebenbild (Die Krupps remix)', '5:43'),
+                    ('11', [{'type': 'Main', 'name': 'Eisbrecher'}], 'Vergissmeinnicht (live)', '3:59'),
+                    ('12', [{'type': 'Main', 'name': 'Zeromancer'}], 'Industrypeople', '4:14'),
+                    ('13', [{'type': 'Main', 'name': 'Julien-K'}], 'Kick the Bass', '3:42'),
+                    ('14', [{'type': 'Main', 'name': 'Nosferatu'}], 'Black Hole', '5:25'),
+                    ('15', [{'type': 'Main', 'name': 'Die Art'}], 'Swimming in Dirty Water', '4:24'),
+                    ('16', [{'type': 'Main', 'name': 'Mad Sin'}], 'Wreckhouse Stomp', '3:04')]},
+                    'link': 'http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740',
+                    'artists': [{'type': 'Main', 'name': 'Various'}]}
+
+        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
+
+        self.assertEqual(expected, r.data)
+
+    def test_disc_titles(self):
+        expected = {'title': 'Original Album Classics', 'country': 'Europe', 'format': u'5\xd7CD, Album + Compilation',
+                    'label': ['Epic'],
+                    'discTitles': {1: u'The Brothers: Isley', 2: u'Get Into Something', 3: u"Givin' It Back",
+                                   4: u'Brother, Brother, Brother', 5: u'3 + 3'}, 'released': '2008',
+                    'catalog': ['88697304842'], 'discs': {
+                1: [('1', [], 'I Turned You On', '2:38'), ('2', [], 'Vacuum Cleaner', '2:56'),
+                    ('3', [], 'I Got to Get Myself Together', '3:38'), ('4', [], 'Was It Good to You?', '2:44'),
+                    ('5', [], 'The Blacker the Berry (a.k.a. Black Berries)', '5:53'),
+                    ('6', [], 'My Little Girl', '3:41'), ('7', [], 'Get Down Off of the Train', '3:12'),
+                    ('8', [], 'Holding On', '2:36'), ('9', [], 'Feels Like the World', '3:26')],
+                2: [('1', [], 'Get Into Something', '7:30'), ('2', [], 'Freedom', '3:38'),
+                    ('3', [], 'Take Inventory', '2:47'), ('4', [], "Keep on Doin'", '4:02'),
+                    ('5', [], 'Girls Will Be Girls', '2:51'), ('6', [], 'I Need You So', '4:25'),
+                    ('7', [], 'If He Can You Can', '3:45'), ('8', [], 'I Got to Find Me One', '4:38'),
+                    ('9', [], 'Beautiful', '3:06'), ('10', [], 'Bless Your Heart', '3:03')],
+                3: [('1', [], 'Ohio - Machine Gun', '9:14'), ('2', [], 'Fire and Rain', '5:29'),
+                    ('3', [], 'Lay Lady Lay', '10:22'), ('4', [], 'Spill the Wine', '6:32'),
+                    ('5', [], 'Nothing to Do But Today', '3:39'), ('6', [], 'Cold Bologna', '2:59'),
+                    ('7', [], "Love the One You're With", '3:39')],
+                4: [('1', [], 'Brother, Brother', '3:17'), ('2', [], 'Put A Little Love In Your Heart', '3:02'),
+                    ('3', [], "Sweet Season / Keep On Walkin'", '5:13'), ('4', [], 'Work To Do', '3:12'),
+                    ('5', [], 'Pop That Thang', '2:54'), ('6', [], 'Lay Away', '3:23'),
+                    ('7', [], "It's Too Late", '10:31'), ('8', [], 'Love Put Me On The Corner', '6:30')],
+                5: [('1', [], 'That Lady, Parts 1 & 2', '5:35'), ('2', [], "Don't Let Me Be Lonely Tonight", '3:59'),
+                    ('3', [], 'If You Were There', '3:23'), ('4', [], 'You Walk Your Way', '3:06'),
+                    ('5', [], 'Listen to the Music', '4:06'), ('6', [], 'What It Comes Down To', '3:54'),
+                    ('7', [], 'Sunshine (Go Away Today)', '4:22'), ('8', [], 'Summer Breeze', '6:12'),
+                    ('9', [], 'The Highways of My Life', '4:53'), ('10', [], 'That Lady (live)', '3:42')]},
+                    'link': 'http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310',
+                    'artists': [{'type': 'Main', 'name': 'The Isley Brothers'}]}
+
+        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
+
+        self.assertEqual(expected, r.data)
+
+    def test_404(self):
+        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/12345-abcdefg')
+        try:
+            r.data
+        except musicbrainz.MusicBrainzAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
