@@ -453,15 +453,77 @@ class MetalarchivesTest(TestCase):
                     'link': 'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779',
                     'artists': [{'type': 'Main', 'name': 'Within Temptation'}]}
 
-        r = metalarchives.Release.release_from_url('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
+        r = metalarchives.Release.release_from_url(
+            'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
 
         self.assertEqual(expected, r.data)
 
     def test_404(self):
-        r = metalarchives.Release.release_from_url('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/999999999')
+        r = metalarchives.Release.release_from_url(
+            'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/999999999')
         try:
             r.data
             self.assertFalse(True)
         except metalarchives.MetalarchivesAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
+
+
+class AudiojellyTest(TestCase):
+    def test_simple_album(self):
+        expected = {'title': u'Love \u221a Infinity (Love to the Square Root of Infinity)',
+                    'label': ['defamation records'], 'released': '2011-10-27', 'catalog': ['5055506333041'], 'discs': {
+                1: [('1', [], u'Love \u221a Infinity (Radio Edit)', '02:49'),
+                    ('2', [], u'Love \u221a Infinity (Vocal Club Mix)', '06:46'),
+                    ('3', [], u'Love \u221a Infinity (Instrumental Club Mix)', '06:46')]},
+                    'link': 'http://www.audiojelly.com/releases/love-infinity-love-to-the-square-root-of-infinity/211079'
+            , 'artists': [{'type': 'Main', 'name': 'AudioFreQ'}], 'genre': ['Electro House']}
+
+        r = audiojelly.Release.release_from_url(
+            'http://www.audiojelly.com/releases/love-infinity-love-to-the-square-root-of-infinity/211079')
+
+        self.assertEqual(expected, r.data)
+
+    def test_featuring_main_artist(self):
+        expected = {'title': 'Where Is Love (Love Is Hard To Find)', 'label': ['Ultra Records'],
+                    'released': '2011-10-24', 'catalog': ['UL 2903'], 'discs': {
+                1: [('1', [], 'Where Is Love (Love Is Hard To Find) (Lucky Date Remix)', '06:15'),
+                    ('2', [], 'Where Is Love (Love Is Hard To Find) (Electrixx Radio Edit)', '03:54'),
+                    ('3', [], 'Where Is Love (Love Is Hard To Find) (Electrixx Remix)', '06:07'),
+                    ('4', [], 'Where Is Love (Love Is Hard To Find) (Matthew Sterling Remix)', '05:32'),
+                    ('5', [], 'Where Is Love (Love Is Hard To Find) (Disco Fries Remix)', '05:51'),
+                    ('6', [], 'Where Is Love (Love Is Hard To Find) (Mysto & Pizzi Remix)', '05:28'),
+                    ('7', [], 'Where Is Love (Love Is Hard To Find) (Ido Shoam Remix)', '05:01'),
+                    ('8', [], 'Where Is Love (Love Is Hard To Find) (SpacePlant Remix)', '06:11')]},
+                    'link': 'http://www.audiojelly.com/releases/where-is-love-love-is-hard-to-find/210428',
+                    'artists': [{'type': 'Main', 'name': 'Mysto'}, {'type': 'Main', 'name': 'Pizzi'},
+                            {'type': 'Feature', 'name': 'Johnny Rose'}], 'genre': ['Electronica']}
+
+        r = audiojelly.Release.release_from_url(
+            'http://www.audiojelly.com/releases/where-is-love-love-is-hard-to-find/210428')
+
+        self.assertEqual(expected, r.data)
+
+    def test_various_artists(self):
+        expected = {'title': 'Plus Various I', 'label': ['Sound Academy Plus'], 'released': '2012-04-01',
+                    'catalog': ['SAP042'], 'discs': {
+                1: [('1', [{'type': 'Main', 'name': 'Can Yuksel'}], 'With You Forever (Original Mix)', '07:08'), (
+                '2', [{'type': 'Main', 'name': 'Ismael Casimiro'}, {'type': 'Main', 'name': 'Borja Maneje'}],
+                'Electro Deep (Gokhan Guneyli Remix)', '08:48'),
+                    ('3', [{'type': 'Main', 'name': 'Roby B.'}], 'Deal (Original Mix)', '06:45'),
+                    ('4', [{'type': 'Main', 'name': 'Serdar Ors'}], 'Musica (Can Yuksel Remix)', '06:11')]},
+                    'link': 'http://www.audiojelly.com/releases/plus-various-i/230282',
+                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Tech House']}
+
+        r = audiojelly.Release.release_from_url('http://www.audiojelly.com/releases/plus-various-i/230282')
+
+        self.assertEqual(expected, r.data)
+
+    def test_404(self):
+        r = audiojelly.Release.release_from_url('http://www.audiojelly.com/releases/plus-various-i/999999')
+        try:
+            r.data
+            self.assertFalse(True)
+        except audiojelly.AudiojellyAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
