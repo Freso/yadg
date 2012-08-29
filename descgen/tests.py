@@ -166,6 +166,7 @@ class DiscogsTest(TestCase):
         r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/12345')
         try:
             r.data
+            self.assertFalse(True)
         except discogs.DiscogsAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
@@ -350,6 +351,7 @@ class MusicbrainzTest(TestCase):
         r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/12345-abcdefg')
         try:
             r.data
+            self.assertFalse(True)
         except musicbrainz.MusicBrainzAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
