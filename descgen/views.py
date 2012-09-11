@@ -97,4 +97,4 @@ class SettingsView(FormView,GetDescriptionMixin,CreateTaskMixin):
         return render(self.request,self.template_name,{'form':form, 'successful':True})
 
 def csrf_failure(request, reason=""):
-    return render(request, 'csrf_failure.html')
+    return render(request, 'csrf_failure.html', status=403)
