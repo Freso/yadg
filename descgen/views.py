@@ -8,8 +8,6 @@ from django.views.generic.edit import FormView
 
 from djcelery.models import TaskMeta
 
-import unicodedata, re
-
 
 class IndexView(View, CreateTaskMixin):
     
