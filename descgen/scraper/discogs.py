@@ -39,8 +39,11 @@ class Release(BaseRelease):
         components = filter(lambda x: x, components)
         return components
 
+    def _remove_enum_suffix(self, string):
+        return re.sub(u'(.*) \(\d+\)$', r'\1', string)
+
     def _prepare_artist_name(self, artist_name):
-        artist_name = re.sub(u'(.*) \(\d+\)$', r'\1', artist_name)
+        artist_name = self._remove_enum_suffix(artist_name)
         artist_name = self.swap_suffix(artist_name)
         if artist_name == 'Various':
             artist_name = self.ARTIST_NAME_VARIOUS
@@ -93,10 +96,11 @@ class Release(BaseRelease):
             for label_component in label_components:
                 split = label_component.split(u' \u2013 ')
                 if len(split) == 2: #we have exactely label and catalog#
-                    labels.append(split[0])
+                    label = self._remove_enum_suffix(split[0])
                 else:
                     #we just have a label or to many components, so don't change anything
-                    labels.append(label_component)
+                    label = self._remove_enum_suffix(label_component)
+                labels.append(label)
             return labels
         return []
 
