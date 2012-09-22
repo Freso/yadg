@@ -4,6 +4,8 @@ from django.test import TestCase
 from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz
 
 class DiscogsTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'style': ['Goth Rock', 'Synth-pop'], 'title': u'Hast Du Mich Vermisst?', 'country': 'Germany',
                     'format': 'CD, Album', 'label': [u'Richterskala'], 'released': '03 Nov 2000',
@@ -173,6 +175,8 @@ class DiscogsTest(TestCase):
 
 
 class MusicbrainzTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Hast Du mich vermisst? Der schwarze Schmetterling, Teil I', 'country': 'Germany',
                     'format': 'CD, Album', 'label': ['Trisol'], 'released': '2004-09-23', 'catalog': ['TRI 070 CD'],
@@ -358,6 +362,8 @@ class MusicbrainzTest(TestCase):
 
 
 class BeatportTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': u'Love Love Love Yeah', 'label': [u'Playhouse'], 'released': u'2007-01-22',
                     'catalog': [u'PLAY131'], 'discs': {
@@ -421,6 +427,8 @@ class BeatportTest(TestCase):
 
 
 class MetalarchivesTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Century Child', 'format': 'Full-length', 'label': ['Spinefarm Records'],
                     'released': 'June 24th, 2002', 'discs': {
@@ -470,6 +478,8 @@ class MetalarchivesTest(TestCase):
 
 
 class AudiojellyTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': u'Love \u221a Infinity (Love to the Square Root of Infinity)',
                     'label': ['defamation records'], 'released': '2011-10-27', 'catalog': ['5055506333041'], 'discs': {
@@ -530,6 +540,8 @@ class AudiojellyTest(TestCase):
 
 
 class JunodownloadTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Love', 'label': ['3 Beat'], 'released': '3 July, 2011', 'catalog': ['3BEAT 051'],
                     'discs': {1: [('1', [], 'Love (UK radio edit)', '02:31'), ('2', [], 'Love (club mix)', '04:59'),
@@ -669,6 +681,8 @@ class JunodownloadTest(TestCase):
 
 
 class ITunesTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Love (Remastered)', 'released': '1985', 'discs': {
             1: [('1', [], 'Nirvana', '5:26'), ('2', [], 'Big Neon Glitter', '4:51'), ('3', [], 'Love', '5:29'),
