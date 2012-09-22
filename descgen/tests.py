@@ -4,6 +4,8 @@ from django.test import TestCase
 from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz
 
 class DiscogsTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'style': ['Goth Rock', 'Synth-pop'], 'title': u'Hast Du Mich Vermisst?', 'country': 'Germany',
                     'format': 'CD, Album', 'label': [u'Richterskala'], 'released': '03 Nov 2000',
@@ -162,6 +164,23 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_label_with_suffix(self):
+        expected = {'style': ['Medieval'], 'title': u'Prima Nocte', 'country': 'Germany', 'format': 'CD, Album',
+                    'label': [u'Indigo'], 'released': '25 Nov 2005', 'catalog': [u'CD 55182'], 'discs': {
+            1: [('1', [], 'Es War Einmal', '2:52'), ('2', [], 'Das Mittelalter', '4:20'), ('3', [], 'Drachentanz', '3:44'),
+                ('4', [], 'Das Turnier', '4:14'), ('5', [], 'Prima Nocte', '5:31'), ('6', [], u'B\xe4rentanz', '3:52'),
+                ('7', [], 'Herren Der Winde', '4:25'), ('8', [], 'Der Teufel', '4:50'), ('9', [], 'Schneewittchen', '6:17'),
+                ('10', [], 'Der Traum', '5:19'), ('11', [], u'R\xe4uber', '3:26'), ('12', [], 'Sauflied', '3:54'),
+                ('13', [], 'Teufelsgeschenk', '4:24'), ('14', [], u'La\xdft Die Ritter Schlafen', '5:13'),
+                ('15', [], 'Gute Nacht', '7:00')]},
+                    'link': 'http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694',
+                    'artists': [{'type': 'Main', 'name': 'Feuerschwanz'}],
+                    'genre': ['Folk', 'World', 'Country', 'Rock']}
+
+        r = discogs.Release.release_from_url('http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/999999999')
         try:
@@ -173,6 +192,8 @@ class DiscogsTest(TestCase):
 
 
 class MusicbrainzTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Hast Du mich vermisst? Der schwarze Schmetterling, Teil I', 'country': 'Germany',
                     'format': 'CD, Album', 'label': ['Trisol'], 'released': '2004-09-23', 'catalog': ['TRI 070 CD'],
@@ -358,6 +379,8 @@ class MusicbrainzTest(TestCase):
 
 
 class BeatportTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': u'Love Love Love Yeah', 'label': [u'Playhouse'], 'released': u'2007-01-22',
                     'catalog': [u'PLAY131'], 'discs': {
@@ -421,6 +444,8 @@ class BeatportTest(TestCase):
 
 
 class MetalarchivesTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Century Child', 'format': 'Full-length', 'label': ['Spinefarm Records'],
                     'released': 'June 24th, 2002', 'discs': {
@@ -470,6 +495,8 @@ class MetalarchivesTest(TestCase):
 
 
 class AudiojellyTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': u'Love \u221a Infinity (Love to the Square Root of Infinity)',
                     'label': ['defamation records'], 'released': '2011-10-27', 'catalog': ['5055506333041'], 'discs': {
@@ -530,6 +557,8 @@ class AudiojellyTest(TestCase):
 
 
 class JunodownloadTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Love', 'label': ['3 Beat'], 'released': '3 July, 2011', 'catalog': ['3BEAT 051'],
                     'discs': {1: [('1', [], 'Love (UK radio edit)', '02:31'), ('2', [], 'Love (club mix)', '04:59'),
@@ -669,6 +698,8 @@ class JunodownloadTest(TestCase):
 
 
 class ITunesTest(TestCase):
+    maxDiff = None
+
     def test_simple_album(self):
         expected = {'title': 'Love (Remastered)', 'released': '1985', 'discs': {
             1: [('1', [], 'Nirvana', '5:26'), ('2', [], 'Big Neon Glitter', '4:51'), ('3', [], 'Love', '5:29'),
@@ -753,7 +784,7 @@ class ITunesTest(TestCase):
                 ('40', [{'type': 'Main', 'name': 'Places and Numbers'}], 'Notes from the Dead Zone', '3:05'),
                 ('41', [{'type': 'Main', 'name': 'Grieves'}], 'Bloody Poetry', '3:21'),
                 ('42', [{'type': 'Main', 'name': 'I Set My Friends On Fire'}], 'It Comes Naturally', '3:36'),
-                ('43', [{'type': 'Main', 'name': 'Woe, Is Me'}], '[&] Delinquents', '2:55'),
+                ('43', [{'type': 'Main', 'name': 'Woe Is Me'}], '[&] Delinquents', '2:55'),
                 ('44', [{'type': 'Main', 'name': 'Miss May I'}], 'Relentless Chaos', '3:25'),
                 ('45', [{'type': 'Main', 'name': 'Motionless In White'}], 'Creatures', '3:47'),
                 ('46', [{'type': 'Main', 'name': 'The Word Alive'}], '2012', '3:01'),
