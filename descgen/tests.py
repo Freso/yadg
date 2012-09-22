@@ -164,6 +164,23 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_label_with_suffix(self):
+        expected = {'style': ['Medieval'], 'title': u'Prima Nocte', 'country': 'Germany', 'format': 'CD, Album',
+                    'label': [u'Indigo'], 'released': '25 Nov 2005', 'catalog': [u'CD 55182'], 'discs': {
+            1: [('1', [], 'Es War Einmal', '2:52'), ('2', [], 'Das Mittelalter', '4:20'), ('3', [], 'Drachentanz', '3:44'),
+                ('4', [], 'Das Turnier', '4:14'), ('5', [], 'Prima Nocte', '5:31'), ('6', [], u'B\xe4rentanz', '3:52'),
+                ('7', [], 'Herren Der Winde', '4:25'), ('8', [], 'Der Teufel', '4:50'), ('9', [], 'Schneewittchen', '6:17'),
+                ('10', [], 'Der Traum', '5:19'), ('11', [], u'R\xe4uber', '3:26'), ('12', [], 'Sauflied', '3:54'),
+                ('13', [], 'Teufelsgeschenk', '4:24'), ('14', [], u'La\xdft Die Ritter Schlafen', '5:13'),
+                ('15', [], 'Gute Nacht', '7:00')]},
+                    'link': 'http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694',
+                    'artists': [{'type': 'Main', 'name': 'Feuerschwanz'}],
+                    'genre': ['Folk', 'World', 'Country', 'Rock']}
+
+        r = discogs.Release.release_from_url('http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/999999999')
         try:
