@@ -64,11 +64,16 @@ class Release(BaseRelease):
     def get_release_date(self):
         release_date_span = self.parsed_response.cssselect('div#left-stack li.release-date span.label')
         if len(release_date_span) != 1:
-            self.raise_exception(u'could not find release data span')
+            self.log(self.DEBUG, u'could not find release date span')
+            release_date_span = self.parsed_response.cssselect('div#left-stack li.expected-release-date span.label')
+            if len(release_date_span) != 1:
+                self.log(self.WARNING, u'could not find release date span nor expected release date span')
+                return None
         release_date = release_date_span[0].tail
         release_date = self.remove_whitespace(release_date)
         if release_date:
             return release_date
+        self.log(self.DEBUG, u'found release date span, but removing whitespace resulted in empty string')
         return None
 
     def get_release_title(self):
