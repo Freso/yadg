@@ -1,4 +1,4 @@
-import requests, re
+import requests, re, logging
 
 
 class BaseAPIError(Exception):
@@ -104,7 +104,30 @@ class UtilityMixin(object):
         return ' '.join(string.split())
 
 
-class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
+class LoggerMixin(object):
+
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
+
+    _logger = None
+
+    def get_logger(self):
+        if self._logger is None:
+            self._logger = logging.getLogger(name=self.__module__ + '.' + self.__class__.__name__)
+        return self._logger
+
+    def get_extra_log_kwargs(self):
+        return {'instance':unicode(self)}
+
+    def log(self, level, msg):
+        logger = self.get_logger()
+        logger.log(level, msg, extra=self.get_extra_log_kwargs())
+
+
+class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin, LoggerMixin):
     ARTIST_TYPE_MAIN = 'Main'
     ARTIST_TYPE_FEATURE = 'Feature'
     ARTIST_TYPE_REMIXER = 'Remixer'
@@ -337,7 +360,7 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin):
             return None
 
 
-class BaseSearch(ExceptionMixin, RequestMixin, UtilityMixin):
+class BaseSearch(ExceptionMixin, RequestMixin, UtilityMixin, LoggerMixin):
     _releases = None
 
     def raise_request_exception(self, message):
