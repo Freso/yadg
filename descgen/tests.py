@@ -794,7 +794,7 @@ class ITunesTest(TestCase):
                 ('50', [{'type': 'Main', 'name': 'No Reservations'}], 'Continental', '3:31'),
                 ('51', [{'type': 'Main', 'name': 'Winds Of Plauge'}], 'California', '3:28'),
                 ('52', [{'type': 'Main', 'name': "That's Outrageous!"}], '#Winning', '2:42'),
-                ('53', [{'type': 'Main', 'name': 'Eyes Set To Kill'}], 'The Secrets Between', '3:47'),
+                ('53', [{'type': 'Main', 'name': 'Eyes Set to Kill'}], 'The Secrets Between', '3:47'),
                 ('54', [{'type': 'Main', 'name': 'Verah Falls'}], 'A Family Affair', '5:21'),
                 ('55', [{'type': 'Main', 'name': 'The Human Abstract'}], 'Horizon to Zenith', '4:19')]},
                     'link': 'http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4',
