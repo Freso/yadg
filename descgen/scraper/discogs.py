@@ -286,17 +286,17 @@ class Search(BaseSearch):
         return u'<DiscogsSearch: term="' + self.search_term + u'">'
 
     def get_params(self):
-        return {'type':'releases', 'q':self.search_term}
+        return {'type':'release', 'q':self.search_term}
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
         self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):
-        return self.parsed_response.cssselect('div.search_result')
+        return self.parsed_response.cssselect('ol.search_results li.body_row div.result_container')
 
     def get_release_name(self,releaseContainer):
-        release_link = releaseContainer.cssselect('div.data > div:first-child > a')
+        release_link = releaseContainer.cssselect('a.search_result_title')
         if len(release_link) != 1:
             self.raise_exception(u'could not extract release link from:' + releaseContainer.text_content())
         release_link = release_link[0]
@@ -308,17 +308,18 @@ class Search(BaseSearch):
 
     def get_release_info(self,releaseContainer):
         #get additional info
-        release_info = releaseContainer.cssselect('div.data > div.search_release_stats')
+        release_info = releaseContainer.cssselect('span.push_right_mini')
+        release_info = filter(lambda x: x.text_content() != "Release", release_info)
         if len(release_info) != 1:
             self.raise_exception(u'could not extract additional info from: ' + releaseContainer.text_content())
         release_info = release_info[0].text_content()
-        release_info = ' | '.join(map(lambda x: self.remove_whitespace(x), release_info.split('|')))
+        release_info = u' | '.join(map(lambda x: self.remove_whitespace(x), release_info.split(u'·')))
         if release_info:
             return release_info
         return None
 
     def get_release_instance(self,releaseContainer):
-        release_link = releaseContainer.cssselect('div.data > div:first-child > a')
+        release_link = releaseContainer.cssselect('a.search_result_title')
         if len(release_link) != 1:
             self.raise_exception(u'could not extract release link from:' + releaseContainer.text_content())
         release_link = release_link[0]
