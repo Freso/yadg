@@ -309,7 +309,7 @@ class Search(BaseSearch):
     def get_release_info(self,releaseContainer):
         #get additional info
         release_info = releaseContainer.cssselect('span.push_right_mini')
-        release_info = filter(lambda x: x.text_content() != "Release", release_info)
+        release_info = filter(lambda x: not x.text_content() in ("Release", "Master Release"), release_info)
         if len(release_info) != 1:
             self.raise_exception(u'could not extract additional info from: ' + releaseContainer.text_content())
         release_info = release_info[0].text_content()
