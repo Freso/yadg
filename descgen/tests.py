@@ -784,7 +784,7 @@ class ITunesTest(TestCase):
                 ('40', [{'type': 'Main', 'name': 'Places and Numbers'}], 'Notes from the Dead Zone', '3:05'),
                 ('41', [{'type': 'Main', 'name': 'Grieves'}], 'Bloody Poetry', '3:21'),
                 ('42', [{'type': 'Main', 'name': 'I Set My Friends On Fire'}], 'It Comes Naturally', '3:36'),
-                ('43', [{'type': 'Main', 'name': 'Woe Is Me'}], '[&] Delinquents', '2:55'),
+                ('43', [{'type': 'Main', 'name': 'Woe, Is Me'}], '[&] Delinquents', '2:55'),
                 ('44', [{'type': 'Main', 'name': 'Miss May I'}], 'Relentless Chaos', '3:25'),
                 ('45', [{'type': 'Main', 'name': 'Motionless In White'}], 'Creatures', '3:47'),
                 ('46', [{'type': 'Main', 'name': 'The Word Alive'}], '2012', '3:01'),
