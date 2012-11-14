@@ -210,21 +210,24 @@ class Release(BaseRelease):
     def get_disc_containers(self):
         if self._tracklist_caption is not None:
             tracklist_table = self._tracklist_caption.getnext()
-            disc_divs = tracklist_table.cssselect('tbody > div')
-            if len(disc_divs) == 0:
+            disc_rows = tracklist_table.cssselect('tbody > tr')
+            if len(disc_rows) == 0:
                 self.raise_exception(u'could not find any disc tracklisting')
-            discs_containers = {}
-            for disc_div in disc_divs:
-                caption_tr = disc_div.getprevious()
-                caption_a = caption_tr.cssselect('a')
-                if len(caption_a) != 1:
-                    self.raise_exception(u'could not determine disc header')
-                caption_a = caption_a[0]
-                m = re.search('\d+',caption_a.text_content())
-                if not m:
-                    self.raise_exception(u'could not determine disc number')
-                disc_number = int(m.group(0))
-                discs_containers[disc_number] = {'div':disc_div, 'caption':caption_a.text_content()}
+            discs_containers = {1:{'tracks':[], 'caption':''}}
+            disc_number = 1
+            for disc_row in disc_rows:
+                if disc_row.attrib['class'] == 'subh':
+                    caption_a = disc_row.cssselect('a[rel="mo:record"]')
+                    if len(caption_a) == 1:
+                        caption_a = caption_a[0]
+                        m = re.search('\d+',caption_a.text_content())
+                        if not m:
+                            self.raise_exception(u'could not determine disc number')
+                        else:
+                            disc_number = int(m.group(0))
+                            discs_containers[disc_number] = {'tracks':[], 'caption':caption_a.text_content()}
+                else:
+                    discs_containers[disc_number]['tracks'].append(disc_row)
             return discs_containers
         return {}
 
@@ -237,7 +240,7 @@ class Release(BaseRelease):
         return None
 
     def get_track_containers(self, discContainer):
-        track_rows = discContainer['div'].cssselect('span > tr')
+        track_rows = discContainer['tracks']
         return map(lambda x: x.cssselect('td'), track_rows)
 
     def get_track_number(self, trackContainer):
