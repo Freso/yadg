@@ -368,6 +368,22 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_special_sub_heading(self):
+        expected = {'title': 'Fremder-Zyklus, Teil 1.1: Die GeistErfahrer', 'country': 'Germany',
+                    'format': u'2\xd7CD, EP', 'label': ['Trisol'], 'discTitles': {2: u'Bonus CD'},
+                    'released': '2012-11-16', 'catalog': ['TRI 460 CD'], 'discs': {
+            1: [('1', [], 'GeistErfahrer', '6:00'), ('2', [], 'In Sack und Asche', '7:20'),
+                ('3', [], u'\xdcberH\xe4rte', '6:16'), ('4', [], 'Carpe noctem', '5:12'),
+                ('5', [], 'Weichen(t)stellung (GeistErfahrer Reprise)', '4:34'), ('6', [], 'Danach', '8:36')],
+            2: [('1', [], 'Sing Child', '6:44'), ('2', [], 'Duett (Minnelied der Incubi)', '4:11'),
+                ('3', [], 'Krabat', '5:58'), ('4', [], 'Unverwandt', '11:07'), ('5', [], 'Werben', '7:20')]},
+                    'link': 'http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f',
+                    'artists': [{'type': 'Main', 'name': 'ASP'}]}
+
+        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/12345-abcdefg')
         try:
