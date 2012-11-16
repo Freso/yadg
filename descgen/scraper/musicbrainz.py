@@ -216,7 +216,7 @@ class Release(BaseRelease):
             discs_containers = {1:{'tracks':[], 'caption':''}}
             disc_number = 1
             for disc_row in disc_rows:
-                if disc_row.attrib['class'] == 'subh':
+                if 'subh' in disc_row.attrib['class'].split():
                     caption_a = disc_row.cssselect('a[rel="mo:record"]')
                     if len(caption_a) == 1:
                         caption_a = caption_a[0]
