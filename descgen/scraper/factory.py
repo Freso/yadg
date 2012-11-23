@@ -10,7 +10,7 @@ _SCRAPERS = {
     'itunes':itunes,
 }
 
-_SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
+_SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),filter(lambda x: hasattr(_SCRAPERS[x],'Release'),_SCRAPERS)))
 
 _SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
 
