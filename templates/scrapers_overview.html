@@ -19,8 +19,8 @@
         <tbody>{% for scraper in scrapers %}
             <tr>
                 <td><a href="{{ scraper.url }}">{{ scraper.name }}</a></td>
-                <td>{% if scraper.release %}<i class="icon-ok"></i>{% else %}<i class="icon-remove"></i>{% endif %}</td>
-                <td>{% if scraper.searchable %}<i class="icon-ok"></i>{% else %}<i class="icon-remove"></i>{% endif %}</td>
+                <td>{% if scraper.release %}<i class="icon-ok" title="Yes"></i><span class="hide">Yes</span>{% else %}<i class="icon-remove" title="No"></i><span class="hide">No</span>{% endif %}</td>
+                <td>{% if scraper.searchable %}<i class="icon-ok" title="Yes"></i><span class="hide">Yes</span>{% else %}<i class="icon-remove" title="No"></i><span class="hide">No</span>{% endif %}</td>
                 <td>{{ scraper.notes|safe }}</td>
             </tr>{% endfor %}
         </tbody>
