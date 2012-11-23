@@ -4,6 +4,7 @@ from base import BaseRelease, BaseSearch, BaseAPIError
 
 
 READABLE_NAME = 'Audiojelly'
+SCRAPER_URL = 'http://www.audiojelly.com/'
 
 
 class AudiojellyAPIError(BaseAPIError):

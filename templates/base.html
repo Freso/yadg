@@ -56,6 +56,7 @@
           <a class="brand" href="{% url index %}" title="Yet Another Description Generator">YADG</a>
           <ul class="nav">
             <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url index %}">Home</a></li>
+            <li{% block scrapers_li_tags %}{% endblock %}><a href="{% url scrapers_overview %}">Available Scrapers</a></li>
             <li><a href="{% url api_root %}">API</a></li>
           </ul>
           <ul class="nav pull-right">

@@ -2,7 +2,9 @@
 import lxml.html,re,lxml.etree
 from base import BaseSearch, BaseRelease, BaseAPIError
 
+
 READABLE_NAME = 'Discogs'
+SCRAPER_URL = 'http://www.discogs.com/'
 
 
 class DiscogsAPIError(BaseAPIError):
