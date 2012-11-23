@@ -10,13 +10,13 @@ _SCRAPERS = {
     'itunes':itunes,
 }
 
-_SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
+_SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),filter(lambda x: hasattr(_SCRAPERS[x],'Release'),_SCRAPERS)))
 
 _SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
 
-SCRAPER = _SCRAPERS.keys()
+SCRAPER = _SCRAPER_SEARCHES.keys()
 
-SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),_SCRAPERS)
+SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),SCRAPER)
 SCRAPER_CHOICES.sort(lambda x,y: cmp(x[0],y[0]))
 
 SCRAPER_DEFAULT = 'discogs'
@@ -52,7 +52,7 @@ class ScraperFactory(object):
         if not scraper:
             scraper = SCRAPER_DEFAULT
         if not scraper in SCRAPER:
-            raise ScraperFactoryError, u'no scraper "%s"' % scraper
+            raise ScraperFactoryError, u'no searchable scraper "%s"' % scraper
         
         search = _SCRAPER_SEARCHES[scraper](search_term)
         if not getattr(search,'SCRAPER',False):

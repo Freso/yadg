@@ -4,6 +4,7 @@ from base import BaseAPIError, BaseRelease, BaseSearch
 
 
 READABLE_NAME = 'Musicbrainz'
+SCRAPER_URL = 'http://musicbrainz.org/'
 
 
 class MusicBrainzAPIError(BaseAPIError):

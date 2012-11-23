@@ -4,6 +4,7 @@ from base import BaseRelease, BaseSearch, BaseAPIError
 
 
 READABLE_NAME = 'iTunes Store'
+SCRAPER_URL = 'http://itunes.apple.com/'
 
 
 class iTunesAPIError(BaseAPIError):

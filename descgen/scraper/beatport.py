@@ -4,6 +4,7 @@ from base import BaseRelease, BaseSearch, BaseAPIError
 
 
 READABLE_NAME = 'Beatport'
+SCRAPER_URL = 'http://www.beatport.com/'
 
 
 class BeatportAPIError(BaseAPIError):

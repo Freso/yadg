@@ -1,12 +1,16 @@
 from descgen.forms import InputForm,FormatForm,SettingsForm
 from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
+from descgen.scraper.factory import _SCRAPERS
 
 from django.shortcuts import render,redirect
 from django.http import Http404,HttpResponse
 from django.views.generic.base import View
 from django.views.generic.edit import FormView
+from django.views.generic.base import TemplateView
 
 from djcelery.models import TaskMeta
+
+import markdown
 
 
 class IndexView(View, CreateTaskMixin):
@@ -93,6 +97,37 @@ class SettingsView(FormView,GetDescriptionMixin,CreateTaskMixin):
         self.request.session['default_format'] = form.cleaned_data['description_format']
         self.request.session['default_scraper'] = form.cleaned_data['scraper']
         return render(self.request,self.template_name,{'form':form, 'successful':True})
+
+
+class ScrapersView(TemplateView):
+    template_name = 'scrapers_overview.html'
+
+    def get_context_data(self, **kwargs):
+        data = super(ScrapersView, self).get_context_data(**kwargs)
+
+        md = markdown.Markdown(output_format='html5', safe_mode='escape')
+
+        scraper_keys = _SCRAPERS.keys()
+        scraper_keys.sort()
+
+        scrapers = []
+
+        for scraper_key in scraper_keys:
+            scraper = _SCRAPERS[scraper_key]
+            scraper_item = {
+                'name': scraper.READABLE_NAME,
+                'url': scraper.SCRAPER_URL,
+                'release': hasattr(scraper, 'Release'),
+                'searchable': hasattr(scraper, 'Search')
+            }
+            if hasattr(scraper, 'NOTES'):
+                scraper_item['notes'] = md.convert(scraper.NOTES)
+            scrapers.append(scraper_item)
+
+        data['scrapers'] = scrapers
+
+        return data
+
 
 def csrf_failure(request, reason=""):
     return render(request, 'csrf_failure.html', status=403)
