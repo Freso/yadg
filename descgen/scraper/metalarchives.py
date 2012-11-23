@@ -4,6 +4,8 @@ from base import BaseRelease, BaseSearch, BaseAPIError
 
 
 READABLE_NAME = 'Metal-Archives'
+SCRAPER_URL = 'http://www.metal-archives.com/'
+NOTES = 'Search terms are only matched against **album titles**. It is *not possible* to search for artists through YADG.'
 
 
 class MetalarchivesAPIError(BaseAPIError):

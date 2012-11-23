@@ -4,6 +4,8 @@ from base import BaseRelease, BaseSearch, BaseAPIError
 
 
 READABLE_NAME = 'Junodownload'
+SCRAPER_URL = 'http://www.junodownload.com/'
+NOTES = 'Track artists on VA releases are not supported.'
 
 
 class JunodownloadAPIError(BaseAPIError):
