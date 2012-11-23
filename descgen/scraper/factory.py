@@ -14,9 +14,9 @@ _SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),_SCRAPERS))
 
 _SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
 
-SCRAPER = _SCRAPERS.keys()
+SCRAPER = _SCRAPER_SEARCHES.keys()
 
-SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),_SCRAPERS)
+SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),SCRAPER)
 SCRAPER_CHOICES.sort(lambda x,y: cmp(x[0],y[0]))
 
 SCRAPER_DEFAULT = 'discogs'
