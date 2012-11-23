@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title%}Available Scrapers – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block scrapers_li_tags %} class="active"{% endblock %}
+
+{% block content%}
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Release</th>
+                <th>Searchable</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>{% for scraper in scrapers %}
+            <tr>
+                <td><a href="{{ scraper.url }}">{{ scraper.name }}</a></td>
+                <td>{% if scraper.release %}<i class="icon-ok"></i>{% else %}<i class="icon-remove"></i>{% endif %}</td>
+                <td>{% if scraper.searchable %}<i class="icon-ok"></i>{% else %}<i class="icon-remove"></i>{% endif %}</td>
+                <td>{{ scraper.notes|safe }}</td>
+            </tr>{% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
