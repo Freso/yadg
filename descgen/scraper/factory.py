@@ -52,7 +52,7 @@ class ScraperFactory(object):
         if not scraper:
             scraper = SCRAPER_DEFAULT
         if not scraper in SCRAPER:
-            raise ScraperFactoryError, u'no scraper "%s"' % scraper
+            raise ScraperFactoryError, u'no searchable scraper "%s"' % scraper
         
         search = _SCRAPER_SEARCHES[scraper](search_term)
         if not getattr(search,'SCRAPER',False):
