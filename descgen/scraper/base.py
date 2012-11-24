@@ -138,6 +138,8 @@ class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin, LoggerMixin):
     _data = None
     _release_url = None
 
+    priority = 10
+
     def raise_request_exception(self, message):
         """
         Make sure the RequestMixin uses ExceptionMixin
