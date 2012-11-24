@@ -964,6 +964,19 @@ class BandcampTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_album_with_track_artist(self):
+        expected = {'title': u'Love Everyday EP', 'format': 'WEB release', 'released': u'2012', 'discs': {
+            1: [('1', [], u'For You', u'1:31'), ('2', [], u'Love Everyday', u'3:30'), ('3', [], u'Stole the Show', u'2:57'),
+                ('4', [], u'Love is a Song', u'4:52'), ('5', [], u'Body High ft. Breezy Lovejoy & Jose Rios', u'4:26'),
+                ('6', [], u'Not Right Now ft. Wax', u'2:53'),
+                ('7', [{'type': 'Main', 'name': u'Breezy Lovejoy'}], u'Breezy Lovejoy - Paradise', u'3:22')]},
+                    'link': 'http://music.dumbfoundead.com/album/love-everyday-ep',
+                    'artists': [{'type': 'Main', 'name': u'Dumbfoundead'}]}
+
+        r = bandcamp.Release.release_from_url('http://music.dumbfoundead.com/album/love-everyday-ep')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = bandcamp.Release.release_from_url('http://blubb.bla.com/album/blubb')
         try:
