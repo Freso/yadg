@@ -1,7 +1,7 @@
 # coding=utf-8
 
 from django.test import TestCase
-from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz
+from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
 
 class DiscogsTest(TestCase):
     maxDiff = None
@@ -929,3 +929,37 @@ class ITunesTest(TestCase):
         except itunes.iTunesAPIError as e:
             if not unicode(e).startswith('404 '):
                 raise e
+
+
+class BandcampTest(TestCase):
+    maxDiff = None
+
+    def test_album_with_band_name(self):
+        expected = {'artists': [{'type': 'Main', 'name': u'Love Sex Machine'}], 'released': u'2012',
+                    'title': u'Love Sex Machine', 'discs': {
+            1: [('1', [], u'Anal On Deceased Virgin', u'5:35'), ('2', [], u'Deafening Peepshow', u'4:30'),
+                ('3', [], u'Fucking Battle', u'2:37'), ('4', [], u'Antagonism Can STFU', u'2:59'),
+                ('5', [], u'Plenty Of Feelings', u'2:26'), ('6', [], u'Vagina Curse', u'5:20'),
+                ('7', [], u'Killed With A Monster Cock', u'4:44'), ('8', [], u'Warstrike Takes The Piss', u'4:35')]},
+                    'format': 'WEB release', 'link': 'http://music.throatruinerrecords.com/album/love-sex-machine'}
+
+        r = bandcamp.Release.release_from_url('http://music.throatruinerrecords.com/album/love-sex-machine')
+
+        self.assertEqual(expected, r.data)
+
+    def test_album_without_band_name(self):
+        expected = {'artists': [{'type': 'Main', 'name': u'BORN'}], 'released': u'2012', 'title': u'THE WAKE',
+                    'discs': {1: [('1', [], u'STILL- BORN', u'3:21'), ('2', [], u'THE FEELING', u'4:26'),
+                                  ('3', [], u'MIC CHECK', u'3:06'), ('4', [], u'WRITERS BLOCK', u'3:54'),
+                                  ('5', [], u'VIRGINS', u'4:35'),
+                                  ('6', [], u'THE PAIN ft. Alley Cat, Barry Smooth, Rome', u'4:32'),
+                                  ('7', [], u'THE B-SIDE', u'3:53'),
+                                  ('8', [], u'TOMORROW NEVER COMES ft. Jenna Messer', u'4:59'),
+                                  ('9', [], u'DEFINITION OF HEAVEN ft. Barry Smooth', u'3:38'),
+                                  ('10', [], u'OUTTA WORK VIDEO GIRL', u'3:50'), ('11', [], u'CASSADAGA', u'3:41'),
+                                  ('12', [], u'THE DREAMS OVER', u'4:24')]}, 'format': 'WEB release',
+                    'link': 'http://bornmc.bandcamp.com/album/the-wake',}
+
+        r = bandcamp.Release.release_from_url('http://bornmc.bandcamp.com/album/the-wake')
+
+        self.assertEqual(expected, r.data)
