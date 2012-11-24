@@ -1,4 +1,4 @@
-import discogs, musicbrainz, beatport, metalarchives, audiojelly, junodownload, itunes
+import discogs, musicbrainz, beatport, metalarchives, audiojelly, junodownload, itunes, bandcamp
 
 _SCRAPERS = {
     'discogs':discogs,
@@ -8,9 +8,13 @@ _SCRAPERS = {
     'audiojelly':audiojelly,
     'junodownload':junodownload,
     'itunes':itunes,
+    'bandcamp':bandcamp,
 }
 
 _SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),filter(lambda x: hasattr(_SCRAPERS[x],'Release'),_SCRAPERS)))
+
+_SCRAPER_RELEASES_SORTED = _SCRAPER_RELEASES.values()
+_SCRAPER_RELEASES_SORTED.sort(lambda x,y: cmp(x.priority, y.priority))
 
 _SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
 
@@ -29,6 +33,7 @@ SCRAPER_EXCEPTIONS = (
     audiojelly.AudiojellyAPIError,
     junodownload.JunodownloadAPIError,
     itunes.iTunesAPIError,
+    bandcamp.BandcampAPIError,
 )
 
 
@@ -41,7 +46,7 @@ class ScraperFactory(object):
     def get_release_by_url(self,url):
         release = None
         
-        for scraper in _SCRAPER_RELEASES.values():
+        for scraper in _SCRAPER_RELEASES_SORTED:
             release = scraper.release_from_url(url)
             if release:
                 break
