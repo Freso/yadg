@@ -99,7 +99,7 @@ class Release(BaseRelease):
         elif self.parsed_response_album.has_key('band_id'):
             band_info = self._get_band_info(self.parsed_response_album['band_id'])
             if band_info.has_key('name'):
-                artist = self.parsed_response_band['name']
+                artist = band_info['name']
         if artist:
             return [self.format_artist(artist, self.ARTIST_TYPE_MAIN)]
         return []
