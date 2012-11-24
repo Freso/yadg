@@ -963,3 +963,12 @@ class BandcampTest(TestCase):
         r = bandcamp.Release.release_from_url('http://bornmc.bandcamp.com/album/the-wake')
 
         self.assertEqual(expected, r.data)
+
+    def test_404(self):
+        r = bandcamp.Release.release_from_url('http://blubb.bla.com/album/blubb')
+        try:
+            r.data
+            self.assertFalse(True)
+        except bandcamp.BandcampAPIError as e:
+            if not unicode(e).startswith('404 '):
+                raise e
