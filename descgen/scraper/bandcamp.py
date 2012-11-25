@@ -21,7 +21,7 @@ class Release(BaseRelease):
 
     exception = BandcampAPIError
 
-    url_regex = '^(http(?:s)?://.*?/album/.*)$'
+    url_regex = '^(http(?:s)?://\S+?/album/\S*)$'
 
     def __init__(self, album_url):
         self.album_url = album_url
