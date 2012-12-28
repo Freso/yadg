@@ -196,7 +196,8 @@ class Release(BaseRelease):
         return None
 
     def get_release_artists(self):
-        artist_links = self._release_header_div.cssselect('p.subheader > a')
+        artist_links = self._release_header_div.cssselect('p.subheader a')
+        artist_links = filter(lambda x: x.attrib.has_key('resource') and 'mbz:artist' in x.attrib['resource'], artist_links)
         if len(artist_links) == 0:
             self.raise_exception(u'could not find artist a')
 
@@ -281,7 +282,7 @@ class Release(BaseRelease):
                 if track_artist == 'Various Artists':
                     track_artist = self.ARTIST_NAME_VARIOUS
                 track_artists.append(self.format_artist(track_artist, self.ARTIST_TYPE_MAIN if not is_feature else self.ARTIST_TYPE_FEATURE))
-                if track_artist_a.tail and u'feat.' in track_artist_a.tail:
+                if (track_artist_a.tail and u'feat.' in track_artist_a.tail) or (track_artist_a.getparent().tail and u'feat.' in track_artist_a.getparent().tail):
                     is_feature = True
         return track_artists
 
