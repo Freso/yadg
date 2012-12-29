@@ -977,6 +977,24 @@ class BandcampTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_album_with_utf8_characters(self):
+        expected = {'title': u'Illusions', 'format': 'WEB release', 'released': u'2012', 'discs': {
+            1: [('1', [], u'Sugar High', u'2:41'), ('2', [], u'Illusion (feat. Brenton Mattheus)', u'4:26'),
+                ('3', [], u'Beer Remastered', u'4:41'), ('4', [], u'Snowfall', u'4:30'), ('5', [], u'Love Theory', u'2:37'),
+                ('6', [], u'Canc\xfan', u'4:17'), ('7', [], u'South Side', u'4:28'),
+                ('8', [], u'Illusion (Instrumental)', u'4:26'), ('9', [], u'Love Theory (Instrumental)', u'2:37'),
+                ('10', [], u'Illusion (Extended Mix) [feat. Brenton Mattheus]', u'6:11'),
+                ('11', [], u'Beer Remastered (Extended Mix)', u'7:00'), ('12', [], u'Snowfall (Extended Mix)', u'7:04'),
+                ('13', [], u'Love Theory (Extended Mix)', u'4:58'), ('14', [], u'Canc\xfan (Extended Mix)', u'6:13'),
+                ('15', [], u'South Side (Extended Mix)', u'6:13'), ('16', [], u'Illusions Continuous Mix', u'33:37'),
+                ('17', [], u'Illusions Continuous Instrumental Mix', u'33:37')]},
+                    'link': 'http://music.approachingnirvana.com/album/illusions',
+                    'artists': [{'type': 'Main', 'name': u'Approaching Nirvana'}]}
+
+        r = bandcamp.Release.release_from_url('http://music.approachingnirvana.com/album/illusions')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = bandcamp.Release.release_from_url('http://blubb.bla.com/album/blubb')
         try:

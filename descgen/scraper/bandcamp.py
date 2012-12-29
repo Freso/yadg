@@ -21,6 +21,8 @@ class Release(BaseRelease):
 
     exception = BandcampAPIError
 
+    forced_response_encoding = 'utf8'
+
     url_regex = '^(http(?:s)?://\S+?/album/\S*)$'
 
     def __init__(self, album_url):
@@ -39,6 +41,7 @@ class Release(BaseRelease):
         r2 = self._make_request(self.REQUEST_METHOD_GET, self.base_url + 'band/3/info', {'band_id':band_id, 'key':self.api_key}, self.get_headers(), None, {})
         if r2.status_code != 200:
             self.raise_request_exception('%d' % (r2.status_code if r2.status_code else 500))
+        r2.encoding = self.get_forced_response_encoding()
 
         try:
             resp2 = json.loads(r2.text)
@@ -64,6 +67,7 @@ class Release(BaseRelease):
             if r1.status_code != 200:
                 self.raise_request_exception('%d' % (r1.status_code if r1.status_code else 500))
             else:
+                r1.encoding = self.get_forced_response_encoding()
                 try:
                     resp1 = json.loads(r1.text)
                 except:
