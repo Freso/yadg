@@ -125,12 +125,13 @@ class Release(BaseRelease):
         if len(title_element) != 1:
             self.raise_exception(u'could not find title element')
         title_element = title_element[0]
-        title = title_element.text_content()
+        title_text_nodes = title_element.xpath('child::text()')
+        title = u''.join(map(lambda x: self.remove_whitespace(x), title_text_nodes))
         #right now this contains 'artist - title', so remove 'artist'
         title = title.split(u'–')
-        if len(title) != 2:
+        if len(title) < 2:
             self.raise_exception('could not split release title')
-        title = self.remove_whitespace(title[1])
+        title = u' – '.join(map(lambda x: self.remove_whitespace(x), title[1:]))
         if title:
             return title
         return None
