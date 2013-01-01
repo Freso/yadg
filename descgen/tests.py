@@ -181,6 +181,34 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_album_with_unicode_dash_in_title(self):
+        expected = {'style': ['Soundtrack', 'Abstract', 'Ambient'],
+                    'title': u'AUN \u2013 The Beginning And The End Of All Things', 'country': 'UK',
+                    'format': 'CD, Album', 'label': [u'Ash International'], 'released': '25 Jun 2012',
+                    'catalog': [u'Ash 9.5'], 'discs': {
+            1: [('1', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Kae', None),
+                ('2', [{'type': 'Main', 'name': 'Fennesz Sakamoto'}], 'Aware', None),
+                ('3', [{'type': 'Main', 'name': 'Fennesz Sakamoto'}], 'Haru', None),
+                ('4', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Sekai', None),
+                ('5', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Euclides', None),
+                ('6', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Sasazuka', None),
+                ('7', [{'type': 'Main', 'name': 'Fennesz Sakamoto'}], 'Trace', None),
+                ('8', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Mori', None),
+                ('9', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'AUN40', None),
+                ('10', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Namuru', None),
+                ('11', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Himitsu', None),
+                ('12', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'AUN80', None),
+                ('13', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Nympha', None),
+                ('14', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Shinu', None),
+                ('15', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Hikari', None)]},
+                    'link': 'http://www.discogs.com/Christian-Fennesz-AUN-The-Beginning-And-The-End-Of-All-Things/release/2881000',
+                    'artists': [{'type': 'Main', 'name': 'Christian Fennesz'}],
+                    'genre': ['Electronic', 'Stage & Screen']}
+
+        r = discogs.Release.release_from_url('http://www.discogs.com/Christian-Fennesz-AUN-The-Beginning-And-The-End-Of-All-Things/release/2881000')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/999999999')
         try:
