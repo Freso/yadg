@@ -96,7 +96,7 @@ class Release(BaseRelease):
             labels = []
             #sometimes we have the format "label - catalog#" for a label
             for label_component in label_components:
-                split = label_component.split(u' \u2013 ')
+                split = label_component.split(u' \u200e\u2013 ')
                 if len(split) == 2: #we have exactely label and catalog#
                     label = self._remove_enum_suffix(split[0])
                 else:
@@ -114,7 +114,7 @@ class Release(BaseRelease):
             catalog_nr = []
             #sometimes we have the format "label - catalog#" for a label
             for label_component in label_components:
-                split = label_component.split(u' \u2013 ')
+                split = label_component.split(u' \u200e\u2013 ')
                 if len(split) == 2 and split[1] != 'none': #we have exactely label and catalog#
                     catalog_nr.append(split[1])
             return catalog_nr
