@@ -121,19 +121,17 @@ class Release(BaseRelease):
         return []
 
     def get_release_title(self):
-        title_element = self.container.cssselect('div.profile h1')
-        if len(title_element) != 1:
+        title_spans = self.container.cssselect('div.profile h1 span')
+        if len(title_spans) == 0:
             self.raise_exception(u'could not find title element')
-        title_element = title_element[0]
-        title_text_nodes = title_element.xpath('child::text()')
-        title = u''.join(map(lambda x: self.remove_whitespace(x), title_text_nodes))
-        #right now this contains 'artist - title', so remove 'artist'
-        title = title.split(u'–')
-        if len(title) < 2:
-            self.raise_exception('could not split release title')
-        title = u' – '.join(map(lambda x: self.remove_whitespace(x), title[1:]))
-        if title:
-            return title
+        title_span = None
+        for span in title_spans:
+            if u'–' in span.tail:
+                title_span = span.xpath('following-sibling::span')
+        if title_span is not None and len(title_span) == 1:
+            title = self.remove_whitespace(title_span[0].text_content())
+            if title:
+                return title
         return None
 
     def get_release_country(self):
