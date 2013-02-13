@@ -139,7 +139,10 @@ class Release(BaseRelease):
     def get_track_number(self, trackContainer):
         track_num_span = trackContainer.cssselect('td.index span.index span')
         if len(track_num_span) != 1:
-            self.raise_exception(u'could not get track number span')
+            # the track index might be in the name column
+            track_num_span = trackContainer.cssselect('td.name span.index span')
+            if len(track_num_span) != 1:
+                self.raise_exception(u'could not get track number span')
         track_num = track_num_span[0].text_content()
         track_num = self.remove_whitespace(track_num)
         if track_num:
