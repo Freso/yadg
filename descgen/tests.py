@@ -940,6 +940,86 @@ class ITunesTest(TestCase):
 
         self.assertEqual(expected, r.data)
 
+    def test_tracknum_in_name_column(self):
+        expected = {'title': 'Chopin: Piano Works', 'released': 'Jun 01, 2005', 'discs': {
+            1: [('1', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'No. 1. in C', '2:16'), (
+                '2', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 2. in A Minor "chromatique"',
+                '1:24'), (
+                    '3', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 3. in E "Tristesse"',
+                    '4:03'), (
+                    '4', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 4. in C-Sharp Minor',
+                    '2:08'), ('5', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                              '12 Etudes, Op.10: No. 5. in G-Flat "Black Keys"', '1:42'), (
+                    '6', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 6. in E-Flat Minor',
+                    '3:15'),
+                ('7', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 7. in C', '1:32'),
+                ('8', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 8. in F', '2:43'),
+                ('9', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 9. in F Minor', '2:17'),
+                ('10', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 10. in A-Flat', '2:20'),
+                ('11', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 11. in E-Flat', '2:15'),
+                ('12', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                 '12 Etudes, Op.10: No. 12. in C Minor "Revolutionary"', '2:53'),
+                ('13', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'No. 1 in A-Flat - "Harp Study"', '2:51'),
+                ('14', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 2 in F Minor', '1:32'),
+                ('15', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 3 in F Major', '1:43'),
+                ('16', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 4 in A Minor', '1:28'),
+                ('17', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 5 in E Minor', '3:18'),
+                ('18', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 6 in G-Sharp Minor',
+                 '1:57'), (
+                    '19', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 7 in C-Sharp Minor',
+                    '5:12'),
+                ('20', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 8 in D-Flat', '1:06'), (
+                    '21', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                    '12 Etudes, Op.25: No. 9 in G-Flat, "Butterfly Wings"', '1:02'),
+                ('22', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 10 in B Minor', '4:04'),
+                ('23', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                 '12 Etudes, Op.25: No. 11 in A Minor "Winter Wind"', '3:35'),
+                ('24', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'No. 12 in C Minor', '2:48'),
+                ('25', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Impromptu No. 1 in A-Flat, Op.29', '3:53'),
+                ('26', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Impromptu No. 2 in F-Sharp, Op.36', '5:51'),
+                ('27', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Impromptu No. 3 in G-Flat, Op.51', '4:44'), (
+                    '28', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                    'Impromptu No. 4 in C-Sharp Minor, Op. 66 "Fantaisie-Impromptu"', '4:51')],
+            2: [('1', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'I. Grave - Doppio Movimento', '5:31'), (
+                '2', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], u'II. Scherzo - Pi\xf9 Lento - Tempo I', '6:37'),
+                ('3', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], u'III. Marche Fun\xe8bre (Lento)', '8:23'),
+                ('4', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'IV. Finale (Presto)', '1:37'),
+                ('5', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'I. Allegro Maestoso', '8:53'),
+                ('6', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'II. Scherzo (Molto Vivace)', '2:50'),
+                ('7', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'III. Largo', '9:21'),
+                ('8', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'IV. Finale (Presto Non Tanto)', '5:09'), (
+                    '9', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 54 in D: Allegro Non Troppo',
+                    '1:11'), (
+                    '10', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 46 in C Op.67 No.3: Allegretto',
+                    '1:28'), ('11', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                              'Mazurka No. 49 in A Minor Op. 68, No. 2: Lento', '2:35'), (
+                    '12', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 5 in B-Flat Op. 7, No. 1: Vivace',
+                    '2:20'), ('13', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                              'Introduction and Variations On a German National Air Op.posth. (KK 925-927)', '6:27'), (
+                    '14', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 58 in A-Flat: Poco Mosso', '1:17'),
+                ('15', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Berceuse in D-Flat, Op. 57: Andante', '5:16'),
+                ('16', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
+                 'Polonaise No. 6 in A-Flat, Op. 53 -"Heroic": Maestoso', '6:53')], 3: [('1', [
+            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Jerzy Semkow'},
+            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'I. Allegro Maestoso', '20:15'), ('2', [
+            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Jerzy Semkow'},
+            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'II. Romance (Larghetto)', '10:36'), ('3', [
+            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Jerzy Semkow'},
+            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'III. Rondo (Vivace)', '10:19'), ('4', [
+            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Janos Kulka'},
+            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Piano Concerto No. 2 in F Minor, Op. 21: I. Maestoso', '15:01'),
+            ('5', [{'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Janos Kulka'},
+                   {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Piano Concerto No. 2 in F Minor, Op. 21: II. Larghetto', '9:43'),
+            ('6', [{'type': 'Main', 'name': u'Berliner Philharmoniker'},
+                   {'type': 'Main','name': u'Janos Kulka'},
+                   {'type': 'Main','name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Piano Concerto No. 2 in F Minor, Op. 21: III. Allegro Vivace', '8:44')]},
+                    'link': 'https://itunes.apple.com/us/album/chopin-piano-works/id77261376',
+                    'artists': [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'genre': ['Classical']}
+
+        r = itunes.Release.release_from_url('https://itunes.apple.com/us/album/chopin-piano-works/id77261376')
+
+        self.assertEqual(expected, r.data)
+
     def test_404(self):
         r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/blubb/id999999999999')
         try:
