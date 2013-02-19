@@ -207,3 +207,6 @@ SESSION_COOKIE_HTTPONLY = False # make sure cookie is sent with ajax calls
 
 #set a custum csrf_failure view
 CSRF_FAILURE_VIEW = "descgen.views.csrf_failure"
+
+#set allowed hosts
+ALLOWED_HOSTS = ['.yadg.cc']
