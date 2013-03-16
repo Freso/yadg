@@ -18,6 +18,11 @@ _SCRAPER_RELEASES_SORTED.sort(lambda x,y: cmp(x.priority, y.priority))
 
 _SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
 
+SCRAPER_ITEMS = map(lambda x: {'name': _SCRAPERS[x].READABLE_NAME,
+                               'url': _SCRAPERS[x].SCRAPER_URL,
+                               'release': hasattr(_SCRAPERS[x], 'Release'),
+                               'searchable': hasattr(_SCRAPERS[x], 'Search')}, sorted(_SCRAPERS))
+
 SCRAPER = _SCRAPER_SEARCHES.keys()
 
 SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),SCRAPER)
