@@ -14,6 +14,7 @@ class ScraperNamesNode(template.Node):
         return ''
 
 
+#todo: use @register.assignment_tag for this when updating to Django 1.4
 @register.tag(name='scraper_names')
 def do_scraper_names(parser, token):
     # This version uses a regular expression to parse tag contents.
