@@ -11,17 +11,37 @@ _SCRAPERS = {
     'bandcamp':bandcamp,
 }
 
-_SCRAPER_RELEASES = dict(map(lambda x: (x,_SCRAPERS[x].Release),filter(lambda x: hasattr(_SCRAPERS[x],'Release'),_SCRAPERS)))
+_SCRAPER_RELEASES = {}
+_SCRAPER_SEARCHES = {}
+SCRAPER_ITEMS = []
+SCRAPER_CHOICES = []
+
+for scraper_key in sorted(_SCRAPERS):
+    scraper = _SCRAPERS[scraper_key]
+    has_release = hasattr(scraper, 'Release')
+    has_search = hasattr(scraper, 'Search')
+    readable_name = scraper.READABLE_NAME
+    url = scraper.SCRAPER_URL
+    if has_release:
+        _SCRAPER_RELEASES[scraper_key] = scraper.Release
+    if has_search:
+        _SCRAPER_SEARCHES[scraper_key] = scraper.Search
+        # the scraper is searchable, so add it to the list of scraper choices used by the forms
+        SCRAPER_CHOICES.append((scraper_key, readable_name))
+    scraper_item = {
+        'name': readable_name,
+        'url': url,
+        'release': has_release,
+        'searchable': has_search
+    }
+    if hasattr(scraper, 'NOTES'):
+        scraper_item['notes'] = scraper.NOTES
+    SCRAPER_ITEMS.append(scraper_item)
 
 _SCRAPER_RELEASES_SORTED = _SCRAPER_RELEASES.values()
 _SCRAPER_RELEASES_SORTED.sort(lambda x,y: cmp(x.priority, y.priority))
 
-_SCRAPER_SEARCHES = dict(map(lambda x: (x,_SCRAPERS[x].Search),filter(lambda x: hasattr(_SCRAPERS[x],'Search'),_SCRAPERS)))
-
 SCRAPER = _SCRAPER_SEARCHES.keys()
-
-SCRAPER_CHOICES = map(lambda x: (x,_SCRAPERS[x].READABLE_NAME),SCRAPER)
-SCRAPER_CHOICES.sort(lambda x,y: cmp(x[0],y[0]))
 
 SCRAPER_DEFAULT = 'discogs'
 

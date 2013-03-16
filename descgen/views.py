@@ -1,6 +1,6 @@
 from descgen.forms import InputForm,FormatForm,SettingsForm
 from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
-from descgen.scraper.factory import _SCRAPERS
+from descgen.scraper.factory import SCRAPER_ITEMS
 
 from django.shortcuts import render,redirect
 from django.http import Http404,HttpResponse
@@ -107,21 +107,17 @@ class ScrapersView(TemplateView):
 
         md = markdown.Markdown(output_format='html5', safe_mode='escape')
 
-        scraper_keys = _SCRAPERS.keys()
-        scraper_keys.sort()
-
         scrapers = []
 
-        for scraper_key in scraper_keys:
-            scraper = _SCRAPERS[scraper_key]
+        for scraper in SCRAPER_ITEMS:
             scraper_item = {
-                'name': scraper.READABLE_NAME,
-                'url': scraper.SCRAPER_URL,
-                'release': hasattr(scraper, 'Release'),
-                'searchable': hasattr(scraper, 'Search')
+                'name': scraper['name'],
+                'url': scraper['url'],
+                'release': scraper['release'],
+                'searchable': scraper['searchable']
             }
-            if hasattr(scraper, 'NOTES'):
-                scraper_item['notes'] = md.convert(scraper.NOTES)
+            if 'notes' in scraper:
+                scraper_item['notes'] = md.convert(scraper['notes'])
             scrapers.append(scraper_item)
 
         data['scrapers'] = scrapers
