@@ -1,5 +1,5 @@
 from django import template
-from descgen.scraper.factory import SCRAPER_CHOICES
+from descgen.scraper.factory import SCRAPER_ITEMS
 import re
 
 register = template.Library()
@@ -10,9 +10,7 @@ class ScraperNamesNode(template.Node):
         self.var_name = var_name
 
     def render(self, context):
-        scraper_names = map(lambda x: x[1], SCRAPER_CHOICES)
-        scraper_names.sort()
-        context[self.var_name] = scraper_names
+        context[self.var_name] = map(lambda x: x['name'], filter(lambda x: x['release'], SCRAPER_ITEMS))
         return ''
 
 
