@@ -398,7 +398,7 @@ class MusicbrainzTest(TestCase):
 
     def test_special_sub_heading(self):
         expected = {'title': 'Die GeistErfahrer EP: Fremder-Zyklus, Teil 1.1', 'country': 'Germany',
-                    'format': u'2\xd7CD, EP', 'label': ['Trisol'], 'discTitles': {2: u'Bonus CD'},
+                    'format': u'2\xd7CD, EP', 'label': ['Trisol'],
                     'released': '2012-11-16', 'catalog': ['TRI 460 CD'], 'discs': {
             1: [('1', [], 'GeistErfahrer', '6:00'), ('2', [], 'In Sack und Asche', '7:20'),
                 ('3', [], u'\xdcberH\xe4rte', '6:16'), ('4', [], 'Carpe noctem', '5:12'),
