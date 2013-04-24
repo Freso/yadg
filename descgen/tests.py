@@ -398,7 +398,7 @@ class MusicbrainzTest(TestCase):
 
     def test_special_sub_heading(self):
         expected = {'title': 'Die GeistErfahrer EP: Fremder-Zyklus, Teil 1.1', 'country': 'Germany',
-                    'format': u'2\xd7CD, EP', 'label': ['Trisol'], 'discTitles': {2: u'Bonus CD'},
+                    'format': u'2\xd7CD, EP', 'label': ['Trisol'],
                     'released': '2012-11-16', 'catalog': ['TRI 460 CD'], 'discs': {
             1: [('1', [], 'GeistErfahrer', '6:00'), ('2', [], 'In Sack und Asche', '7:20'),
                 ('3', [], u'\xdcberH\xe4rte', '6:16'), ('4', [], 'Carpe noctem', '5:12'),
@@ -511,12 +511,12 @@ class MetalarchivesTest(TestCase):
                 1: [('1', [], 'Ouverture', '07:43'), ('2', [], "Jillian (I'd Give My Heart)", '04:39'),
                     ('3', [], 'The Howling', '06:31'), ('4', [], 'Stand My Ground', '04:33'),
                     ('5', [], 'The Cross', '05:22'), ('6', [], 'What Have You Done?', '04:58'),
-                    ('7', [], 'Hand Of Sorrow', '05:40'), ('8', [], 'The Heart Of Everything', '05:48'),
+                    ('7', [], 'Hand of Sorrow', '05:40'), ('8', [], 'The Heart of Everything', '05:48'),
                     ('9', [], 'Forgiven', '04:53'), ('10', [], 'Somewhere', '04:24'),
                     ('11', [], 'The Swan Song', '04:00'), ('12', [], 'Memories', '04:03')],
                 2: [('1', [], 'Our Solemn Hour', '05:22'), ('2', [], 'The Other Half (Of Me)', '05:04'),
                     ('3', [], 'Frozen', '06:00'), ('4', [], 'The Promise', '04:32'), ('5', [], 'Angels', '08:15'),
-                    ('6', [], 'Mother Earth', '04:02'), ('7', [], 'The Truth Beneath The Rose', '07:23'),
+                    ('6', [], 'Mother Earth', '04:02'), ('7', [], 'The Truth Beneath the Rose', '07:23'),
                     ('8', [], 'Deceiver of Fools', '07:38'), ('9', [], 'All I Need', '04:55'),
                     ('10', [], 'Ice Queen', '07:15')]},
                     'link': 'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779',
@@ -817,7 +817,7 @@ class ITunesTest(TestCase):
                 ('29', [{'type': 'Main', 'name': 'Dance Gavin Dance'}], 'Pounce Bounce', '2:26'),
                 ('30', [{'type': 'Main', 'name': 'Larry and His Flask'}], 'Blood Drunk', '3:34'),
                 ('31', [{'type': 'Main', 'name': 'River City Extension'}], 'Our New Intelligence', '3:54'),
-                ('32', [{'type': 'Main', 'name': 'Brothers Of Brazil'}], 'Samba Around the Clock', '2:39'),
+                ('32', [{'type': 'Main', 'name': 'Brothers of Brazil'}], 'Samba Around the Clock', '2:39'),
                 ('33', [{'type': 'Main', 'name': 'Lionize'}], 'Your Trying to Kill Me', '2:48'),
                 ('34', [{'type': 'Main', 'name': 'The Agrrolites'}], 'Complicated Girl', '2:04'),
                 ('35', [{'type': 'Main', 'name': 'The Black Pacific'}], 'The System', '2:43'),
@@ -852,7 +852,7 @@ class ITunesTest(TestCase):
     def test_non_us_store(self):
         expected = {'title': u'Puissance Ra\xef RnB 2011', 'released': '14 mars 2011', 'discs': {1: [(
         '1', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Alger Casa Tunis...Ou Paris (Feat. Ap Du 113 & Reda Taliani)',
-        '4:23'), ('2', [{'type': 'Main', 'name': "L'Algerino"}], 'Marseille By Night', '3:40'),
+        '4:23'), ('2', [{'type': 'Main', 'name': "L'algerino"}], 'Marseille By Night', '3:40'),
             ('3', [{'type': 'Main', 'name': 'El Matador'}], 'Allez Allez (Feat. Amar)', '3:30'),
             ('4', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Bolly Rai (Feat. Tlf, Rayan & Amal)', '3:45'),
             ('5', [{'type': 'Main', 'name': 'Hasni'}], 'Rani Mourak', '3:54'),
@@ -885,14 +885,14 @@ class ITunesTest(TestCase):
             ('31', [{'type': 'Main', 'name': 'Faycal'}], 'Mathawsich Alia By Dj Zahir', '2:23'),
             ('32', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Ya Loukane Galbak', '3:57'),
             ('33', [{'type': 'Main', 'name': 'Hasni Seghir'}], 'Gouli Wine Rak Anaya Nejika', '4:59'), (
-            '34', [{'type': 'Main', 'name': 'Dj Goldfingers'}], 'La Corniche (Feat. Tunisiano & Zahouania) [Remix]',
+            '34', [{'type': 'Main', 'name': 'DJ Goldfingers'}], 'La Corniche (Feat. Tunisiano & Zahouania) [Remix]',
             '4:03'),
             ('35', [{'type': 'Main', 'name': 'Elephant Man'}], 'Bullit (Feat. Mokobe Du 113 & Sheryne)', '3:21'),
             ('36', [{'type': 'Main', 'name': 'Rachida'}], 'Aar Rabi', '4:59'),
             ('37', [{'type': 'Main', 'name': 'Hasni'}], 'Ayet Manaalam', '5:13'),
             ('38', [{'type': 'Main', 'name': 'Shyneze'}], 'All Rai On Me (Feat. Mohamed Lamine)', '3:23'),
             ('39', [{'type': 'Main', 'name': 'Swen'}], 'Emmene Moi (Feat. Najim)', '3:43'),
-            ('40', [{'type': 'Main', 'name': "L'Algerino"}], "M'Zia (Feat. Reda Taliani)", '3:54')], 2: [
+            ('40', [{'type': 'Main', 'name': "L'algerino"}], "M'Zia (Feat. Reda Taliani)", '3:54')], 2: [
             ('1', [{'type': 'Main', 'name': 'Algeria United'}], '1 2 3 Viva Algeria', '4:39'),
             ('2', [{'type': 'Main', 'name': 'Milano & Torino'}], 'Fort Fort', '3:24'),
             ('3', [{'type': 'Main', 'name': 'Hasni'}], 'Consulat', '3:52'),
@@ -916,7 +916,7 @@ class ITunesTest(TestCase):
             ('21', [{'type': 'Main', 'name': 'Khaled'}], 'Aicha', '4:15'),
             ('22', [{'type': 'Main', 'name': 'Amina'}], u'Le Dernier Qui A Parl\xe9', '3:16'),
             ('23', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Josephine', '4:07'),
-            ('24', [{'type': 'Main', 'name': 'Onb'}], 'Bnet Paris', '4:13'),
+            ('24', [{'type': 'Main', 'name': 'ONB'}], 'Bnet Paris', '4:13'),
             ('25', [{'type': 'Main', 'name': 'Ofra Haza'}], 'Im Nin Alu-2000', '3:30'),
             ('26', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Ki Yaajabni Houbi', '4:01'),
             ('27', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Mali Mali (Feat. Chabba Djenet)', '4:05'),
