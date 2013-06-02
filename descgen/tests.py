@@ -428,8 +428,8 @@ class BeatportTest(TestCase):
     def test_simple_album(self):
         expected = {'title': u'Love Love Love Yeah', 'label': [u'Playhouse'], 'released': u'2007-01-22',
                     'catalog': [u'PLAY131'], 'discs': {
-                1: [('1', [], u'Love Love Love Yeah', u'07:55'), ('2', [], u'Bus Driver', u'03:07'),
-                    ('3', [], u'Christiane', u'00:24'), ('4', [], u'So Cold', u'03:32')]},
+                1: [('1', [], u'Love Love Love Yeah', u'7:55'), ('2', [], u'Bus Driver', u'3:07'),
+                    ('3', [], u'Christiane', u'0:24'), ('4', [], u'So Cold', u'3:32')]},
                     'link': 'http://www.beatport.com/release/love-love-love-yeah/43577',
                     'artists': [{'type': 'Main', 'name': u'Rework'}], 'genre': [u'Electro House', u'DJ Tools']}
 
@@ -441,8 +441,8 @@ class BeatportTest(TestCase):
         expected = {'title': u'Love Spy / Love Dies', 'label': [u'Karatemusik'], 'released': u'2006-04-19',
                     'catalog': [u'KM013'], 'discs': {1: [(
                 '1', [{'type': 'Remixer', 'name': u'Error Error'}], u'Love Spy / Love Dies [Error Error Remix]',
-                u'07:27'),
-                ('2', [], u'Love Spy / Love Dies', u'07:07'), ('3', [], u'Reply 23', u'06:58')]},
+                u'7:27'),
+                ('2', [], u'Love Spy / Love Dies', u'7:07'), ('3', [], u'Reply 23', u'6:58')]},
                     'link': 'http://www.beatport.com/release/love-spy-love-dies/27944',
                     'artists': [{'type': 'Main', 'name': u'Polygamy Boys'}], 'genre': [u'Tech House', u'Electro House']}
 
@@ -896,7 +896,7 @@ class ITunesTest(TestCase):
             ('1', [{'type': 'Main', 'name': 'Algeria United'}], '1 2 3 Viva Algeria', '4:39'),
             ('2', [{'type': 'Main', 'name': 'Milano & Torino'}], 'Fort Fort', '3:24'),
             ('3', [{'type': 'Main', 'name': 'Hasni'}], 'Consulat', '3:52'),
-            ('4', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Ca Passe Ou Ca Casse (Feat. Tunisiano)', '3:06'),
+            ('4', [{'type': 'Main', 'name': 'Reda Taliani'}], u'\xc7a Passe Ou \xc7a Casse (Feat. Tunisiano)', '3:06'),
             ('5', [{'type': 'Main', 'name': 'Cheb Sahraoui'}], 'Pas De Chance', '4:07'),
             ('6', [{'type': 'Main', 'name': 'Marsaoui'}], 'Rani Mara Hna', '4:06'),
             ('7', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Adabtek Nti Bizarre', '4:03'),
@@ -934,7 +934,7 @@ class ITunesTest(TestCase):
             ('39', [{'type': 'Main', 'name': 'Ouarda'}], 'Gendarme', '3:45'),
             ('40', [{'type': 'Main', 'name': 'Rayan'}], 'Dana Dana (Feat. Rima)', '4:04')]},
                     'link': 'http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770',
-                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Musiques du monde', 'Musique']}
+                    'artists': [{'type': 'Main', 'name': u'Compilation Puissance Ra\xef RnB'}], 'genre': ['Musiques du monde', 'Musique']}
 
         r = itunes.Release.release_from_url('http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770')
 

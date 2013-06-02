@@ -118,14 +118,17 @@ class Release(BaseRelease):
 
 
     def get_release_date(self):
-        if self._sidebar_captions.has_key('Release information'):
-            caption = self._sidebar_captions['Release information']
+        if self._sidebar_captions.has_key('Release events'):
+            caption = self._sidebar_captions['Release events']
 
-            dl = caption.getnext()
-            dd = self._get_dd_from_dt('Date:', dl.getchildren())
+            ul = caption.getnext()
+            lis = ul.cssselect('li')
 
-            if dd is not None:
-                return self.remove_whitespace(dd.text_content())
+            if len(lis) > 0:
+                li = lis[0]
+                date_span = li.cssselect('span[typeof="mo:ReleaseEvent"]')
+                if len(date_span) == 1:
+                    return self.remove_whitespace(date_span[0].text_content())
         return None
 
     def get_release_format(self):
@@ -185,14 +188,19 @@ class Release(BaseRelease):
         return self.remove_whitespace(title_a.text_content())
 
     def get_release_country(self):
-        if self._sidebar_captions.has_key('Release information'):
-            caption = self._sidebar_captions['Release information']
+        if self._sidebar_captions.has_key('Release events'):
+            caption = self._sidebar_captions['Release events']
 
-            dl = caption.getnext()
-            dd = self._get_dd_from_dt('Country:', dl.getchildren())
+            ul = caption.getnext()
+            lis = ul.cssselect('li')
 
-            if dd is not None:
-                return self.remove_whitespace(dd.text_content())
+            if len(lis) > 0:
+                li = lis[0]
+                country_span = li.cssselect('span[rel="mo:publishing_location"]')
+                if len(country_span) == 1:
+                    country_abbr = country_span[0].cssselect('abbr')
+                    if len(country_abbr) == 1 and country_abbr[0].attrib.has_key('title'):
+                        return self.remove_whitespace(country_abbr[0].attrib['title'])
         return None
 
     def get_release_artists(self):
