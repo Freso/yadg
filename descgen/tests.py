@@ -896,7 +896,7 @@ class ITunesTest(TestCase):
             ('1', [{'type': 'Main', 'name': 'Algeria United'}], '1 2 3 Viva Algeria', '4:39'),
             ('2', [{'type': 'Main', 'name': 'Milano & Torino'}], 'Fort Fort', '3:24'),
             ('3', [{'type': 'Main', 'name': 'Hasni'}], 'Consulat', '3:52'),
-            ('4', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Ca Passe Ou Ca Casse (Feat. Tunisiano)', '3:06'),
+            ('4', [{'type': 'Main', 'name': 'Reda Taliani'}], u'\xc7a Passe Ou \xc7a Casse (Feat. Tunisiano)', '3:06'),
             ('5', [{'type': 'Main', 'name': 'Cheb Sahraoui'}], 'Pas De Chance', '4:07'),
             ('6', [{'type': 'Main', 'name': 'Marsaoui'}], 'Rani Mara Hna', '4:06'),
             ('7', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Adabtek Nti Bizarre', '4:03'),
@@ -934,7 +934,7 @@ class ITunesTest(TestCase):
             ('39', [{'type': 'Main', 'name': 'Ouarda'}], 'Gendarme', '3:45'),
             ('40', [{'type': 'Main', 'name': 'Rayan'}], 'Dana Dana (Feat. Rima)', '4:04')]},
                     'link': 'http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770',
-                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Musiques du monde', 'Musique']}
+                    'artists': [{'type': 'Main', 'name': u'Compilation Puissance Ra\xef RnB'}], 'genre': ['Musiques du monde', 'Musique']}
 
         r = itunes.Release.release_from_url('http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770')
 
