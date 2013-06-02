@@ -428,8 +428,8 @@ class BeatportTest(TestCase):
     def test_simple_album(self):
         expected = {'title': u'Love Love Love Yeah', 'label': [u'Playhouse'], 'released': u'2007-01-22',
                     'catalog': [u'PLAY131'], 'discs': {
-                1: [('1', [], u'Love Love Love Yeah', u'07:55'), ('2', [], u'Bus Driver', u'03:07'),
-                    ('3', [], u'Christiane', u'00:24'), ('4', [], u'So Cold', u'03:32')]},
+                1: [('1', [], u'Love Love Love Yeah', u'7:55'), ('2', [], u'Bus Driver', u'3:07'),
+                    ('3', [], u'Christiane', u'0:24'), ('4', [], u'So Cold', u'3:32')]},
                     'link': 'http://www.beatport.com/release/love-love-love-yeah/43577',
                     'artists': [{'type': 'Main', 'name': u'Rework'}], 'genre': [u'Electro House', u'DJ Tools']}
 
@@ -441,8 +441,8 @@ class BeatportTest(TestCase):
         expected = {'title': u'Love Spy / Love Dies', 'label': [u'Karatemusik'], 'released': u'2006-04-19',
                     'catalog': [u'KM013'], 'discs': {1: [(
                 '1', [{'type': 'Remixer', 'name': u'Error Error'}], u'Love Spy / Love Dies [Error Error Remix]',
-                u'07:27'),
-                ('2', [], u'Love Spy / Love Dies', u'07:07'), ('3', [], u'Reply 23', u'06:58')]},
+                u'7:27'),
+                ('2', [], u'Love Spy / Love Dies', u'7:07'), ('3', [], u'Reply 23', u'6:58')]},
                     'link': 'http://www.beatport.com/release/love-spy-love-dies/27944',
                     'artists': [{'type': 'Main', 'name': u'Polygamy Boys'}], 'genre': [u'Tech House', u'Electro House']}
 
