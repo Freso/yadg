@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""
+taken from: http://peter-hoffmann.com/2010/extrinsic-visitor-pattern-python-inheritance.html
+"""
 class Visitor(object):
     def visit(self, obj, *args, **kwargs):
         meth = None
