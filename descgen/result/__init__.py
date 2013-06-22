@@ -17,6 +17,7 @@ class ListResult(Result):
         name = None
         info = None
         query = None
+        url = None
 
         def set_name(self, name):
             self.name = name
@@ -35,6 +36,12 @@ class ListResult(Result):
 
         def get_query(self):
             return self.query
+
+        def set_url(self, url):
+            self.url = url
+
+        def get_url(self):
+            return self.url
 
     items = []
 
