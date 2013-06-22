@@ -14,10 +14,11 @@ class ListResult(Result):
 
     class ListItem(object):
 
-        name = None
-        info = None
-        query = None
-        url = None
+        def __init__(self):
+            self.name = None
+            self.info = None
+            self.query = None
+            self.url = None
 
         def set_name(self, name):
             self.name = name
@@ -43,7 +44,8 @@ class ListResult(Result):
         def get_url(self):
             return self.url
 
-    items = []
+    def __init__(self):
+        self.items = []
 
     def create_item(self):
         return self.ListItem()
@@ -65,8 +67,9 @@ class ReleaseResult(Result):
 
     class ReleaseEvent(object):
 
-        date = None
-        country = None
+        def __init__(self):
+            self.date = None
+            self.country = None
 
         def set_date(self, date):
             self.date = date
@@ -82,8 +85,9 @@ class ReleaseResult(Result):
 
     class LabelId(object):
 
-        label = None
-        catalogue_nr = []
+        def __init__(self):
+            self.label = None
+            self.catalogue_nr = []
 
         def set_label(self, label):
             self.label = label
@@ -99,9 +103,10 @@ class ReleaseResult(Result):
 
     class Artist(object):
 
-        name = None
-        types = []
-        various = False
+        def __init__(self):
+            self.name = None
+            self.types = []
+            self.various = False
 
         def set_name(self, name):
             self.name = name
@@ -125,10 +130,11 @@ class ReleaseResult(Result):
 
         class Track(object):
 
-            number = None
-            artists = []
-            title = None
-            length = None
+            def __init__(self):
+                self.number = None
+                self.artists = []
+                self.title = None
+                self.length = None
 
             def set_number(self, number):
                 self.number = number
@@ -154,9 +160,10 @@ class ReleaseResult(Result):
             def get_length(self):
                 return self.length
 
-        number = None
-        title = None
-        tracks = []
+        def __init__(self):
+            self.number = None
+            self.title = None
+            self.tracks = []
 
         def set_number(self, number):
             self.number = number
@@ -179,15 +186,16 @@ class ReleaseResult(Result):
         def get_tracks(self):
             return self.tracks
 
-    release_events = []
-    format = None
-    label_ids = []
-    title = None
-    artists = []
-    genres = []
-    styles = []
-    url = None
-    discs = []
+    def __init__(self):
+        self.release_events = []
+        self.format = None
+        self.label_ids = []
+        self.title = None
+        self.artists = []
+        self.genres = []
+        self.styles = []
+        self.url = None
+        self.discs = []
 
     def create_release_event(self):
         return self.ReleaseEvent()
