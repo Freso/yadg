@@ -114,8 +114,8 @@ class ReleaseResult(Result):
         def get_name(self):
             return self.name
 
-        def append_type(self, type):
-            self.types.append(type)
+        def append_type(self, artist_type):
+            self.types.append(artist_type)
 
         def get_types(self):
             return self.types
@@ -206,8 +206,8 @@ class ReleaseResult(Result):
     def get_release_events(self):
         return self.release_events
 
-    def set_format(self, format):
-        self.format = format
+    def set_format(self, release_format):
+        self.format = release_format
 
     def get_format(self):
         return self.format
