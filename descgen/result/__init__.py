@@ -100,7 +100,7 @@ class ReleaseResult(Result):
     class Artist(object):
 
         name = None
-        type = 0
+        types = []
         various = False
 
         def set_name(self, name):
@@ -109,14 +109,11 @@ class ReleaseResult(Result):
         def get_name(self):
             return self.name
 
-        def set_type(self, type):
-            self.type = type
+        def append_type(self, type):
+            self.types.append(type)
 
-        def add_type(self, type):
-            self.type = self.type | type
-
-        def has_type(self, type):
-            return True if self.type & type > 0 else False
+        def get_types(self):
+            return self.types
 
         def set_various(self, various):
             self.various = various
