@@ -225,7 +225,7 @@ class ReleaseResult(Result):
     def append_release_artist(self, artist):
         self.artists.append(artist)
 
-    def get_artists(self):
+    def get_release_artists(self):
         return self.artists
 
     def add_genre(self, genre):
