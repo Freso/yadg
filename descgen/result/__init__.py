@@ -74,21 +74,27 @@ class ReleaseResult(Result):
         def set_country(self, country):
             self.country = country
 
+        def get_date(self):
+            return self.date
+
+        def get_country(self):
+            return self.country
+
     class LabelId(object):
 
         label = None
-        catalogue_nr = None
+        catalogue_nr = []
 
         def set_label(self, label):
             self.label = label
 
-        def set_catalogue_nr(self, catalogue_nr):
-            self.catalogue_nr = catalogue_nr
+        def append_catalogue_nr(self, catalogue_nr):
+            self.catalogue_nr.append(catalogue_nr)
 
         def get_label(self):
             return self.label
 
-        def get_catalogue_nr(self):
+        def get_catalogue_nrs(self):
             return self.catalogue_nr
 
     class Artist(object):
