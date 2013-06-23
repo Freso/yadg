@@ -3,7 +3,15 @@
 
 
 class Result(object):
-    pass
+
+    def __init__(self):
+        self.scraper_name = None
+
+    def set_scraper_name(self, scraper_name):
+        self.scraper_name = scraper_name
+
+    def get_scraper_name(self):
+        return self.scraper_name
 
 
 class NotFoundResult(Result):
@@ -45,6 +53,7 @@ class ListResult(Result):
             return self.url
 
     def __init__(self):
+        super(ListResult, self).__init__()
         self.items = []
 
     def create_item(self):
@@ -187,6 +196,7 @@ class ReleaseResult(Result):
             return self.tracks
 
     def __init__(self):
+        super(ReleaseResult, self).__init__()
         self.release_events = []
         self.format = None
         self.label_ids = []
