@@ -17,6 +17,10 @@ class APIVisitorV1(Visitor):
 
     ARTIST_NAME_VARIOUS = 'Various'
 
+    def __init__(self, description_format, include_raw_data):
+        self.description_format = description_format
+        self.include_raw_data = include_raw_data
+
     def _convert_artists(self, artists):
         result = []
         for artist in artists:
@@ -35,12 +39,22 @@ class APIVisitorV1(Visitor):
         return result
 
     def visit_NotFoundResult(self, result):
-        return None
+        data = {
+            "type": "release_not_found"
+        }
+        return data
 
     def visit_ListResult(self, result):
-        data = []
+        scraper_name = result.get_scraper_name()
+        data = {
+            "release_count": len(result.get_items()),
+            "releases": {
+                scraper_name: []
+            },
+            "type": "release_list"
+        }
         for item in result.get_items():
-            data.append({
+            data["releases"][scraper_name].append({
                 "name": item.get_name(),
                 "info": item.get_info(),
                 "release_url": item.get_url(),
@@ -49,68 +63,81 @@ class APIVisitorV1(Visitor):
         return data
 
     def visit_ReleaseResult(self, result):
-        data = {}
+        data = {
+            "type": "release"
+        }
 
-        for release_event in result.get_release_events():
-            data['released'] = release_event.get_date()
-            data['country'] = release_event.get_country()
-            break
+        # todo: implement validation of given description format
+        data["description_format"] = self.description_format
 
-        release_format = result.get_format()
-        if release_format:
-            data['format'] = release_format
+        # todo: generate actual description
+        data["description"] = ""
 
-        labels = []
-        catalogue_nrs = []
-        for label_id in result.get_label_ids():
-            if label_id.get_label():
-                labels.append(label_id.get_label())
-            for catalogue_nr in label_id.get_catalogue_nrs():
-                catalogue_nrs.append(catalogue_nr)
+        if self.include_raw_data:
+            raw_data = {}
+
+            for release_event in result.get_release_events():
+                raw_data['released'] = release_event.get_date()
+                raw_data['country'] = release_event.get_country()
                 break
-        if labels:
-            data['label'] = labels
-        if catalogue_nrs:
-            data['catalog'] = catalogue_nrs
 
-        title = result.get_title()
-        if title:
-            data['title'] = title
+            release_format = result.get_format()
+            if release_format:
+                raw_data['format'] = release_format
 
-        artists = self._convert_artists(result.get_release_artists())
-        if artists:
-            data['artists'] = artists
+            labels = []
+            catalogue_nrs = []
+            for label_id in result.get_label_ids():
+                if label_id.get_label():
+                    labels.append(label_id.get_label())
+                for catalogue_nr in label_id.get_catalogue_nrs():
+                    catalogue_nrs.append(catalogue_nr)
+                    break
+            if labels:
+                raw_data['label'] = labels
+            if catalogue_nrs:
+                raw_data['catalog'] = catalogue_nrs
 
-        genres = result.get_genres()
-        if genres:
-            data['genre'] = genres
-
-        styles = result.get_styles()
-        if styles:
-            data['style'] = styles
-
-        url = result.get_url()
-        if url:
-            data['link'] = url
-
-        discs = {}
-        disc_titles = {}
-        for disc in result.get_discs():
-            disc_number = disc.get_number()
-            discs[disc_number] = []
-            title = disc.get_title()
+            title = result.get_title()
             if title:
-                disc_titles[disc_number] = title
-            for track in disc.get_tracks():
-                track_number = track.get_number()
-                track_artists = self._convert_artists(track.get_artists())
-                track_title = track.get_title()
-                track_length = '%02d:%02d' % divmod(track.get_length(), 60)
+                raw_data['title'] = title
 
-                discs[disc_number].append((track_number, track_artists, track_title, track_length))
-        if discs:
-            data['discs'] = discs
-        if disc_titles:
-            data['discTitles'] = disc_titles
+            artists = self._convert_artists(result.get_release_artists())
+            if artists:
+                raw_data['artists'] = artists
+
+            genres = result.get_genres()
+            if genres:
+                raw_data['genre'] = genres
+
+            styles = result.get_styles()
+            if styles:
+                raw_data['style'] = styles
+
+            url = result.get_url()
+            if url:
+                raw_data['link'] = url
+
+            discs = {}
+            disc_titles = {}
+            for disc in result.get_discs():
+                disc_number = disc.get_number()
+                discs[disc_number] = []
+                title = disc.get_title()
+                if title:
+                    disc_titles[disc_number] = title
+                for track in disc.get_tracks():
+                    track_number = track.get_number()
+                    track_artists = self._convert_artists(track.get_artists())
+                    track_title = track.get_title()
+                    track_length = '%02d:%02d' % divmod(track.get_length(), 60)
+
+                    discs[disc_number].append((track_number, track_artists, track_title, track_length))
+            if discs:
+                raw_data['discs'] = discs
+            if disc_titles:
+                raw_data['discTitles'] = disc_titles
+
+            data["raw_data"] = raw_data
 
         return data
