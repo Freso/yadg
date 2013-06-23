@@ -18,5 +18,5 @@ class Visitor(object):
             meth = self.generic_visit
         return meth(obj, *args, **kwargs)
 
-    def generic_visit(self, node, *args, **kwargs):
+    def generic_visit(self, obj, *args, **kwargs):
         raise NotImplementedError()
