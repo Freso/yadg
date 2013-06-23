@@ -236,13 +236,13 @@ class ReleaseResult(Result):
     def get_release_artists(self):
         return self.artists
 
-    def add_genre(self, genre):
+    def append_genre(self, genre):
         self.genres.append(genre)
 
     def get_genres(self):
         return self.genres
 
-    def add_style(self, style):
+    def append_style(self, style):
         self.styles.append(style)
 
     def get_styles(self):
