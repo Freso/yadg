@@ -1,10 +1,9 @@
-{% load isdigit %}{% load sorteditems %}{% load artistsbytype %}{% load wrapartists %}[size=4][b]{% with main_artists=artists|artistsbytype:"Main" %}{% if main_artists|length_is:"1" and main_artists|first == "Various" %}{{ main_artists|first }}{% else %}{% wrapartists main_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %}{% with featured_artists=artists|artistsbytype:"Feature" %}{% if featured_artists %} feat. {% wrapartists featured_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %} – {{ title }}[/b][/size]
-{% if label %}[b]Label:[/b] {{ label|join:", " }}
-{% endif %}{% if catalog %}[b]Catalog#:[/b] {{ catalog|join:", " }}
-{% endif %}{% if country %}[b]Country:[/b] {{ country }}
-{% endif %}{% if released %}[b]Year:[/b] {{ released }}
-{% endif %}{% if genre %}[b]Genre:[/b] {% for g in genre %}[url=https://www.waffles.fm/tags.php?tag="{{ g|lower|urlencode }}"]{{ g }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
-{% endif %}{% if style %}[b]Style:[/b] {% for s in style %}[url=https://www.waffles.fm/tags.php?tag="{{ s|lower|urlencode }}"]{{ s }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
-{% endif %}{% if format %}[b]Format:[/b] {{ format }}
+{% load artistsbytype %}{% load wrapartists %}[size=4][b]{% with main_artists=result.get_release_artists|artistsbytype:result.ArtistTypes.MAIN %}{% if main_artists|length_is:"1" and main_artists.0.is_various %}Various Artists{% else %}{% wrapartists main_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %}{% with featured_artists=result.get_release_artists|artistsbytype:result.ArtistTypes.FEATURING %}{% if featured_artists %} feat. {% wrapartists featured_artists "[artist=\"%s\"]" ", " " & " %}{% endif %}{% endwith %} – {{ result.get_title }}[/b][/size]
+{% if result.get_label_ids %}[b]Label/Cat#:[/b] {% for label_id in result.get_label_ids %}{{ label_id.get_label }}{% if label_id.get_catalogue_nrs %} – {{ label_id.get_catalogue_nrs|join:" or " }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if result.get_release_events %}{% with release_event=result.get_release_events|first %}{% if release_event.get_country %}[b]Country:[/b] {{ release_event.get_country }}
+{% endif %}{% if release_event.get_date %}[b]Year:[/b] {{ release_event.get_date }}
+{% endif %}{% endwith %}{% endif %}{% if result.get_genres %}[b]Genre:[/b] {% for g in result.get_genres %}[url=https://www.waffles.fm/tags.php?tag="{{ g|lower|urlencode }}"]{{ g }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if result.get_styles %}[b]Style:[/b] {% for s in result.get_styles %}[url=https://www.waffles.fm/tags.php?tag="{{ s|lower|urlencode }}"]{{ s }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if result.get_format %}[b]Format:[/b] {{ result.get_format }}
 {% endif %}
 {% include "output_formats/wafflesfm-tracks-only.txt" %}
