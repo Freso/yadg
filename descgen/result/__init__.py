@@ -74,6 +74,52 @@ class ReleaseResult(Result):
         FEATURING = 2**1
         REMIXER = 2**2
 
+    class AlbumArtTypes(object):
+
+        FRONT = 2**0
+        BACK = 2**1
+        DISC = 2**2
+        INLET = 2**3
+
+    class AlbumArt(object):
+
+        def __init__(self):
+            self.url = None
+            self.type = None
+            self.width = None
+            self.height = None
+            self.hint = None
+
+        def set_url(self, url):
+            self.url = url
+
+        def set_type(self, art_type):
+            self.type = art_type
+
+        def set_width(self, width):
+            self.width = width
+
+        def set_height(self, height):
+            self.height = height
+
+        def set_hint(self, hint):
+            self.hint = hint
+
+        def get_url(self):
+            return self.url
+
+        def get_type(self):
+            return self.type
+
+        def get_width(self):
+            return self.width
+
+        def get_height(self):
+            return self.height
+
+        def get_hint(self):
+            return self.hint
+
     class ReleaseEvent(object):
 
         def __init__(self):
@@ -206,6 +252,7 @@ class ReleaseResult(Result):
         self.styles = []
         self.url = None
         self.discs = []
+        self.album_arts = []
 
     def create_release_event(self):
         return self.ReleaseEvent()
@@ -272,3 +319,12 @@ class ReleaseResult(Result):
 
     def get_discs(self):
         return self.discs
+
+    def create_album_art(self):
+        return self.AlbumArt()
+
+    def append_album_art(self, album_art):
+        self.album_arts.append(album_art)
+
+    def get_album_arts(self):
+        return self.album_arts
