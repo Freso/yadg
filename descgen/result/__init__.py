@@ -154,19 +154,19 @@ class ReleaseResult(Result):
 
         def __init__(self):
             self.label = None
-            self.catalogue_nr = []
+            self.catalogue_nrs = []
 
         def set_label(self, label):
             self.label = label
 
         def append_catalogue_nr(self, catalogue_nr):
-            self.catalogue_nr.append(catalogue_nr)
+            self.catalogue_nrs.append(catalogue_nr)
 
         def get_label(self):
             return self.label
 
         def get_catalogue_nrs(self):
-            return self.catalogue_nr
+            return self.catalogue_nrs
 
     class Artist(CommonEqualityAndReprMixin):
 
