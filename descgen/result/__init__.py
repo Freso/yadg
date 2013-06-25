@@ -2,7 +2,19 @@
 # -*- coding: utf-8 -*-
 
 
-class Result(object):
+class CommonEqualityAndReprMixin(object):
+
+    def __repr__(self):
+        return "<%s: %r>" % (self.__class__.__name__, self.__dict__)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+class Result(CommonEqualityAndReprMixin):
 
     def __init__(self):
         self.scraper_name = None
@@ -20,7 +32,7 @@ class NotFoundResult(Result):
 
 class ListResult(Result):
 
-    class ListItem(object):
+    class ListItem(CommonEqualityAndReprMixin):
 
         def __init__(self):
             self.name = None
@@ -81,7 +93,7 @@ class ReleaseResult(Result):
         DISC = 2**2
         INLET = 2**3
 
-    class AlbumArt(object):
+    class AlbumArt(CommonEqualityAndReprMixin):
 
         def __init__(self):
             self.url = None
@@ -120,7 +132,7 @@ class ReleaseResult(Result):
         def get_hint(self):
             return self.hint
 
-    class ReleaseEvent(object):
+    class ReleaseEvent(CommonEqualityAndReprMixin):
 
         def __init__(self):
             self.date = None
@@ -138,7 +150,7 @@ class ReleaseResult(Result):
         def get_country(self):
             return self.country
 
-    class LabelId(object):
+    class LabelId(CommonEqualityAndReprMixin):
 
         def __init__(self):
             self.label = None
@@ -156,7 +168,7 @@ class ReleaseResult(Result):
         def get_catalogue_nrs(self):
             return self.catalogue_nr
 
-    class Artist(object):
+    class Artist(CommonEqualityAndReprMixin):
 
         def __init__(self):
             self.name = None
@@ -181,9 +193,9 @@ class ReleaseResult(Result):
         def is_various(self):
             return self.various
 
-    class Disc(object):
+    class Disc(CommonEqualityAndReprMixin):
 
-        class Track(object):
+        class Track(CommonEqualityAndReprMixin):
 
             def __init__(self):
                 self.number = None
