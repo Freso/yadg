@@ -1,4 +1,11 @@
-import discogs, musicbrainz, beatport, metalarchives, audiojelly, junodownload, itunes, bandcamp
+import discogs
+import musicbrainz
+import beatport
+import metalarchives
+import audiojelly
+import junodownload
+import itunes
+import bandcamp
 
 _SCRAPERS = {
     'discogs':discogs,
@@ -63,7 +70,7 @@ class ScraperFactoryError(Exception):
 
 class ScraperFactory(object):
     
-    def get_release_by_url(self,url):
+    def get_release_by_url(self, url):
         release = None
         
         for scraper in _SCRAPER_RELEASES_SORTED:
@@ -73,7 +80,7 @@ class ScraperFactory(object):
         
         return release
     
-    def get_search(self,search_term,scraper = SCRAPER_DEFAULT):
+    def get_search(self,search_term,scraper=SCRAPER_DEFAULT):
         if not scraper:
             scraper = SCRAPER_DEFAULT
         if not scraper in SCRAPER:
