@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
+#There are several classes in this module that were supposed to be inner classes of their result class. Those classes
+#were moved to the module level to allow pickling of the result classes which is necessary for celery
+
+
 class CommonEqualityAndReprMixin(object):
 
     def __repr__(self):
@@ -30,39 +34,43 @@ class NotFoundResult(Result):
     pass
 
 
+class ListItem(CommonEqualityAndReprMixin):
+
+    def __init__(self):
+        super(ListItem, self).__init__()
+        self.name = None
+        self.info = None
+        self.query = None
+        self.url = None
+
+    def set_name(self, name):
+        self.name = name
+
+    def set_info(self, info):
+        self.info = info
+
+    def set_query(self, query):
+        self.query = query
+
+    def get_name(self):
+        return self.name
+
+    def get_info(self):
+        return self.info
+
+    def get_query(self):
+        return self.query
+
+    def set_url(self, url):
+        self.url = url
+
+    def get_url(self):
+        return self.url
+
+
 class ListResult(Result):
 
-    class ListItem(CommonEqualityAndReprMixin):
-
-        def __init__(self):
-            self.name = None
-            self.info = None
-            self.query = None
-            self.url = None
-
-        def set_name(self, name):
-            self.name = name
-
-        def set_info(self, info):
-            self.info = info
-
-        def set_query(self, query):
-            self.query = query
-
-        def get_name(self):
-            return self.name
-
-        def get_info(self):
-            return self.info
-
-        def get_query(self):
-            return self.query
-
-        def set_url(self, url):
-            self.url = url
-
-        def get_url(self):
-            return self.url
+    ListItem = ListItem
 
     def __init__(self):
         super(ListResult, self).__init__()
@@ -78,180 +86,204 @@ class ListResult(Result):
         return self.items
 
 
+class ArtistTypes(object):
+
+    MAIN = 2**0
+    FEATURING = 2**1
+    REMIXER = 2**2
+
+
+class AlbumArtTypes(object):
+
+    FRONT = 2**0
+    BACK = 2**1
+    DISC = 2**2
+    INLET = 2**3
+
+
+class AlbumArt(CommonEqualityAndReprMixin):
+
+    def __init__(self):
+        super(AlbumArt, self).__init__()
+        self.url = None
+        self.type = None
+        self.width = None
+        self.height = None
+        self.hint = None
+
+    def set_url(self, url):
+        self.url = url
+
+    def set_type(self, art_type):
+        self.type = art_type
+
+    def set_width(self, width):
+        self.width = width
+
+    def set_height(self, height):
+        self.height = height
+
+    def set_hint(self, hint):
+        self.hint = hint
+
+    def get_url(self):
+        return self.url
+
+    def get_type(self):
+        return self.type
+
+    def get_width(self):
+        return self.width
+
+    def get_height(self):
+        return self.height
+
+    def get_hint(self):
+        return self.hint
+
+
+class ReleaseEvent(CommonEqualityAndReprMixin):
+
+    def __init__(self):
+        super(ReleaseEvent, self).__init__()
+        self.date = None
+        self.country = None
+
+    def set_date(self, date):
+        self.date = date
+
+    def set_country(self, country):
+        self.country = country
+
+    def get_date(self):
+        return self.date
+
+    def get_country(self):
+        return self.country
+
+
+class LabelId(CommonEqualityAndReprMixin):
+
+    def __init__(self):
+        super(LabelId, self).__init__()
+        self.label = None
+        self.catalogue_nrs = []
+
+    def set_label(self, label):
+        self.label = label
+
+    def append_catalogue_nr(self, catalogue_nr):
+        self.catalogue_nrs.append(catalogue_nr)
+
+    def get_label(self):
+        return self.label
+
+    def get_catalogue_nrs(self):
+        return self.catalogue_nrs
+
+
+class Artist(CommonEqualityAndReprMixin):
+
+    def __init__(self):
+        super(Artist, self).__init__()
+        self.name = None
+        self.types = []
+        self.various = False
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def append_type(self, artist_type):
+        self.types.append(artist_type)
+
+    def get_types(self):
+        return self.types
+
+    def set_various(self, various):
+        self.various = various
+
+    def is_various(self):
+        return self.various
+
+
+class Track(CommonEqualityAndReprMixin):
+
+    def __init__(self):
+        super(Track, self).__init__()
+        self.number = None
+        self.artists = []
+        self.title = None
+        self.length = None
+
+    def set_number(self, number):
+        self.number = number
+
+    def get_number(self):
+        return self.number
+
+    def append_artist(self, artist):
+        self.artists.append(artist)
+
+    def get_artists(self):
+        return self.artists
+
+    def set_title(self, title):
+        self.title = title
+
+    def get_title(self):
+        return self.title
+
+    def set_length(self, length):
+        self.length = length
+
+    def get_length(self):
+        return self.length
+
+
+class Disc(CommonEqualityAndReprMixin):
+
+    Track = Track
+
+    def __init__(self):
+        super(Disc, self).__init__()
+        self.number = None
+        self.title = None
+        self.tracks = []
+
+    def set_number(self, number):
+        self.number = number
+
+    def get_number(self):
+        return self.number
+
+    def set_title(self, title):
+        self.title = title
+
+    def get_title(self):
+        return self.title
+
+    def create_track(self):
+        return self.Track()
+
+    def append_track(self, track):
+        self.tracks.append(track)
+
+    def get_tracks(self):
+        return self.tracks
+
+
 class ReleaseResult(Result):
 
-    class ArtistTypes(object):
-
-        MAIN = 2**0
-        FEATURING = 2**1
-        REMIXER = 2**2
-
-    class AlbumArtTypes(object):
-
-        FRONT = 2**0
-        BACK = 2**1
-        DISC = 2**2
-        INLET = 2**3
-
-    class AlbumArt(CommonEqualityAndReprMixin):
-
-        def __init__(self):
-            self.url = None
-            self.type = None
-            self.width = None
-            self.height = None
-            self.hint = None
-
-        def set_url(self, url):
-            self.url = url
-
-        def set_type(self, art_type):
-            self.type = art_type
-
-        def set_width(self, width):
-            self.width = width
-
-        def set_height(self, height):
-            self.height = height
-
-        def set_hint(self, hint):
-            self.hint = hint
-
-        def get_url(self):
-            return self.url
-
-        def get_type(self):
-            return self.type
-
-        def get_width(self):
-            return self.width
-
-        def get_height(self):
-            return self.height
-
-        def get_hint(self):
-            return self.hint
-
-    class ReleaseEvent(CommonEqualityAndReprMixin):
-
-        def __init__(self):
-            self.date = None
-            self.country = None
-
-        def set_date(self, date):
-            self.date = date
-
-        def set_country(self, country):
-            self.country = country
-
-        def get_date(self):
-            return self.date
-
-        def get_country(self):
-            return self.country
-
-    class LabelId(CommonEqualityAndReprMixin):
-
-        def __init__(self):
-            self.label = None
-            self.catalogue_nrs = []
-
-        def set_label(self, label):
-            self.label = label
-
-        def append_catalogue_nr(self, catalogue_nr):
-            self.catalogue_nrs.append(catalogue_nr)
-
-        def get_label(self):
-            return self.label
-
-        def get_catalogue_nrs(self):
-            return self.catalogue_nrs
-
-    class Artist(CommonEqualityAndReprMixin):
-
-        def __init__(self):
-            self.name = None
-            self.types = []
-            self.various = False
-
-        def set_name(self, name):
-            self.name = name
-
-        def get_name(self):
-            return self.name
-
-        def append_type(self, artist_type):
-            self.types.append(artist_type)
-
-        def get_types(self):
-            return self.types
-
-        def set_various(self, various):
-            self.various = various
-
-        def is_various(self):
-            return self.various
-
-    class Disc(CommonEqualityAndReprMixin):
-
-        class Track(CommonEqualityAndReprMixin):
-
-            def __init__(self):
-                self.number = None
-                self.artists = []
-                self.title = None
-                self.length = None
-
-            def set_number(self, number):
-                self.number = number
-
-            def get_number(self):
-                return self.number
-
-            def append_artist(self, artist):
-                self.artists.append(artist)
-
-            def get_artists(self):
-                return self.artists
-
-            def set_title(self, title):
-                self.title = title
-
-            def get_title(self):
-                return self.title
-
-            def set_length(self, length):
-                self.length = length
-
-            def get_length(self):
-                return self.length
-
-        def __init__(self):
-            self.number = None
-            self.title = None
-            self.tracks = []
-
-        def set_number(self, number):
-            self.number = number
-
-        def get_number(self):
-            return self.number
-
-        def set_title(self, title):
-            self.title = title
-
-        def get_title(self):
-            return self.title
-
-        def create_track(self):
-            return self.Track()
-
-        def append_track(self, track):
-            self.tracks.append(track)
-
-        def get_tracks(self):
-            return self.tracks
+    ArtistTypes = ArtistTypes
+    AlbumArtTypes = AlbumArtTypes
+    AlbumArt = AlbumArt
+    ReleaseEvent = ReleaseEvent
+    LabelId = LabelId
+    Artist = Artist
+    Disc = Disc
 
     def __init__(self):
         super(ReleaseResult, self).__init__()
