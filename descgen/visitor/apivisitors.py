@@ -5,6 +5,7 @@ from .base import Visitor
 from django.core.urlresolvers import reverse
 from django.utils.http import urlencode
 from ..result import ReleaseResult
+from ..formatter import Formatter
 
 
 class APIVisitorV1(Visitor):
@@ -20,6 +21,7 @@ class APIVisitorV1(Visitor):
     def __init__(self, description_format, include_raw_data):
         self.description_format = description_format
         self.include_raw_data = include_raw_data
+        self.formatter = Formatter()
 
     def _convert_artists(self, artists):
         result = []
@@ -48,11 +50,11 @@ class APIVisitorV1(Visitor):
         scraper_name = result.get_scraper_name()
         data = {
             "release_count": len(result.get_items()),
-            "releases": {
-                scraper_name: []
-            },
+            "releases": {},
             "type": "release_list"
         }
+        if result.get_items():
+            data['releases'][scraper_name] = []
         for item in result.get_items():
             data["releases"][scraper_name].append({
                 "name": item.get_name(),
@@ -63,22 +65,21 @@ class APIVisitorV1(Visitor):
         return data
 
     def visit_ReleaseResult(self, result):
+        format = self.formatter.get_valid_format(self.description_format)
         data = {
-            "type": "release"
+            "type": "release",
+            "description_format": format,
+            "description": self.formatter.description_from_ReleaseResult(result, format)
         }
-
-        # todo: implement validation of given description format
-        data["description_format"] = self.description_format
-
-        # todo: generate actual description
-        data["description"] = ""
 
         if self.include_raw_data:
             raw_data = {}
 
             for release_event in result.get_release_events():
-                raw_data['released'] = release_event.get_date()
-                raw_data['country'] = release_event.get_country()
+                if release_event.get_date():
+                    raw_data['released'] = release_event.get_date()
+                if release_event.get_country():
+                    raw_data['country'] = release_event.get_country()
                 break
 
             release_format = result.get_format()
@@ -120,8 +121,10 @@ class APIVisitorV1(Visitor):
 
             discs = {}
             disc_titles = {}
+            max_digits = len(str(max(map(lambda disc: disc.get_number(), result.get_discs()))))
             for disc in result.get_discs():
                 disc_number = disc.get_number()
+                disc_number = 'disc_' + str(disc_number).zfill(max_digits)
                 discs[disc_number] = []
                 title = disc.get_title()
                 if title:
