@@ -133,7 +133,10 @@ class APIVisitorV1(Visitor):
                     track_number = track.get_number()
                     track_artists = self._convert_artists(track.get_artists())
                     track_title = track.get_title()
-                    track_length = '%02d:%02d' % divmod(track.get_length(), 60)
+                    if track.get_length():
+                        track_length = '%02d:%02d' % divmod(track.get_length(), 60)
+                    else:
+                        track_length = None
 
                     discs[disc_number].append((track_number, track_artists, track_title, track_length))
             if discs:
