@@ -26,7 +26,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return u'id="%s"' % self.id
 
     def get_url(self):
-        return self._base_url + 'release/%d' % self.id
+        return self._base_url + 'release/%s' % self.id
 
     def _split_infos(self, info_string):
         components = info_string.split(',')
