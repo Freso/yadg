@@ -1,6 +1,6 @@
-from descgen.scraper.factory import ScraperFactory,SCRAPER_DEFAULT
-from descgen.formatter import Formatter,FORMAT_DEFAULT
-from descgen.tasks import get_search_results,get_release_info
+from .scraper.factory import ScraperFactory, SCRAPER_DEFAULT
+from .formatter import Formatter, FORMAT_DEFAULT
+from .tasks import get_results
 
 from djcelery.models import TaskMeta
 
@@ -11,15 +11,15 @@ class CreateTaskMixin(object):
     
     def create_task(self, **kwargs):
         input = kwargs['input']
-        scraper = kwargs['scraper']
+        scraper_name = kwargs['scraper']
         
-        scraper = self.get_valid_scraper(scraper)
+        scraper_name = self.get_valid_scraper(scraper_name)
         
-        release = self.factory.get_release_by_url(input)
-        if release:
-            task = get_release_info.delay(release,kwargs)
-        else:
-            task = get_search_results.delay(self.factory.get_search(input,scraper),kwargs)
+        scraper = self.factory.get_scraper_by_string(input)
+        if not scraper:
+            scraper = self.factory.get_search_scraper(input, scraper_name)
+
+        task = get_results.delay(scraper, kwargs)
         #make sure a TaskMeta object for the created task exists
         TaskMeta.objects.get_or_create(task_id=task.task_id)
         
@@ -33,17 +33,9 @@ class CreateTaskMixin(object):
         return scraper
 
 
-class GetDescriptionMixin(object):
+class GetFormatMixin(object):
     
     formatter = Formatter()
-    
-    def get_formatted_description(self, data, format):
-        format = self.get_valid_format(format)
-        
-        return (format,self.formatter.format(data,format))
-
-    def get_formatted_release_title(self, data):
-        return self.formatter.get_release_title(data)
 
     def get_valid_format(self, format):
         if not format:
