@@ -9,7 +9,14 @@
 class CommonEqualityAndReprMixin(object):
 
     def __repr__(self):
-        return "<%s: %r>" % (self.__class__.__name__, self.__dict__)
+        members = '{'
+        for key, value in sorted(self.__dict__.iteritems()):
+            members += '%s: %r' % (key, value)
+            members += ', '
+        if members.endswith(', '):
+            members = members[:-2]
+        members += '}'
+        return "<%s: %s>" % (self.__class__.__name__, members)
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
