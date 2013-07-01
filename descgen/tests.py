@@ -5,6 +5,7 @@ import difflib
 from django.test import TestCase as TestCaseBase
 from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
+from .visitor.misc import DescriptionVisitor
 
 
 class TestCase(TestCaseBase):
@@ -8170,3 +8171,1077 @@ class BandcampTest(TestCase):
         r = s.get_result()
 
         self.assertEqual(expected, r)
+
+
+class DescriptionVisitorTest(TestCase):
+
+    maxDiff = None
+
+    def setUp(self):
+        super(DescriptionVisitorTest, self).setUp()
+
+        self.result = ReleaseResult()
+        self.result.set_scraper_name(None)
+
+        release_event = self.result.create_release_event()
+        release_event.set_date('2007-05-25')
+        release_event.set_country('Germany')
+        self.result.append_release_event(release_event)
+
+        self.result.set_format(u'4\xd7CD, Album + Live')
+
+        self.result.append_genre('Electronic')
+        self.result.append_genre('Rock')
+
+        self.result.append_style('Goth Rock')
+        self.result.append_style('Synth-pop')
+
+        label_id = self.result.create_label_id()
+        label_id.set_label('Trisol')
+        label_id.append_catalogue_nr('TRI 303 CD')
+        label_id.append_catalogue_nr('Eine andere CatNr')
+        self.result.append_label_id(label_id)
+
+        label_id = self.result.create_label_id()
+        label_id.set_label('Ein anderes Label')
+        label_id.append_catalogue_nr('Nr.1')
+        label_id.append_catalogue_nr('Nr.2')
+        label_id.append_catalogue_nr('Nr.3')
+        self.result.append_label_id(label_id)
+
+        label_id = self.result.create_label_id()
+        label_id.set_label('Ein letztes Label')
+        label_id.append_catalogue_nr('Und eine letzte Nummer')
+        self.result.append_label_id(label_id)
+
+        self.result.set_title('Once in a Lifetime')
+
+        artist = self.result.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(self.result.ArtistTypes.MAIN)
+        self.result.append_release_artist(artist)
+
+        artist = self.result.create_artist()
+        artist.set_name('Chamber')
+        artist.set_various(False)
+        artist.append_type(self.result.ArtistTypes.MAIN)
+        self.result.append_release_artist(artist)
+
+        artist = self.result.create_artist()
+        artist.set_name('Dritter Main Artist')
+        artist.set_various(False)
+        artist.append_type(self.result.ArtistTypes.MAIN)
+        self.result.append_release_artist(artist)
+
+        artist = self.result.create_artist()
+        artist.set_name('Featuring Artist')
+        artist.set_various(False)
+        artist.append_type(self.result.ArtistTypes.FEATURING)
+        self.result.append_release_artist(artist)
+
+        self.result.set_url('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+
+        disc = self.result.create_disc()
+        disc.set_number(1)
+        disc.set_title('Eine tolle CD')
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Once in a Lifetime, Part 1')
+        track.set_length(351)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'A Dead Man\u2019s Song')
+        track.set_length(312)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Noch ein Artist')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Versuchung')
+        track.set_length(345)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Torn')
+        track.set_length(304)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Demon Love')
+        track.set_length(272)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('The Paperhearted Ghost')
+        track.set_length(283)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('A Tale of Real Love')
+        track.set_length(316)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Ein Remixer')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Hunger')
+        track.set_length(289)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('The Truth About Snow-White')
+        track.set_length(240)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('She Wore Shadows')
+        track.set_length(276)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Und wir tanzten (Ungeschickte Liebesbriefe)')
+        track.set_length(317)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Once in a Lifetime, Part 2 (reprise)')
+        track.set_length(164)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        self.result.append_disc(disc)
+
+        disc = self.result.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'K\xfcss mich')
+        track.set_length(384)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Silence - Release')
+        track.set_length(225)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Solitude')
+        track.set_length(220)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Die Ballade von der Erweckung')
+        track.set_length(527)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Another Conversation')
+        track.set_length(201)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Sing Child')
+        track.set_length(449)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Ich will brennen')
+        track.set_length(300)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Toscana')
+        track.set_length(374)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Ride On')
+        track.set_length(222)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Hometown')
+        track.set_length(181)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Werben')
+        track.set_length(293)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Once in a Lifetime, Part 3 (Finale)')
+        track.set_length(608)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        self.result.append_disc(disc)
+
+        disc = self.result.create_disc()
+        disc.set_number(3)
+        disc.set_title('Hier noch ein Titel')
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'H\xe4sslich')
+        track.set_length(145)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Backstage (All Areas)')
+        track.set_length(573)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Paracetamoltr\xe4ume')
+        track.set_length(517)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Auszug aus \u201eTremendista\u201c')
+        track.set_length(1473)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name(u'Ralph M\xfcller')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Campari O')
+        track.set_length(159)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        self.result.append_disc(disc)
+
+        disc = self.result.create_disc()
+        disc.set_number(4)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Sicamore Trees (ASP soundcheck out-take)')
+        track.set_length(94)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Demon Love')
+        track.set_length(275)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('The Truth About Snow-White')
+        track.set_length(275)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('She Wore Shadows')
+        track.set_length(319)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Sing Child')
+        track.set_length(469)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Hometown')
+        track.set_length(221)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Dritter Track Artist')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hunger')
+        track.set_length(274)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Silence - Release')
+        track.set_length(208)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('She Moved Through the Fair (ASP soundcheck out-take)')
+        track.set_length(120)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = self.result.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(self.result.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        self.result.append_disc(disc)
+
+    def test_bbcode_generic(self):
+        visitor = DescriptionVisitor(description_format='bbcode-generic')
+
+        expected = u"""[size=4][b]ASP, Chamber & Dritter Main Artist feat. Featuring Artist \u2013 Once in a Lifetime[/b][/size]
+
+[b]Label/Cat#:[/b] Trisol \u2013 TRI 303 CD or Eine andere CatNr, Ein anderes Label \u2013 Nr.1 or Nr.2 or Nr.3, Ein letztes Label \u2013 Und eine letzte Nummer
+[b]Country:[/b] Germany
+[b]Year:[/b] 2007-05-25
+[b]Genre:[/b] Electronic, Rock
+[b]Style:[/b] Goth Rock, Synth-pop
+[b]Format:[/b] 4×CD, Album + Live
+
+[size=3][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
+[b]1.[/b] ASP & Chamber – Once in a Lifetime, Part 1 [i](05:51)[/i]
+[b]2.[/b] ASP & Chamber – A Dead Man’s Song (feat. Noch ein Artist) [i](05:12)[/i]
+[b]3.[/b] ASP & Chamber – Versuchung [i](05:45)[/i]
+[b]4.[/b] ASP & Chamber – Torn [i](05:04)[/i]
+[b]5.[/b] ASP & Chamber – Demon Love [i](04:32)[/i]
+[b]6.[/b] ASP & Chamber – The Paperhearted Ghost [i](04:43)[/i]
+[b]7.[/b] ASP & Chamber – A Tale of Real Love [i](05:16)[/i]
+[b]8.[/b] ASP & Chamber – Hunger [i](04:49)[/i]
+[b]9.[/b] ASP & Chamber – The Truth About Snow-White [i](04:00)[/i]
+[b]10.[/b] ASP & Chamber – She Wore Shadows [i](04:36)[/i]
+[b]11.[/b] ASP & Chamber – Und wir tanzten (Ungeschickte Liebesbriefe) [i](05:17)[/i]
+[b]12.[/b] ASP & Chamber – Once in a Lifetime, Part 2 (reprise) [i](02:44)[/i]
+
+[size=3][b]Disc 2[/b][/size]
+[b]1.[/b] ASP & Chamber – Küss mich [i](06:24)[/i]
+[b]2.[/b] ASP & Chamber – Silence - Release [i](03:45)[/i]
+[b]3.[/b] ASP & Chamber – Solitude [i](03:40)[/i]
+[b]4.[/b] ASP & Chamber – Die Ballade von der Erweckung [i](08:47)[/i]
+[b]5.[/b] ASP & Chamber – Another Conversation [i](03:21)[/i]
+[b]6.[/b] ASP & Chamber – Sing Child [i](07:29)[/i]
+[b]7.[/b] ASP & Chamber – Ich will brennen [i](05:00)[/i]
+[b]8.[/b] ASP & Chamber – Toscana [i](06:14)[/i]
+[b]9.[/b] ASP & Chamber – Ride On [i](03:42)[/i]
+[b]10.[/b] ASP & Chamber – Hometown [i](03:01)[/i]
+[b]11.[/b] ASP & Chamber – Werben [i](04:53)[/i]
+[b]12.[/b] ASP & Chamber – Once in a Lifetime, Part 3 (Finale) [i](10:08)[/i]
+
+[size=3][b]Disc 3: [i]Hier noch ein Titel[/i][/b][/size]
+[b]1.[/b] ASP & Chamber – Hässlich [i](02:25)[/i]
+[b]2.[/b] ASP & Chamber – Backstage (All Areas) [i](09:33)[/i]
+[b]3.[/b] ASP & Chamber – Paracetamolträume [i](08:37)[/i]
+[b]4.[/b] ASP & Chamber – Auszug aus „Tremendista“ (feat. Ralph Müller) [i](24:33)[/i]
+[b]5.[/b] ASP & Chamber – Campari O [i](02:39)[/i]
+
+[size=3][b]Disc 4[/b][/size]
+[b]1.[/b] ASP & Chamber – Sicamore Trees (ASP soundcheck out-take) [i](01:34)[/i]
+[b]2.[/b] ASP & Chamber – Demon Love [i](04:35)[/i]
+[b]3.[/b] ASP & Chamber – The Truth About Snow-White [i](04:35)[/i]
+[b]4.[/b] ASP & Chamber – She Wore Shadows [i](05:19)[/i]
+[b]5.[/b] ASP & Chamber – Sing Child [i](07:49)[/i]
+[b]6.[/b] ASP, Chamber & Dritter Track Artist – Hometown [i](03:41)[/i]
+[b]7.[/b] ASP & Chamber – Hunger [i](04:34)[/i]
+[b]8.[/b] ASP & Chamber – Silence - Release [i](03:28)[/i]
+[b]9.[/b] ASP & Chamber – She Moved Through the Fair (ASP soundcheck out-take) [i](02:00)[/i]
+
+More information: [url]http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb[/url]"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
+
+    def test_whatcd(self):
+        visitor = DescriptionVisitor(description_format='whatcd')
+
+        expected = u"""[size=5][b][artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Main Artist[/artist] feat. [artist]Featuring Artist[/artist] \u2013 Once in a Lifetime[/b][/size]
+[b]Label/Cat#:[/b] [url=https://ssl.what.cd/torrents.php?recordlabel=Trisol]Trisol[/url] \u2013 TRI 303 CD or Eine andere CatNr, [url=https://ssl.what.cd/torrents.php?recordlabel=Ein%20anderes%20Label]Ein anderes Label[/url] \u2013 Nr.1 or Nr.2 or Nr.3, [url=https://ssl.what.cd/torrents.php?recordlabel=Ein%20letztes%20Label]Ein letztes Label[/url] \u2013 Und eine letzte Nummer
+[b]Country:[/b] Germany
+[b]Year:[/b] 2007-05-25
+[b]Genre:[/b] [url=https://ssl.what.cd/torrents.php?taglist=Electronic]Electronic[/url], [url=https://ssl.what.cd/torrents.php?taglist=Rock]Rock[/url]
+[b]Style:[/b] [url=https://ssl.what.cd/torrents.php?taglist=Goth.Rock]Goth Rock[/url], [url=https://ssl.what.cd/torrents.php?taglist=Synth-pop]Synth-pop[/url]
+[b]Format:[/b] 4×CD, Album + Live
+
+[size=4][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 1 [i](05:51)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – A Dead Man’s Song (feat. [artist]Noch ein Artist[/artist]) [i](05:12)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Versuchung [i](05:45)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Torn [i](05:04)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Demon Love [i](04:32)[/i]
+[b]6.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Paperhearted Ghost [i](04:43)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – A Tale of Real Love [i](05:16)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hunger [i](04:49)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Truth About Snow-White [i](04:00)[/i]
+[b]10.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Wore Shadows [i](04:36)[/i]
+[b]11.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Und wir tanzten (Ungeschickte Liebesbriefe) [i](05:17)[/i]
+[b]12.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 2 (reprise) [i](02:44)[/i]
+
+[size=4][b]Disc 2[/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Küss mich [i](06:24)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Silence - Release [i](03:45)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Solitude [i](03:40)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Die Ballade von der Erweckung [i](08:47)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Another Conversation [i](03:21)[/i]
+[b]6.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sing Child [i](07:29)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Ich will brennen [i](05:00)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Toscana [i](06:14)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Ride On [i](03:42)[/i]
+[b]10.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hometown [i](03:01)[/i]
+[b]11.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Werben [i](04:53)[/i]
+[b]12.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 3 (Finale) [i](10:08)[/i]
+
+[size=4][b]Disc 3: [i]Hier noch ein Titel[/i][/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hässlich [i](02:25)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Backstage (All Areas) [i](09:33)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Paracetamolträume [i](08:37)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Auszug aus „Tremendista“ (feat. [artist]Ralph Müller[/artist]) [i](24:33)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Campari O [i](02:39)[/i]
+
+[size=4][b]Disc 4[/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sicamore Trees (ASP soundcheck out-take) [i](01:34)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Demon Love [i](04:35)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Truth About Snow-White [i](04:35)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Wore Shadows [i](05:19)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sing Child [i](07:49)[/i]
+[b]6.[/b] [artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Track Artist[/artist] – Hometown [i](03:41)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hunger [i](04:34)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Silence - Release [i](03:28)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Moved Through the Fair (ASP soundcheck out-take) [i](02:00)[/i]
+
+More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
+
+    def test_whatcd_tracksonly(self):
+        visitor = DescriptionVisitor(description_format='whatcd-tracks-only')
+
+        expected = u"""[size=4][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 1 [i](05:51)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – A Dead Man’s Song (feat. [artist]Noch ein Artist[/artist]) [i](05:12)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Versuchung [i](05:45)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Torn [i](05:04)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Demon Love [i](04:32)[/i]
+[b]6.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Paperhearted Ghost [i](04:43)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – A Tale of Real Love [i](05:16)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hunger [i](04:49)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Truth About Snow-White [i](04:00)[/i]
+[b]10.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Wore Shadows [i](04:36)[/i]
+[b]11.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Und wir tanzten (Ungeschickte Liebesbriefe) [i](05:17)[/i]
+[b]12.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 2 (reprise) [i](02:44)[/i]
+
+[size=4][b]Disc 2[/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Küss mich [i](06:24)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Silence - Release [i](03:45)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Solitude [i](03:40)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Die Ballade von der Erweckung [i](08:47)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Another Conversation [i](03:21)[/i]
+[b]6.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sing Child [i](07:29)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Ich will brennen [i](05:00)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Toscana [i](06:14)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Ride On [i](03:42)[/i]
+[b]10.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hometown [i](03:01)[/i]
+[b]11.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Werben [i](04:53)[/i]
+[b]12.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 3 (Finale) [i](10:08)[/i]
+
+[size=4][b]Disc 3: [i]Hier noch ein Titel[/i][/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hässlich [i](02:25)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Backstage (All Areas) [i](09:33)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Paracetamolträume [i](08:37)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Auszug aus „Tremendista“ (feat. [artist]Ralph Müller[/artist]) [i](24:33)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Campari O [i](02:39)[/i]
+
+[size=4][b]Disc 4[/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sicamore Trees (ASP soundcheck out-take) [i](01:34)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Demon Love [i](04:35)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Truth About Snow-White [i](04:35)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Wore Shadows [i](05:19)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sing Child [i](07:49)[/i]
+[b]6.[/b] [artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Track Artist[/artist] – Hometown [i](03:41)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hunger [i](04:34)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Silence - Release [i](03:28)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Moved Through the Fair (ASP soundcheck out-take) [i](02:00)[/i]
+
+More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
+
+    def test_wafflesfm(self):
+        visitor = DescriptionVisitor(description_format='wafflesfm')
+
+        expected = u"""[size=4][b][artist="ASP"], [artist="Chamber"] & [artist="Dritter Main Artist"] feat. [artist="Featuring Artist"] \u2013 Once in a Lifetime[/b][/size]
+[b]Label/Cat#:[/b] Trisol \u2013 TRI 303 CD or Eine andere CatNr, Ein anderes Label \u2013 Nr.1 or Nr.2 or Nr.3, Ein letztes Label \u2013 Und eine letzte Nummer
+[b]Country:[/b] Germany
+[b]Year:[/b] 2007-05-25
+[b]Genre:[/b] [url=https://www.waffles.fm/tags.php?tag="electronic"]Electronic[/url], [url=https://www.waffles.fm/tags.php?tag="rock"]Rock[/url]
+[b]Style:[/b] [url=https://www.waffles.fm/tags.php?tag="goth%20rock"]Goth Rock[/url], [url=https://www.waffles.fm/tags.php?tag="synth-pop"]Synth-pop[/url]
+[b]Format:[/b] 4×CD, Album + Live
+
+[size=3][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Once in a Lifetime, Part 1 [i](05:51)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – A Dead Man’s Song (feat. [artist="Noch ein Artist"]) [i](05:12)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – Versuchung [i](05:45)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – Torn [i](05:04)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Demon Love [i](04:32)[/i]
+[b]6.[/b] [artist="ASP"] & [artist="Chamber"] – The Paperhearted Ghost [i](04:43)[/i]
+[b]7.[/b] [artist="ASP"] & [artist="Chamber"] – A Tale of Real Love [i](05:16)[/i]
+[b]8.[/b] [artist="ASP"] & [artist="Chamber"] – Hunger [i](04:49)[/i]
+[b]9.[/b] [artist="ASP"] & [artist="Chamber"] – The Truth About Snow-White [i](04:00)[/i]
+[b]10.[/b] [artist="ASP"] & [artist="Chamber"] – She Wore Shadows [i](04:36)[/i]
+[b]11.[/b] [artist="ASP"] & [artist="Chamber"] – Und wir tanzten (Ungeschickte Liebesbriefe) [i](05:17)[/i]
+[b]12.[/b] [artist="ASP"] & [artist="Chamber"] – Once in a Lifetime, Part 2 (reprise) [i](02:44)[/i]
+
+[size=3][b]Disc 2[/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Küss mich [i](06:24)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – Silence - Release [i](03:45)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – Solitude [i](03:40)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – Die Ballade von der Erweckung [i](08:47)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Another Conversation [i](03:21)[/i]
+[b]6.[/b] [artist="ASP"] & [artist="Chamber"] – Sing Child [i](07:29)[/i]
+[b]7.[/b] [artist="ASP"] & [artist="Chamber"] – Ich will brennen [i](05:00)[/i]
+[b]8.[/b] [artist="ASP"] & [artist="Chamber"] – Toscana [i](06:14)[/i]
+[b]9.[/b] [artist="ASP"] & [artist="Chamber"] – Ride On [i](03:42)[/i]
+[b]10.[/b] [artist="ASP"] & [artist="Chamber"] – Hometown [i](03:01)[/i]
+[b]11.[/b] [artist="ASP"] & [artist="Chamber"] – Werben [i](04:53)[/i]
+[b]12.[/b] [artist="ASP"] & [artist="Chamber"] – Once in a Lifetime, Part 3 (Finale) [i](10:08)[/i]
+
+[size=3][b]Disc 3: [i]Hier noch ein Titel[/i][/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Hässlich [i](02:25)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – Backstage (All Areas) [i](09:33)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – Paracetamolträume [i](08:37)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – Auszug aus „Tremendista“ (feat. [artist="Ralph Müller"]) [i](24:33)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Campari O [i](02:39)[/i]
+
+[size=3][b]Disc 4[/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Sicamore Trees (ASP soundcheck out-take) [i](01:34)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – Demon Love [i](04:35)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – The Truth About Snow-White [i](04:35)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – She Wore Shadows [i](05:19)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Sing Child [i](07:49)[/i]
+[b]6.[/b] [artist="ASP"], [artist="Chamber"] & [artist="Dritter Track Artist"] – Hometown [i](03:41)[/i]
+[b]7.[/b] [artist="ASP"] & [artist="Chamber"] – Hunger [i](04:34)[/i]
+[b]8.[/b] [artist="ASP"] & [artist="Chamber"] – Silence - Release [i](03:28)[/i]
+[b]9.[/b] [artist="ASP"] & [artist="Chamber"] – She Moved Through the Fair (ASP soundcheck out-take) [i](02:00)[/i]
+
+More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
+
+    def test_wafflesfm_tracks_only(self):
+        visitor = DescriptionVisitor(description_format='wafflesfm-tracks-only')
+
+        expected = u"""[size=3][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Once in a Lifetime, Part 1 [i](05:51)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – A Dead Man’s Song (feat. [artist="Noch ein Artist"]) [i](05:12)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – Versuchung [i](05:45)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – Torn [i](05:04)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Demon Love [i](04:32)[/i]
+[b]6.[/b] [artist="ASP"] & [artist="Chamber"] – The Paperhearted Ghost [i](04:43)[/i]
+[b]7.[/b] [artist="ASP"] & [artist="Chamber"] – A Tale of Real Love [i](05:16)[/i]
+[b]8.[/b] [artist="ASP"] & [artist="Chamber"] – Hunger [i](04:49)[/i]
+[b]9.[/b] [artist="ASP"] & [artist="Chamber"] – The Truth About Snow-White [i](04:00)[/i]
+[b]10.[/b] [artist="ASP"] & [artist="Chamber"] – She Wore Shadows [i](04:36)[/i]
+[b]11.[/b] [artist="ASP"] & [artist="Chamber"] – Und wir tanzten (Ungeschickte Liebesbriefe) [i](05:17)[/i]
+[b]12.[/b] [artist="ASP"] & [artist="Chamber"] – Once in a Lifetime, Part 2 (reprise) [i](02:44)[/i]
+
+[size=3][b]Disc 2[/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Küss mich [i](06:24)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – Silence - Release [i](03:45)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – Solitude [i](03:40)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – Die Ballade von der Erweckung [i](08:47)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Another Conversation [i](03:21)[/i]
+[b]6.[/b] [artist="ASP"] & [artist="Chamber"] – Sing Child [i](07:29)[/i]
+[b]7.[/b] [artist="ASP"] & [artist="Chamber"] – Ich will brennen [i](05:00)[/i]
+[b]8.[/b] [artist="ASP"] & [artist="Chamber"] – Toscana [i](06:14)[/i]
+[b]9.[/b] [artist="ASP"] & [artist="Chamber"] – Ride On [i](03:42)[/i]
+[b]10.[/b] [artist="ASP"] & [artist="Chamber"] – Hometown [i](03:01)[/i]
+[b]11.[/b] [artist="ASP"] & [artist="Chamber"] – Werben [i](04:53)[/i]
+[b]12.[/b] [artist="ASP"] & [artist="Chamber"] – Once in a Lifetime, Part 3 (Finale) [i](10:08)[/i]
+
+[size=3][b]Disc 3: [i]Hier noch ein Titel[/i][/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Hässlich [i](02:25)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – Backstage (All Areas) [i](09:33)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – Paracetamolträume [i](08:37)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – Auszug aus „Tremendista“ (feat. [artist="Ralph Müller"]) [i](24:33)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Campari O [i](02:39)[/i]
+
+[size=3][b]Disc 4[/b][/size]
+[b]1.[/b] [artist="ASP"] & [artist="Chamber"] – Sicamore Trees (ASP soundcheck out-take) [i](01:34)[/i]
+[b]2.[/b] [artist="ASP"] & [artist="Chamber"] – Demon Love [i](04:35)[/i]
+[b]3.[/b] [artist="ASP"] & [artist="Chamber"] – The Truth About Snow-White [i](04:35)[/i]
+[b]4.[/b] [artist="ASP"] & [artist="Chamber"] – She Wore Shadows [i](05:19)[/i]
+[b]5.[/b] [artist="ASP"] & [artist="Chamber"] – Sing Child [i](07:49)[/i]
+[b]6.[/b] [artist="ASP"], [artist="Chamber"] & [artist="Dritter Track Artist"] – Hometown [i](03:41)[/i]
+[b]7.[/b] [artist="ASP"] & [artist="Chamber"] – Hunger [i](04:34)[/i]
+[b]8.[/b] [artist="ASP"] & [artist="Chamber"] – Silence - Release [i](03:28)[/i]
+[b]9.[/b] [artist="ASP"] & [artist="Chamber"] – She Moved Through the Fair (ASP soundcheck out-take) [i](02:00)[/i]
+
+More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
+
+    def test_plain(self):
+        visitor = DescriptionVisitor(description_format='plain')
+
+        expected = u"""ASP, Chamber & Dritter Main Artist feat. Featuring Artist \u2013 Once in a Lifetime
+
+Label/Cat#: Trisol \u2013 TRI 303 CD or Eine andere CatNr, Ein anderes Label \u2013 Nr.1 or Nr.2 or Nr.3, Ein letztes Label \u2013 Und eine letzte Nummer
+Country: Germany
+Year: 2007-05-25
+Genre: Electronic, Rock
+Style: Goth Rock, Synth-pop
+Format: 4×CD, Album + Live
+
+Disc 1: Eine tolle CD
+1. ASP & Chamber – Once in a Lifetime, Part 1 (05:51)
+2. ASP & Chamber – A Dead Man’s Song (feat. Noch ein Artist) (05:12)
+3. ASP & Chamber – Versuchung (05:45)
+4. ASP & Chamber – Torn (05:04)
+5. ASP & Chamber – Demon Love (04:32)
+6. ASP & Chamber – The Paperhearted Ghost (04:43)
+7. ASP & Chamber – A Tale of Real Love (05:16)
+8. ASP & Chamber – Hunger (04:49)
+9. ASP & Chamber – The Truth About Snow-White (04:00)
+10. ASP & Chamber – She Wore Shadows (04:36)
+11. ASP & Chamber – Und wir tanzten (Ungeschickte Liebesbriefe) (05:17)
+12. ASP & Chamber – Once in a Lifetime, Part 2 (reprise) (02:44)
+
+Disc 2
+1. ASP & Chamber – Küss mich (06:24)
+2. ASP & Chamber – Silence - Release (03:45)
+3. ASP & Chamber – Solitude (03:40)
+4. ASP & Chamber – Die Ballade von der Erweckung (08:47)
+5. ASP & Chamber – Another Conversation (03:21)
+6. ASP & Chamber – Sing Child (07:29)
+7. ASP & Chamber – Ich will brennen (05:00)
+8. ASP & Chamber – Toscana (06:14)
+9. ASP & Chamber – Ride On (03:42)
+10. ASP & Chamber – Hometown (03:01)
+11. ASP & Chamber – Werben (04:53)
+12. ASP & Chamber – Once in a Lifetime, Part 3 (Finale) (10:08)
+
+Disc 3: Hier noch ein Titel
+1. ASP & Chamber – Hässlich (02:25)
+2. ASP & Chamber – Backstage (All Areas) (09:33)
+3. ASP & Chamber – Paracetamolträume (08:37)
+4. ASP & Chamber – Auszug aus „Tremendista“ (feat. Ralph Müller) (24:33)
+5. ASP & Chamber – Campari O (02:39)
+
+Disc 4
+1. ASP & Chamber – Sicamore Trees (ASP soundcheck out-take) (01:34)
+2. ASP & Chamber – Demon Love (04:35)
+3. ASP & Chamber – The Truth About Snow-White (04:35)
+4. ASP & Chamber – She Wore Shadows (05:19)
+5. ASP & Chamber – Sing Child (07:49)
+6. ASP, Chamber & Dritter Track Artist – Hometown (03:41)
+7. ASP & Chamber – Hunger (04:34)
+8. ASP & Chamber – Silence - Release (03:28)
+9. ASP & Chamber – She Moved Through the Fair (ASP soundcheck out-take) (02:00)
+
+More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
