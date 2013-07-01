@@ -33,12 +33,12 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return self._base_url + 'releases/%s/%d' % (self._release_name, self.id)
 
     def _separate_multiple_artists(self, artist_string):
-        artists = re.split('\\s*?(?:,|&|with)\\s*?', artist_string)
+        artists = re.split('(?i)\\s*?(?:,|&|with|pres.)\\s*?', artist_string)
         artists = map(self.remove_whitespace, artists)
         return artists
 
     def _split_artists(self, artist_string):
-        artists = re.split('\\s*?(?:ft\\.?|feat\\.?|featuring)\\s*?', artist_string)
+        artists = re.split('(?i)\\s*?(?:ft\\.?|feat\\.?|featuring)\\s*?', artist_string)
         main_artists = self._separate_multiple_artists(artists[0])
         featuring_artists = []
         if len(artists) > 1:
