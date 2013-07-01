@@ -19,6 +19,8 @@ class ReleaseScraper(Scraper, ExceptionMixin, RequestMixin):
 
     string_regex = '^(http(?:s)?://\S+?/album/\S*)$'
 
+    VARIOUS_ARTISTS_ALIASES = ['various artists']
+
     def __init__(self, album_url):
         super(ReleaseScraper, self).__init__()
         self.album_url = album_url
@@ -66,7 +68,10 @@ class ReleaseScraper(Scraper, ExceptionMixin, RequestMixin):
                 artist_name = band_info_response['name']
         if artist_name:
             artist = self.result.create_artist()
-            artist.set_name(artist_name)
+            if artist_name.lower() in self.VARIOUS_ARTISTS_ALIASES:
+                artist.set_various(True)
+            else:
+                artist.set_name(artist_name)
             artist.append_type(self.result.ArtistTypes.MAIN)
             self.result.append_release_artist(artist)
 
