@@ -1,6 +1,6 @@
 # coding=utf-8
 import json
-from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, StandardFactory
+from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, StandardFactory, StatusCodeError
 from .base import SearchScraper as SearchScraperBase
 from ..result import ReleaseResult, ListResult, NotFoundResult
 
@@ -151,9 +151,15 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             self.result.append_disc(disc)
 
     def get_result(self):
-        # we don't care to catch any StatusCode exceptions here, if the status code of the api call is not equal to 200
-        # then something is wrong with the api
-        response = self.request_get(url=self.url, params=self.get_params())
+        try:
+            response = self.request_get(url=self.url, params=self.get_params())
+        except StatusCodeError as e:
+            if str(e) == "404":
+                result = NotFoundResult()
+                result.set_scraper_name(self.get_name())
+                return result
+            else:
+                raise e
 
         self.prepare_response_content(self.get_response_content(response))
 
@@ -161,7 +167,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             self.raise_exception(u'got more than one release for given id')
         elif self.parsed_response['metadata']['count'] == 0:
             # not release with the given id was found
-            result = NotFoundResult
+            # this case should be covered by the 404 error code handling above, but we just want to make sure
+            result = NotFoundResult()
             result.set_scraper_name(self.get_name())
             return result
 
