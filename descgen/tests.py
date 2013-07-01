@@ -7,11 +7,6 @@ from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalar
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
 
 
-from .visitor.temp import BlubbVisitor
-
-b = BlubbVisitor()
-
-
 class TestCase(TestCaseBase):
 
     def setUp(self):
