@@ -1,1113 +1,8177 @@
 # coding=utf-8
 
-from django.test import TestCase
+import difflib
+
+from django.test import TestCase as TestCaseBase
 from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
+from .result import ReleaseResult, ListResult, NotFoundResult, Result
+
+
+from .visitor.temp import BlubbVisitor
+
+b = BlubbVisitor()
+
+
+class TestCase(TestCaseBase):
+
+    def setUp(self):
+        self.addTypeEqualityFunc(ReleaseResult, 'assertResultEqual')
+        self.addTypeEqualityFunc(ListResult, 'assertResultEqual')
+        self.addTypeEqualityFunc(NotFoundResult, 'assertResultEqual')
+
+    def assertResultEqual(self, d1, d2, msg=None):
+        self.assertTrue(issubclass(d1.__class__, Result), 'First argument is not a Result')
+        self.assertTrue(issubclass(d2.__class__, Result), 'Second argument is not a Result')
+
+        if d1 != d2:
+            standardMsg = '%s != %s' % (repr(d1), repr(d2))
+            diff = ('\n' + '\n'.join(difflib.ndiff(
+                           repr(d1).splitlines(),
+                           repr(d2).splitlines())))
+            standardMsg = self._truncateMessage(standardMsg, diff)
+            self.fail(self._formatMessage(msg, standardMsg))
+
 
 class DiscogsTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'style': ['Goth Rock', 'Synth-pop'], 'title': u'Hast Du Mich Vermisst?', 'country': 'Germany',
-                    'format': 'CD, Album', 'label': [u'Richterskala'], 'released': '03 Nov 2000',
-                    'catalog': [u'TRI 070 CD'], 'discs': {
-                1: [('1', [], 'Schwarzer Schmetterling', '4:50'), ('2', [], 'Where Do The Gods Go', '3:46'),
-                    ('3', [], 'Dancing', '5:45'), ('4', [], u'K\xfcss Mich', '5:11'), ('5', [], 'Sing Child', '3:59'),
-                    ('6', [], 'Teach Me War', '3:45'), ('7', [], 'Imbecile Anthem', '3:42'),
-                    ('8', [], 'Und Wir Tanzten (Ungeschickte Liebesbriefe)', '5:05'), ('9', [], 'Blinded', '7:23')]},
-                    'link': 'http://www.discogs.com/ASP-Hast-Du-Mich-Vermisst/release/453432',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}], 'genre': ['Electronic', 'Rock']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url('http://www.discogs.com/ASP-Hast-Du-Mich-Vermisst/release/453432')
+        release_event = expected.create_release_event()
+        release_event.set_date('03 Nov 2000')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Richterskala')
+        label_id.append_catalogue_nr(u'TRI 070 CD')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Hast Du Mich Vermisst?')
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Rock')
+
+        expected.append_style('Goth Rock')
+        expected.append_style('Synth-pop')
+
+        expected.set_url('http://www.discogs.com/ASP-Hast-Du-Mich-Vermisst/release/453432')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Schwarzer Schmetterling')
+        track.set_length(290)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Where Do The Gods Go')
+        track.set_length(226)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Dancing')
+        track.set_length(345)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'K\xfcss Mich')
+        track.set_length(311)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Sing Child')
+        track.set_length(239)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Teach Me War')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Imbecile Anthem')
+        track.set_length(222)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Und Wir Tanzten (Ungeschickte Liebesbriefe)')
+        track.set_length(305)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Blinded')
+        track.set_length(443)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        scraper = discogs.ReleaseScraper.from_string('http://www.discogs.com/ASP-Hast-Du-Mich-Vermisst/release/453432')
+        result = scraper.get_result()
+
+        self.assertEqual(expected, result)
 
     def test_multiple_cds(self):
-        expected = {'style': ['Acoustic', 'Goth Rock', 'Classical', 'Speech'],
-                    'title': u"The 'Once In A Lifetime' Recollection Box", 'country': 'Germany',
-                    'format': u'4 \xd7 CD, Compilation, Limited Edition, Digipak Box Set, Limited Edition, Hand-Numbered'
-            , 'label': [u'[Trisol] Music Group GmbH'], 'released': '25 May 2007', 'catalog': [u'TRI 303 CD'], 'discs': {
-                1: [('1', [], 'Once In A Lifetime, Part 1', '5:51'), ('2', [], "A Dead Man's Song", '5:12'),
-                    ('3', [], 'Versuchung', '5:45'), ('4', [], 'Torn', '5:04'), ('5', [], 'Demon Love', '4:32'),
-                    ('6', [], 'The Paperhearted Ghost', '4:43'), ('7', [], 'A Tale Of Real Love', '5:16'),
-                    ('8', [], 'Hunger', '4:49'), ('9', [], 'The Truth About Snow-White', '4:00'),
-                    ('10', [], 'She Wore Shadows', '4:35'),
-                    ('11', [], 'Und Wir Tanzten (Ungeschickte Liebesbriefe)', '5:17'),
-                    ('12', [], 'Once In A Lifetime, Part 2 (Reprise)', '2:44')],
-                2: [('1', [], u'K\xfcss Mich', '6:24'), ('2', [], 'Silence - Release', '3:45'),
-                    ('3', [], 'Solitude', '3:40'), ('4', [], 'Die Ballade Von Der Erweckung', '8:47'),
-                    ('5', [], 'Another Conversation', '3:21'), ('6', [], 'Sing Child', '7:29'),
-                    ('7', [], 'Ich Will Brennen', '5:00'), ('8', [], 'Toscana', '6:14'), ('9', [], 'Ride On', '3:42'),
-                    ('10', [], 'Hometown', '3:01'), ('11', [], 'Werben', '4:53'),
-                    ('12', [], 'Once In A Lifetime, Part 3 (Finale)', '10:08')],
-                3: [('1', [], u'H\xe4sslich', '2:25'), ('2', [], 'Backstage (All Areas)', '9:33'),
-                    ('3', [], u'Paracetamoltr\xe4ume', '8:37'),
-                    ('4', [], u'Ausszug Aus "Tremendista" Feat. Ralph M\xfcller/Gitarre', '24:33'),
-                    ('5', [], 'Campari O', '2:39')],
-                4: [('1', [], 'Asp, Soundcheck-Outtake: "Sicamore Trees"', '1:34'), ('2', [], 'Demon Love', '4:35'),
-                    ('3', [], 'The Truth About Snow-White', '4:34'), ('4', [], 'She Wore Shadows', '5:19'),
-                    ('5', [], 'Sing Child', '7:49'), ('6', [], 'Hometown', '3:41'), ('7', [], 'Hunger', '4:34'),
-                    ('8', [], 'Silence-Release', '3:28'),
-                    ('9', [], 'Asp, Soundcheck-Outtake: "She Moved Through The Fair"', '2:00')]},
-                    'link': 'http://www.discogs.com/ASP-Chamber-The-Once-In-A-Lifetime-Recollection-Box/release/977684',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                    'genre': ['Classical', 'Non-Music', 'Rock']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url(
-            'http://www.discogs.com/ASP-Chamber-The-Once-In-A-Lifetime-Recollection-Box/release/977684')
+        release_event = expected.create_release_event()
+        release_event.set_date('25 May 2007')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'4 \xd7 CD, Compilation, Limited Edition, Digipak Box Set, Limited Edition, Hand-Numbered')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'[Trisol] Music Group GmbH')
+        label_id.append_catalogue_nr(u'TRI 303 CD')
+        expected.append_label_id(label_id)
+
+        expected.set_title("The 'Once In A Lifetime' Recollection Box")
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Chamber')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Classical')
+        expected.append_genre('Non-Music')
+        expected.append_genre('Rock')
+
+        expected.append_style('Acoustic')
+        expected.append_style('Goth Rock')
+        expected.append_style('Classical')
+        expected.append_style('Speech')
+
+        expected.set_url('http://www.discogs.com/ASP-Chamber-The-Once-In-A-Lifetime-Recollection-Box/release/977684')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Once In A Lifetime, Part 1')
+        track.set_length(351)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("A Dead Man's Song")
+        track.set_length(312)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Versuchung')
+        track.set_length(345)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Torn')
+        track.set_length(304)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Demon Love')
+        track.set_length(272)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('The Paperhearted Ghost')
+        track.set_length(283)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('A Tale Of Real Love')
+        track.set_length(316)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Hunger')
+        track.set_length(289)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('The Truth About Snow-White')
+        track.set_length(240)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('She Wore Shadows')
+        track.set_length(275)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Und Wir Tanzten (Ungeschickte Liebesbriefe)')
+        track.set_length(317)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Once In A Lifetime, Part 2 (Reprise)')
+        track.set_length(164)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'K\xfcss Mich')
+        track.set_length(384)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Silence - Release')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Solitude')
+        track.set_length(220)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Die Ballade Von Der Erweckung')
+        track.set_length(527)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Another Conversation')
+        track.set_length(201)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Sing Child')
+        track.set_length(449)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Ich Will Brennen')
+        track.set_length(300)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Toscana')
+        track.set_length(374)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Ride On')
+        track.set_length(222)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Hometown')
+        track.set_length(181)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Werben')
+        track.set_length(293)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Once In A Lifetime, Part 3 (Finale)')
+        track.set_length(608)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(3)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'H\xe4sslich')
+        track.set_length(145)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Backstage (All Areas)')
+        track.set_length(573)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Paracetamoltr\xe4ume')
+        track.set_length(517)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Ausszug Aus "Tremendista" Feat. Ralph M\xfcller/Gitarre')
+        track.set_length(1473)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Campari O')
+        track.set_length(159)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(4)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Asp, Soundcheck-Outtake: "Sicamore Trees"')
+        track.set_length(94)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Demon Love')
+        track.set_length(275)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('The Truth About Snow-White')
+        track.set_length(274)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('She Wore Shadows')
+        track.set_length(319)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Sing Child')
+        track.set_length(469)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Hometown')
+        track.set_length(221)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hunger')
+        track.set_length(274)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Silence-Release')
+        track.set_length(208)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Asp, Soundcheck-Outtake: "She Moved Through The Fair"')
+        track.set_length(120)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        scraper = discogs.ReleaseScraper.from_string('http://www.discogs.com/ASP-Chamber-The-Once-In-A-Lifetime-Recollection-Box/release/977684')
+        result = scraper.get_result()
+
+        self.assertEqual(expected, result)
 
     def test_featuring_track_artist(self):
-        expected = {'style': ['Dancehall'], 'title': u'Unter Freunden', 'country': 'Europe', 'format': 'CD, Album',
-                    'label': [u'Rootdown Records'], 'released': '01 Apr 2011', 'catalog': [u'RDM13074-2'], 'discs': {
-                1: [('1', [], 'Intro', '0:13'), ('2', [], 'Unter Freunden', '3:04'),
-                    ('3', [{'type': 'Feature', 'name': "Ce'cile"}], 'Karma', '3:09'),
-                    ('4', [], 'Zeit Steht Still', '4:20'), ('5', [], 'Komplizen', '3:05'),
-                    ('6', [{'type': 'Feature', 'name': 'Gentleman'}], 'Wenn Sich Der Nebel Verzieht', '3:17'),
-                    ('7', [], 'Schwerelos', '3:47'), ('8', [], 'Ein Paar Meter', '3:18'), ('9', [], 'Cash', '3:08'),
-                    ('10', [], 'Dezibel', '4:30'), ('11', [], 'Kontrast', '3:34'),
-                    ('12', [], u'R\xfcckkehr Der Clowns', '3:18'), ('13', [], 'Superstar', '3:47'),
-                    ('14', [], 'Underground', '3:24'),
-                    ('15', [{'type': 'Feature', 'name': 'Rebellion'}], 'Showdown', '4:21')]},
-                    'link': 'http://www.discogs.com/Mono-Nikitaman-Unter-Freunden/release/3432154',
-                    'artists': [{'type': 'Main', 'name': 'Mono & Nikitaman'}], 'genre': ['Reggae']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url('http://www.discogs.com/Mono-Nikitaman-Unter-Freunden/release/3432154')
+        release_event = expected.create_release_event()
+        release_event.set_date('01 Apr 2011')
+        release_event.set_country('Europe')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Rootdown Records')
+        label_id.append_catalogue_nr(u'RDM13074-2')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Unter Freunden')
+
+        artist = expected.create_artist()
+        artist.set_name('Mono & Nikitaman')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Reggae')
+
+        expected.append_style('Dancehall')
+
+        expected.set_url('http://www.discogs.com/Mono-Nikitaman-Unter-Freunden/release/3432154')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Intro')
+        track.set_length(13)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Unter Freunden')
+        track.set_length(184)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Karma')
+        track.set_length(189)
+        track_artist = expected.create_artist()
+        track_artist.set_name("Ce'cile")
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Zeit Steht Still')
+        track.set_length(260)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Komplizen')
+        track.set_length(185)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Wenn Sich Der Nebel Verzieht')
+        track.set_length(197)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Gentleman')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Schwerelos')
+        track.set_length(227)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Ein Paar Meter')
+        track.set_length(198)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Cash')
+        track.set_length(188)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Dezibel')
+        track.set_length(270)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Kontrast')
+        track.set_length(214)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title(u'R\xfcckkehr Der Clowns')
+        track.set_length(198)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Superstar')
+        track.set_length(227)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Underground')
+        track.set_length(204)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Showdown')
+        track.set_length(261)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rebellion')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        scraper = discogs.ReleaseScraper.from_string('http://www.discogs.com/Mono-Nikitaman-Unter-Freunden/release/3432154')
+        result = scraper.get_result()
+
+        self.assertEqual(expected, result)
 
     def test_remix_track_artist(self):
-        expected = {'style': ['Alternative Rock'], 'title': u'Aus Der Tiefe', 'country': 'Germany',
-                    'format': 'CD, Album, Limited Edition, Digibook CD, Compilation, Limited Edition',
-                    'label': [u'[Trisol] Music Group GmbH'], 'released': '01 Jul 2005', 'catalog': [u'TRI 231 CD'],
-                    'discs': {1: [('1', [], u'Beschw\xf6rung', '6:31'), ('2', [], u'Willkommen Zur\xfcck', '2:17'),
-                        ('3', [], 'Schwarzes Blut', '3:32'), ('4', [], 'Im Dunklen Turm', '1:41'),
-                        ('5', [], 'Me', '4:38'), ('6', [], 'Schattenschreie', '0:21'), ('7', [], 'Hunger', '5:21'),
-                        ('8', [], 'Fremde Erinnerungen', '1:12'), ('9', [], 'Ballade Von Der Erweckung', '8:53'),
-                        ('10', [], 'Tiefenrausch', '4:05'), ('11', [], 'Schmetterling, Du Kleines Ding', '0:42'),
-                        ('12', [], 'Ich Komm Dich Holn', '4:17'), ('13', [], 'Werben', '4:28'),
-                        ('14', [], 'Aus Der Tiefe', '3:18'), ('15', [], 'Spiegelaugen', '3:24'),
-                        ('16', [], 'Tiefenrausch (Reprise)', '1:07'), ('17', [], 'Panik', '4:12'),
-                        ('18', [], 'Spiegel', '5:31')], 2: [('1', [], 'Schwarzes Blut (Haltung Version)', '4:09'),
-                        ('2', [], 'Werben (Subtil Edit)', '4:17'), ('3', [], 'Me (Single Version)', '3:45'),
-                        ('4', [{'type': 'Feature', 'name': 'Sara Noxx'}], 'Tiefenrausch (Feat. Sara Noxx)', '4:05'),
-                        ('5', [], 'Hunger (Single Mix)', '4:19'), ('6', [], 'Panik (Ganz Rauf-Verison)', '4:33'),
-                        ('7', [], u'Beschw\xf6rung (Siegeszug Instrumental)', '3:25'),
-                        ('8', [], 'Buch Des Vergessens (Unreines Spiegelsonett)', '1:55'), (
-                            '9', [{'type': 'Remixer', 'name': 'Umbra Et Imago'}],
-                            'Kokon (Brandneu-Remix Von Umbra Et Imago)', '4:39'), (
-                            '10', [{'type': 'Remixer', 'name': 'Blutengel'}], 'Me (Me And You Remix Von Blutengel)',
-                            '5:44')
-                        , ('11', [], 'Und Wir Tanzten (Ungeschickte Liebesbriefe) (Live)', '5:47'),
-                        ('12', [], 'Ich Will Brennen (Live)', '6:09'),
-                        ('13', [], 'Starfucker: In Der Folterkammer', '2:07')]},
-                    'link': 'http://www.discogs.com/ASP-Aus-Der-Tiefe-Der-Schwarze-Schmetterling-IV/release/710517',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}], 'genre': ['Electronic', 'Rock']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url(
-            'http://www.discogs.com/ASP-Aus-Der-Tiefe-Der-Schwarze-Schmetterling-IV/release/710517')
+        release_event = expected.create_release_event()
+        release_event.set_date('01 Jul 2005')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album, Limited Edition, Digibook CD, Compilation, Limited Edition')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'[Trisol] Music Group GmbH')
+        label_id.append_catalogue_nr(u'TRI 231 CD')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Aus Der Tiefe')
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Rock')
+
+        expected.append_style('Alternative Rock')
+
+        expected.set_url('http://www.discogs.com/ASP-Aus-Der-Tiefe-Der-Schwarze-Schmetterling-IV/release/710517')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Beschw\xf6rung')
+        track.set_length(391)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Willkommen Zur\xfcck')
+        track.set_length(137)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Schwarzes Blut')
+        track.set_length(212)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Im Dunklen Turm')
+        track.set_length(101)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Me')
+        track.set_length(278)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Schattenschreie')
+        track.set_length(21)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hunger')
+        track.set_length(321)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Fremde Erinnerungen')
+        track.set_length(72)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Ballade Von Der Erweckung')
+        track.set_length(533)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Tiefenrausch')
+        track.set_length(245)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Schmetterling, Du Kleines Ding')
+        track.set_length(42)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Ich Komm Dich Holn')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Werben')
+        track.set_length(268)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Aus Der Tiefe')
+        track.set_length(198)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Spiegelaugen')
+        track.set_length(204)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Tiefenrausch (Reprise)')
+        track.set_length(67)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('Panik')
+        track.set_length(252)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('Spiegel')
+        track.set_length(331)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Schwarzes Blut (Haltung Version)')
+        track.set_length(249)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Werben (Subtil Edit)')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Me (Single Version)')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Tiefenrausch (Feat. Sara Noxx)')
+        track.set_length(245)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Sara Noxx')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Hunger (Single Mix)')
+        track.set_length(259)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Panik (Ganz Rauf-Verison)')
+        track.set_length(273)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'Beschw\xf6rung (Siegeszug Instrumental)')
+        track.set_length(205)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Buch Des Vergessens (Unreines Spiegelsonett)')
+        track.set_length(115)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Kokon (Brandneu-Remix Von Umbra Et Imago)')
+        track.set_length(279)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Umbra Et Imago')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Me (Me And You Remix Von Blutengel)')
+        track.set_length(344)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Blutengel')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Und Wir Tanzten (Ungeschickte Liebesbriefe) (Live)')
+        track.set_length(347)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Ich Will Brennen (Live)')
+        track.set_length(369)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Starfucker: In Der Folterkammer')
+        track.set_length(127)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        scraper = discogs.ReleaseScraper.from_string('http://www.discogs.com/ASP-Aus-Der-Tiefe-Der-Schwarze-Schmetterling-IV/release/710517')
+        result = scraper.get_result()
+
+        self.assertEqual(expected, result)
 
     def test_vinyl(self):
-        expected = {'style': ['Dancehall', 'Reggae-Pop'], 'title': u'Ausser Kontrolle', 'country': 'Germany',
-                    'format': u'2 \xd7 Vinyl, LP', 'label': [u'Rootdown Records'], 'released': '2008',
-                    'catalog': [u'RDM 13051-1'], 'discs': {
-                1: [('A1', [], 'Intro', None), ('A2', [], 'Schlag Alarm', None),
-                    ('A3', [], 'Kann Ja Mal Passieren', None), ('A4', [], 'Ausser Kontrolle', None),
-                    ('A5', [], "Hol's Dir", None), ('B1', [], 'Das Alles', None), ('B2', [], 'Digge Digge', None),
-                    ('B3', [], 'Nur So', None), ('B4', [], 'Yeah', None),
-                    ('C1', [{'type': 'Feature', 'name': 'Russkaja'}], 'Von Osten Bis Westen', None),
-                    ('C2', [], 'Wenn Ihr Schlaft', None), ('C3', [], 'Unterwegs', None), ('C4', [], 'Tiktak', None),
-                    ('D1', [{'type': 'Feature', 'name': 'Nosliw'}], 'Tut Mir Leid', None),
-                    ('D2', [], 'Es Kommt Anders', None),
-                    ('D3', [{'type': 'Remixer', 'name': 'Zion Train'}], 'Das Alles (Zion Train Remix)', None)]},
-                    'link': 'http://www.discogs.com/Mono-Nikitaman-Ausser-Kontrolle/release/1540929',
-                    'artists': [{'type': 'Main', 'name': 'Mono & Nikitaman'}], 'genre': ['Reggae']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url('http://www.discogs.com/Mono-Nikitaman-Ausser-Kontrolle/release/1540929')
+        release_event = expected.create_release_event()
+        release_event.set_date('2008')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'2 \xd7 Vinyl, LP')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Rootdown Records')
+        label_id.append_catalogue_nr(u'RDM 13051-1')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Ausser Kontrolle')
+
+        artist = expected.create_artist()
+        artist.set_name('Mono & Nikitaman')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Reggae')
+
+        expected.append_style('Dancehall')
+        expected.append_style('Reggae-Pop')
+
+        expected.set_url('http://www.discogs.com/Mono-Nikitaman-Ausser-Kontrolle/release/1540929')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('A1')
+        track.set_title('Intro')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('A2')
+        track.set_title('Schlag Alarm')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('A3')
+        track.set_title('Kann Ja Mal Passieren')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('A4')
+        track.set_title('Ausser Kontrolle')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('A5')
+        track.set_title("Hol's Dir")
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('B1')
+        track.set_title('Das Alles')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('B2')
+        track.set_title('Digge Digge')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('B3')
+        track.set_title('Nur So')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('B4')
+        track.set_title('Yeah')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('C1')
+        track.set_title('Von Osten Bis Westen')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Russkaja')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('C2')
+        track.set_title('Wenn Ihr Schlaft')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('C3')
+        track.set_title('Unterwegs')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('C4')
+        track.set_title('Tiktak')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('D1')
+        track.set_title('Tut Mir Leid')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Nosliw')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('D2')
+        track.set_title('Es Kommt Anders')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('D3')
+        track.set_title('Das Alles (Zion Train Remix)')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Zion Train')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Mono-Nikitaman-Ausser-Kontrolle/release/1540929')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_featuring_main_artist(self):
-        expected = {'style': ['Trance'], 'title': u'In My Dreams', 'country': 'Germany',
-                    'format': u'3 \xd7 File, MP3, 320 kbps', 'label': [u'Redux Recordings'], 'released': '08 Feb 2011',
-                    'catalog': [u'RDX062'], 'discs': {1: [('1', [], 'In My Dreams (Original Vocal Mix)', '9:18'),
-                ('2', [], 'In My Dreams (Original Dub Mix)', '9:18'), (
-                    '2', [{'type': 'Remixer', 'name': 'Ost & Meyer'}], 'In My Dreams (Ost & Meyer Extraodinary Mix)',
-                    '7:52')]},
-                    'link': 'http://www.discogs.com/Lifted-Emotion-feat-Anastasiia-Purple-In-My-Dreams/release/2806179',
-                    'artists': [{'type': 'Main', 'name': 'Lifted Emotion'},
-                            {'type': 'Feature', 'name': 'Anastasiia Purple'}], 'genre': ['Electronic']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url(
-            'http://www.discogs.com/Lifted-Emotion-feat-Anastasiia-Purple-In-My-Dreams/release/2806179')
+        release_event = expected.create_release_event()
+        release_event.set_date('08 Feb 2011')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'3 \xd7 File, MP3, 320 kbps')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Redux Recordings')
+        label_id.append_catalogue_nr(u'RDX062')
+        expected.append_label_id(label_id)
+
+        expected.set_title('In My Dreams')
+
+        artist = expected.create_artist()
+        artist.set_name('Lifted Emotion')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Anastasiia Purple')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.FEATURING)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+
+        expected.append_style('Trance')
+
+        expected.set_url('http://www.discogs.com/Lifted-Emotion-feat-Anastasiia-Purple-In-My-Dreams/release/2806179')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('In My Dreams (Original Vocal Mix)')
+        track.set_length(558)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('In My Dreams (Original Dub Mix)')
+        track.set_length(558)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('In My Dreams (Ost & Meyer Extraodinary Mix)')
+        track.set_length(472)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ost & Meyer')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Lifted-Emotion-feat-Anastasiia-Purple-In-My-Dreams/release/2806179')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_various_artists(self):
-        expected = {'style': ['EBM', 'Darkwave', 'Industrial', 'Goth Rock', 'Electro'], 'title': u'Gothic File 14',
-                    'country': 'Germany', 'format': 'CD, Compilation', 'label': [u'Batbeliever Releases'],
-                    'released': '2010', 'catalog': [u'BAT 075'], 'discs': {
-                1: [('1', [{'type': 'Main', 'name': 'Diary Of Dreams'}], 'Echo In Me', '3:56'),
-                    ('2', [{'type': 'Main', 'name': 'Gothminister'}], 'Liar (Version)', '3:39'),
-                    ('3', [{'type': 'Main', 'name': 'Sirenia'}], 'The End Of It All (Edit)', '3:57'),
-                    ('4', [{'type': 'Main', 'name': 'Merciful Nuns'}], 'Sanctuary', '3:59'),
-                    ('5', [{'type': 'Main', 'name': 'Covenant'}], 'Worlds Collide (Demo Version)', '4:21'),
-                    ('6', [{'type': 'Main', 'name': 'Ien Oblique'}], 'Drowning World', '4:13'),
-                    ('7', [{'type': 'Main', 'name': 'Betamorphose'}], 'In The Name Of God', '4:57'),
-                    ('8', [{'type': 'Main', 'name': 'Don Harris'}], 'PsychoCop (Folge 8)', '2:51')]},
-                    'link': 'http://www.discogs.com/Various-Gothic-File-14/release/3700493',
-                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Electronic', 'Rock']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/3700493')
+        release_event = expected.create_release_event()
+        release_event.set_date('2010')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Compilation')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Batbeliever Releases')
+        label_id.append_catalogue_nr(u'BAT 075')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Gothic File 14')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Rock')
+
+        expected.append_style('EBM')
+        expected.append_style('Darkwave')
+        expected.append_style('Industrial')
+        expected.append_style('Goth Rock')
+        expected.append_style('Electro')
+
+        expected.set_url('http://www.discogs.com/Various-Gothic-File-14/release/3700493')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Echo In Me')
+        track.set_length(236)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Diary Of Dreams')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Liar (Version)')
+        track.set_length(219)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Gothminister')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('The End Of It All (Edit)')
+        track.set_length(237)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Sirenia')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Sanctuary')
+        track.set_length(239)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Merciful Nuns')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Worlds Collide (Demo Version)')
+        track.set_length(261)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Covenant')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Drowning World')
+        track.set_length(253)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ien Oblique')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('In The Name Of God')
+        track.set_length(297)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Betamorphose')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('PsychoCop (Folge 8)')
+        track.set_length(171)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Don Harris')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Various-Gothic-File-14/release/3700493')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_label_with_suffix(self):
-        expected = {'style': ['Medieval'], 'title': u'Prima Nocte', 'country': 'Germany', 'format': 'CD, Album',
-                    'label': [u'Indigo'], 'released': '25 Nov 2005', 'catalog': [u'CD 55182'], 'discs': {
-            1: [('1', [], 'Es War Einmal', '2:52'), ('2', [], 'Das Mittelalter', '4:20'), ('3', [], 'Drachentanz', '3:44'),
-                ('4', [], 'Das Turnier', '4:14'), ('5', [], 'Prima Nocte', '5:31'), ('6', [], u'B\xe4rentanz', '3:52'),
-                ('7', [], 'Herren Der Winde', '4:25'), ('8', [], 'Der Teufel', '4:50'), ('9', [], 'Schneewittchen', '6:17'),
-                ('10', [], 'Der Traum', '5:19'), ('11', [], u'R\xe4uber', '3:26'), ('12', [], 'Sauflied', '3:54'),
-                ('13', [], 'Teufelsgeschenk', '4:24'), ('14', [], u'La\xdft Die Ritter Schlafen', '5:13'),
-                ('15', [], 'Gute Nacht', '7:00')]},
-                    'link': 'http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694',
-                    'artists': [{'type': 'Main', 'name': 'Feuerschwanz'}],
-                    'genre': ['Folk', 'World', 'Country', 'Rock']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url('http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694')
+        release_event = expected.create_release_event()
+        release_event.set_date('25 Nov 2005')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Indigo')
+        label_id.append_catalogue_nr(u'CD 55182')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Prima Nocte')
+
+        artist = expected.create_artist()
+        artist.set_name('Feuerschwanz')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Folk')
+        expected.append_genre('World')
+        expected.append_genre('Country')
+        expected.append_genre('Rock')
+
+        expected.append_style('Medieval')
+
+        expected.set_url('http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Es War Einmal')
+        track.set_length(172)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Das Mittelalter')
+        track.set_length(260)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Drachentanz')
+        track.set_length(224)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Das Turnier')
+        track.set_length(254)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Prima Nocte')
+        track.set_length(331)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title(u'B\xe4rentanz')
+        track.set_length(232)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Herren Der Winde')
+        track.set_length(265)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Der Teufel')
+        track.set_length(290)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Schneewittchen')
+        track.set_length(377)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Der Traum')
+        track.set_length(319)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title(u'R\xe4uber')
+        track.set_length(206)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Sauflied')
+        track.set_length(234)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Teufelsgeschenk')
+        track.set_length(264)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title(u'La\xdft Die Ritter Schlafen')
+        track.set_length(313)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Gute Nacht')
+        track.set_length(420)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Feuerschwanz-Prima-Nocte/release/2611694')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_album_with_unicode_dash_in_title(self):
-        expected = {'style': ['Soundtrack', 'Abstract', 'Ambient'],
-                    'title': u'AUN \u2013 The Beginning And The End Of All Things', 'country': 'UK',
-                    'format': 'CD, Album', 'label': [u'Ash International'], 'released': '25 Jun 2012',
-                    'catalog': [u'Ash 9.5'], 'discs': {
-            1: [('1', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Kae', None),
-                ('2', [{'type': 'Main', 'name': 'Fennesz Sakamoto'}], 'Aware', None),
-                ('3', [{'type': 'Main', 'name': 'Fennesz Sakamoto'}], 'Haru', None),
-                ('4', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Sekai', None),
-                ('5', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Euclides', None),
-                ('6', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Sasazuka', None),
-                ('7', [{'type': 'Main', 'name': 'Fennesz Sakamoto'}], 'Trace', None),
-                ('8', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Mori', None),
-                ('9', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'AUN40', None),
-                ('10', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Namuru', None),
-                ('11', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Himitsu', None),
-                ('12', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'AUN80', None),
-                ('13', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Nympha', None),
-                ('14', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Shinu', None),
-                ('15', [{'type': 'Main', 'name': 'Christian Fennesz'}], 'Hikari', None)]},
-                    'link': 'http://www.discogs.com/Christian-Fennesz-AUN-The-Beginning-And-The-End-Of-All-Things/release/2881000',
-                    'artists': [{'type': 'Main', 'name': 'Christian Fennesz'}],
-                    'genre': ['Electronic', 'Stage & Screen']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = discogs.Release.release_from_url('http://www.discogs.com/Christian-Fennesz-AUN-The-Beginning-And-The-End-Of-All-Things/release/2881000')
+        release_event = expected.create_release_event()
+        release_event.set_date('25 Jun 2012')
+        release_event.set_country('UK')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Ash International')
+        label_id.append_catalogue_nr(u'Ash 9.5')
+        expected.append_label_id(label_id)
+
+        expected.set_title(u'AUN \u2013 The Beginning And The End Of All Things')
+
+        artist = expected.create_artist()
+        artist.set_name('Christian Fennesz')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Stage & Screen')
+
+        expected.append_style('Soundtrack')
+        expected.append_style('Abstract')
+        expected.append_style('Ambient')
+
+        expected.set_url('http://www.discogs.com/Christian-Fennesz-AUN-The-Beginning-And-The-End-Of-All-Things/release/2881000')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Kae')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Aware')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Fennesz Sakamoto')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Haru')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Fennesz Sakamoto')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Sekai')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Euclides')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Sasazuka')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Trace')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Fennesz Sakamoto')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Mori')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('AUN40')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Namuru')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Himitsu')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('AUN80')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Nympha')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Shinu')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Hikari')
+        track.set_length(None)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Christian Fennesz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Christian-Fennesz-AUN-The-Beginning-And-The-End-Of-All-Things/release/2881000')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = discogs.Release.release_from_url('http://www.discogs.com/Various-Gothic-File-14/release/999999999')
-        try:
-            r.data
-            self.assertFalse(True)
-        except discogs.DiscogsAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Various-Gothic-File-14/release/999999999')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class MusicbrainzTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'title': 'Hast Du mich vermisst? Der schwarze Schmetterling, Teil I', 'country': 'Germany',
-                    'format': 'CD, Album', 'label': ['Trisol'], 'released': '2004-09-23', 'catalog': ['TRI 070 CD'],
-                    'discs': {1: [('1', [], 'Intro: In meiner Vorstellung', '4:34'),
-                        ('2', [], 'Schwarzer Schmetterling', '4:50'), ('3', [], 'Where Do the Gods Go', '3:46'),
-                        ('4', [], 'Dancing', '5:45'), ('5', [], u'K\xfcss mich', '5:11'),
-                        ('6', [], 'Sing Child', '3:58'), ('7', [], 'Teach Me War', '3:45'),
-                        ('8', [], 'Imbecile Anthem', '3:42'),
-                        ('9', [], 'Und wir tanzten (Ungeschickte Liebesbriefe)', '5:04'), ('10', [], 'Blinded', '7:24'),
-                        ('11', [], 'Where Do the Gods Go (re-unleashed club edit)', '4:39')]},
-                    'link': 'http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
+        release_event = expected.create_release_event()
+        release_event.set_date('2004-09-23')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Trisol')
+        label_id.append_catalogue_nr('TRI 070 CD')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Hast Du mich vermisst? Der schwarze Schmetterling, Teil I')
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+
+
+        expected.set_url('http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Intro: In meiner Vorstellung')
+        track.set_length(274)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Schwarzer Schmetterling')
+        track.set_length(290)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Where Do the Gods Go')
+        track.set_length(226)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Dancing')
+        track.set_length(345)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'K\xfcss mich')
+        track.set_length(311)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Sing Child')
+        track.set_length(238)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Teach Me War')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Imbecile Anthem')
+        track.set_length(222)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Und wir tanzten (Ungeschickte Liebesbriefe)')
+        track.set_length(304)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Blinded')
+        track.set_length(444)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Where Do the Gods Go (re-unleashed club edit)')
+        track.set_length(279)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_multiple_cds(self):
-        expected = {'title': 'Once in a Lifetime', 'country': 'Germany', 'format': u'4\xd7CD, Album + Live',
-                    'label': ['Trisol'], 'released': '2007-05-25', 'catalog': ['TRI 303 CD'],
-                    'discs': {1: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Once in a Lifetime, Part 1', '5:51'),
-                        ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                         u'A Dead Man\u2019s Song', '5:12'),
-                        ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Versuchung',
-                         '5:45'),
-                        ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Torn', '5:04'),
-                        ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Demon Love',
-                         '4:32'),
-                        ('6', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                         'The Paperhearted Ghost', '4:43'),
-                        ('7', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                         'A Tale of Real Love', '5:16'),
-                        ('8', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}], 'Hunger', '4:49'),
-                        ('9', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                         'The Truth About Snow-White', '4:00'),
-                        (
-                            '10', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                            'She Wore Shadows'
-                            , '4:36'),
-                        ('11', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                         'Und wir tanzten (Ungeschickte Liebesbriefe)', '5:17'),
-                        ('12', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                         'Once in a Lifetime, Part 2 (reprise)', '2:44')],
-                              2: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   u'K\xfcss mich', '6:24'),
-                                  ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Silence - Release', '3:45'),
-                                  ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Solitude', '3:40'),
-                                  ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Die Ballade von der Erweckung', '8:47'),
-                                  ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Another Conversation', '3:21'),
-                                  ('6', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Sing Child', '7:29'),
-                                  ('7', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Ich will brennen', '5:00'),
-                                  (
-                                      '8', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                      'Toscana'
-                                      , '6:14'),
-                                  (
-                                      '9', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                      'Ride On'
-                                      , '3:42'),
-                                  ('10', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Hometown', '3:01'),
-                                  (
-                                      '11', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                      'Werben'
-                                      , '4:53'),
-                                  ('12', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Once in a Lifetime, Part 3 (Finale)', '10:08')],
-                              3: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   u'H\xe4sslich', '2:25'),
-                                  ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Backstage (All Areas)', '9:33'),
-                                  ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   u'Paracetamoltr\xe4ume', '8:37'),
-                                  ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'},
-                                          {'type': 'Feature', 'name': u'Ralph M\xfcller'}],
-                                   u'Auszug aus \u201eTremendista\u201c', '24:33'),
-                                  ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Campari O', '2:39')],
-                              4: [('1', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Sicamore Trees (ASP soundcheck out-take)', '1:34'),
-                                  ('2', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Demon Love', '4:35'),
-                                  ('3', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'The Truth About Snow-White', '4:35'),
-                                  ('4', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'She Wore Shadows', '5:19'),
-                                  ('5', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Sing Child', '7:49'),
-                                  ('6', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Hometown', '3:41'),
-                                  (
-                                      '7', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                      'Hunger',
-                                      '4:34'),
-                                  ('8', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'Silence - Release', '3:28'),
-                                  ('9', [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}],
-                                   'She Moved Through the Fair (ASP soundcheck out-take)', '2:00')]},
-                    'link': 'http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}, {'type': 'Main', 'name': 'Chamber'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+        release_event = expected.create_release_event()
+        release_event.set_date('2007-05-25')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'4\xd7CD, Album + Live')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Trisol')
+        label_id.append_catalogue_nr('TRI 303 CD')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Once in a Lifetime')
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Chamber')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Once in a Lifetime, Part 1')
+        track.set_length(351)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'A Dead Man\u2019s Song')
+        track.set_length(312)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Versuchung')
+        track.set_length(345)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Torn')
+        track.set_length(304)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Demon Love')
+        track.set_length(272)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('The Paperhearted Ghost')
+        track.set_length(283)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('A Tale of Real Love')
+        track.set_length(316)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Hunger')
+        track.set_length(289)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('The Truth About Snow-White')
+        track.set_length(240)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('She Wore Shadows')
+        track.set_length(276)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Und wir tanzten (Ungeschickte Liebesbriefe)')
+        track.set_length(317)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Once in a Lifetime, Part 2 (reprise)')
+        track.set_length(164)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'K\xfcss mich')
+        track.set_length(384)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Silence - Release')
+        track.set_length(225)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Solitude')
+        track.set_length(220)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Die Ballade von der Erweckung')
+        track.set_length(527)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Another Conversation')
+        track.set_length(201)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Sing Child')
+        track.set_length(449)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Ich will brennen')
+        track.set_length(300)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Toscana')
+        track.set_length(374)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Ride On')
+        track.set_length(222)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Hometown')
+        track.set_length(181)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Werben')
+        track.set_length(293)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Once in a Lifetime, Part 3 (Finale)')
+        track.set_length(608)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(3)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'H\xe4sslich')
+        track.set_length(145)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Backstage (All Areas)')
+        track.set_length(573)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Paracetamoltr\xe4ume')
+        track.set_length(517)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Auszug aus \u201eTremendista\u201c')
+        track.set_length(1473)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Ralph M\xfcller')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Campari O')
+        track.set_length(159)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(4)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Sicamore Trees (ASP soundcheck out-take)')
+        track.set_length(94)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Demon Love')
+        track.set_length(275)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('The Truth About Snow-White')
+        track.set_length(275)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('She Wore Shadows')
+        track.set_length(319)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Sing Child')
+        track.set_length(469)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Hometown')
+        track.set_length(221)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hunger')
+        track.set_length(274)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Silence - Release')
+        track.set_length(208)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('She Moved Through the Fair (ASP soundcheck out-take)')
+        track.set_length(120)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ASP')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chamber')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_various_artists(self):
-        expected = {'title': 'Gothic File 11', 'country': 'Germany', 'format': 'CD, Album + Compilation',
-                    'label': ['Batbeliever Releases'], 'released': '2010', 'catalog': ['BAT 065'], 'discs': {
-                1: [('1', [{'type': 'Main', 'name': 'Spectra Paris'}], 'Carrie Satan', '5:12'),
-                    ('2', [{'type': 'Main', 'name': 'Absurd Minds'}], 'Countdown', '4:13'),
-                    ('3', [{'type': 'Main', 'name': 'Nachtmahr'}], u'M\xe4dchen in Uniform (Faderhead remix)', '3:53'),
-                    ('4', [{'type': 'Main', 'name': 'Noisuf-X'}], 'Fucking Invective', '4:33'),
-                    ('5', [{'type': 'Main', 'name': ':wumpscut:'}], 'Loyal to My Hate (Solar Fake remix)', '4:24'),
-                    ('6', [{'type': 'Main', 'name': 'KiEw'}], 'Melancholie (382edit)', '3:52'),
-                    ('7', [{'type': 'Main', 'name': 'Mantus'}], 'Gegen die Welt', '4:47'),
-                    ('8', [{'type': 'Main', 'name': 'Oomph!'}], "Ready or Not (I'm Coming)", '3:22'),
-                    ('9', [{'type': 'Main', 'name': 'Rob Zombie'}], 'What?', '2:46'),
-                    ('10', [{'type': 'Main', 'name': 'Megaherz'}], 'Ebenbild (Die Krupps remix)', '5:43'),
-                    ('11', [{'type': 'Main', 'name': 'Eisbrecher'}], 'Vergissmeinnicht (live)', '3:59'),
-                    ('12', [{'type': 'Main', 'name': 'Zeromancer'}], 'Industrypeople', '4:14'),
-                    ('13', [{'type': 'Main', 'name': 'Julien-K'}], 'Kick the Bass', '3:42'),
-                    ('14', [{'type': 'Main', 'name': 'Nosferatu'}], 'Black Hole', '5:25'),
-                    ('15', [{'type': 'Main', 'name': 'Die Art'}], 'Swimming in Dirty Water', '4:24'),
-                    ('16', [{'type': 'Main', 'name': 'Mad Sin'}], 'Wreckhouse Stomp', '3:04')]},
-                    'link': 'http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740',
-                    'artists': [{'type': 'Main', 'name': 'Various'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
+        release_event = expected.create_release_event()
+        release_event.set_date('2010')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('CD, Album + Compilation')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Batbeliever Releases')
+        label_id.append_catalogue_nr('BAT 065')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Gothic File 11')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Carrie Satan')
+        track.set_length(312)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Spectra Paris')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Countdown')
+        track.set_length(253)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Absurd Minds')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'M\xe4dchen in Uniform (Faderhead remix)')
+        track.set_length(233)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Nachtmahr')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Fucking Invective')
+        track.set_length(273)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Noisuf-X')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Loyal to My Hate (Solar Fake remix)')
+        track.set_length(264)
+        track_artist = expected.create_artist()
+        track_artist.set_name(':wumpscut:')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Melancholie (382edit)')
+        track.set_length(232)
+        track_artist = expected.create_artist()
+        track_artist.set_name('KiEw')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Gegen die Welt')
+        track.set_length(287)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Mantus')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title("Ready or Not (I'm Coming)")
+        track.set_length(202)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Oomph!')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('What?')
+        track.set_length(166)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rob Zombie')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Ebenbild (Die Krupps remix)')
+        track.set_length(343)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Megaherz')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Vergissmeinnicht (live)')
+        track.set_length(239)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Eisbrecher')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Industrypeople')
+        track.set_length(254)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Zeromancer')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Kick the Bass')
+        track.set_length(222)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Julien-K')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Black Hole')
+        track.set_length(325)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Nosferatu')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Swimming in Dirty Water')
+        track.set_length(264)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Die Art')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Wreckhouse Stomp')
+        track.set_length(184)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Mad Sin')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_disc_titles(self):
-        expected = {'title': 'Original Album Classics', 'country': 'Europe', 'format': u'5\xd7CD, Album + Compilation',
-                    'label': ['Epic'],
-                    'discTitles': {1: u'The Brothers: Isley', 2: u'Get Into Something', 3: u"Givin' It Back",
-                                   4: u'Brother, Brother, Brother', 5: u'3 + 3'}, 'released': '2008',
-                    'catalog': ['88697304842'], 'discs': {
-                1: [('1', [], 'I Turned You On', '2:38'), ('2', [], 'Vacuum Cleaner', '2:56'),
-                    ('3', [], 'I Got to Get Myself Together', '3:38'), ('4', [], 'Was It Good to You?', '2:44'),
-                    ('5', [], 'The Blacker the Berry (a.k.a. Black Berries)', '5:53'),
-                    ('6', [], 'My Little Girl', '3:41'), ('7', [], 'Get Down Off of the Train', '3:12'),
-                    ('8', [], 'Holding On', '2:36'), ('9', [], 'Feels Like the World', '3:26')],
-                2: [('1', [], 'Get Into Something', '7:30'), ('2', [], 'Freedom', '3:38'),
-                    ('3', [], 'Take Inventory', '2:47'), ('4', [], "Keep on Doin'", '4:02'),
-                    ('5', [], 'Girls Will Be Girls', '2:51'), ('6', [], 'I Need You So', '4:25'),
-                    ('7', [], 'If He Can You Can', '3:45'), ('8', [], 'I Got to Find Me One', '4:38'),
-                    ('9', [], 'Beautiful', '3:06'), ('10', [], 'Bless Your Heart', '3:03')],
-                3: [('1', [], 'Ohio - Machine Gun', '9:14'), ('2', [], 'Fire and Rain', '5:29'),
-                    ('3', [], 'Lay Lady Lay', '10:22'), ('4', [], 'Spill the Wine', '6:32'),
-                    ('5', [], 'Nothing to Do But Today', '3:39'), ('6', [], 'Cold Bologna', '2:59'),
-                    ('7', [], "Love the One You're With", '3:39')],
-                4: [('1', [], 'Brother, Brother', '3:17'), ('2', [], 'Put A Little Love In Your Heart', '3:02'),
-                    ('3', [], "Sweet Season / Keep On Walkin'", '5:13'), ('4', [], 'Work To Do', '3:12'),
-                    ('5', [], 'Pop That Thang', '2:54'), ('6', [], 'Lay Away', '3:23'),
-                    ('7', [], "It's Too Late", '10:31'), ('8', [], 'Love Put Me On The Corner', '6:30')],
-                5: [('1', [], 'That Lady, Parts 1 & 2', '5:35'), ('2', [], "Don't Let Me Be Lonely Tonight", '3:59'),
-                    ('3', [], 'If You Were There', '3:23'), ('4', [], 'You Walk Your Way', '3:06'),
-                    ('5', [], 'Listen to the Music', '4:06'), ('6', [], 'What It Comes Down To', '3:54'),
-                    ('7', [], 'Sunshine (Go Away Today)', '4:22'), ('8', [], 'Summer Breeze', '6:12'),
-                    ('9', [], 'The Highways of My Life', '4:53'), ('10', [], 'That Lady (live)', '3:42')]},
-                    'link': 'http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310',
-                    'artists': [{'type': 'Main', 'name': 'The Isley Brothers'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
+        release_event = expected.create_release_event()
+        release_event.set_date('2008')
+        release_event.set_country('Europe')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'5\xd7CD, Album + Compilation')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Epic')
+        label_id.append_catalogue_nr('88697304842')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Original Album Classics')
+
+        artist = expected.create_artist()
+        artist.set_name('The Isley Brothers')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(u'The Brothers: Isley')
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('I Turned You On')
+        track.set_length(158)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Vacuum Cleaner')
+        track.set_length(176)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('I Got to Get Myself Together')
+        track.set_length(218)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Was It Good to You?')
+        track.set_length(164)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('The Blacker the Berry (a.k.a. Black Berries)')
+        track.set_length(353)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('My Little Girl')
+        track.set_length(221)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Get Down Off of the Train')
+        track.set_length(192)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Holding On')
+        track.set_length(156)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Feels Like the World')
+        track.set_length(206)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(u'Get Into Something')
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Get Into Something')
+        track.set_length(450)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Freedom')
+        track.set_length(218)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Take Inventory')
+        track.set_length(167)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title("Keep on Doin'")
+        track.set_length(242)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Girls Will Be Girls')
+        track.set_length(171)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('I Need You So')
+        track.set_length(265)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('If He Can You Can')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('I Got to Find Me One')
+        track.set_length(278)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Beautiful')
+        track.set_length(186)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Bless Your Heart')
+        track.set_length(183)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(3)
+        disc.set_title(u"Givin' It Back")
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Ohio - Machine Gun')
+        track.set_length(554)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Fire and Rain')
+        track.set_length(329)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Lay Lady Lay')
+        track.set_length(622)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Spill the Wine')
+        track.set_length(392)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Nothing to Do But Today')
+        track.set_length(219)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Cold Bologna')
+        track.set_length(179)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title("Love the One You're With")
+        track.set_length(219)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(4)
+        disc.set_title(u'Brother, Brother, Brother')
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Brother, Brother')
+        track.set_length(197)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Put A Little Love In Your Heart')
+        track.set_length(182)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title("Sweet Season / Keep On Walkin'")
+        track.set_length(313)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Work To Do')
+        track.set_length(192)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Pop That Thang')
+        track.set_length(174)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Lay Away')
+        track.set_length(203)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title("It's Too Late")
+        track.set_length(631)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Love Put Me On The Corner')
+        track.set_length(390)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(5)
+        disc.set_title(u'3 + 3')
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('That Lady, Parts 1 & 2')
+        track.set_length(335)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("Don't Let Me Be Lonely Tonight")
+        track.set_length(239)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('If You Were There')
+        track.set_length(203)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('You Walk Your Way')
+        track.set_length(186)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Listen to the Music')
+        track.set_length(246)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('What It Comes Down To')
+        track.set_length(234)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Sunshine (Go Away Today)')
+        track.set_length(262)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Summer Breeze')
+        track.set_length(372)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('The Highways of My Life')
+        track.set_length(293)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('That Lady (live)')
+        track.set_length(222)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_special_sub_heading(self):
-        expected = {'title': 'Die GeistErfahrer EP: Fremder-Zyklus, Teil 1.1', 'country': 'Germany',
-                    'format': u'2\xd7CD, EP', 'label': ['Trisol'],
-                    'released': '2012-11-16', 'catalog': ['TRI 460 CD'], 'discs': {
-            1: [('1', [], 'GeistErfahrer', '6:00'), ('2', [], 'In Sack und Asche', '7:20'),
-                ('3', [], u'\xdcberH\xe4rte', '6:16'), ('4', [], 'Carpe noctem', '5:12'),
-                ('5', [], 'Weichen(t)stellung (GeistErfahrer Reprise)', '4:34'), ('6', [], 'Danach', '8:36')],
-            2: [('1', [], 'Sing Child', '6:44'), ('2', [], 'Duett (Minnelied der Incubi)', '4:11'),
-                ('3', [], 'Krabat', '5:58'), ('4', [], 'Unverwandt', '11:07'), ('5', [], 'Werben', '7:20')]},
-                    'link': 'http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
+        release_event = expected.create_release_event()
+        release_event.set_date('2012-11-16')
+        release_event.set_country('Germany')
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'2\xd7CD, EP')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Trisol')
+        label_id.append_catalogue_nr('TRI 460 CD')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Die GeistErfahrer EP: Fremder-Zyklus, Teil 1.1')
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('GeistErfahrer')
+        track.set_length(360)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('In Sack und Asche')
+        track.set_length(440)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'\xdcberH\xe4rte')
+        track.set_length(376)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Carpe noctem')
+        track.set_length(312)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Weichen(t)stellung (GeistErfahrer Reprise)')
+        track.set_length(274)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Danach')
+        track.set_length(516)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Sing Child')
+        track.set_length(404)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Duett (Minnelied der Incubi)')
+        track.set_length(251)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Krabat')
+        track.set_length(358)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Unverwandt')
+        track.set_length(667)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Werben')
+        track.set_length(440)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = musicbrainz.Release.release_from_url('http://musicbrainz.org/release/12345-abcdefg')
-        try:
-            r.data
-            self.assertFalse(True)
-        except musicbrainz.MusicBrainzAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/12345-abcdefg')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class BeatportTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'title': u'Love Love Love Yeah', 'label': [u'Playhouse'], 'released': u'2007-01-22',
-                    'catalog': [u'PLAY131'], 'discs': {
-                1: [('1', [], u'Love Love Love Yeah', u'7:55'), ('2', [], u'Bus Driver', u'3:07'),
-                    ('3', [], u'Christiane', u'0:24'), ('4', [], u'So Cold', u'3:32')]},
-                    'link': 'http://www.beatport.com/release/love-love-love-yeah/43577',
-                    'artists': [{'type': 'Main', 'name': u'Rework'}], 'genre': [u'Electro House', u'DJ Tools']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = beatport.Release.release_from_url('http://www.beatport.com/release/love-love-love-yeah/43577')
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2007-01-22')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Playhouse')
+        label_id.append_catalogue_nr(u'PLAY131')
+        expected.append_label_id(label_id)
+
+        expected.set_title(u'Love Love Love Yeah')
+
+        artist = expected.create_artist()
+        artist.set_name(u'Rework')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre(u'Electro House')
+        expected.append_genre(u'DJ Tools')
+
+        expected.set_url('http://www.beatport.com/release/love-love-love-yeah/43577')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Love Love Love Yeah')
+        track.set_length(475)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Bus Driver')
+        track.set_length(187)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Christiane')
+        track.set_length(24)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'So Cold')
+        track.set_length(212)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = beatport.ReleaseScraper.from_string('http://www.beatport.com/release/love-love-love-yeah/43577')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_remix_track_artist(self):
-        expected = {'title': u'Love Spy / Love Dies', 'label': [u'Karatemusik'], 'released': u'2006-04-19',
-                    'catalog': [u'KM013'], 'discs': {1: [(
-                '1', [{'type': 'Remixer', 'name': u'Error Error'}], u'Love Spy / Love Dies [Error Error Remix]',
-                u'7:27'),
-                ('2', [], u'Love Spy / Love Dies', u'7:07'), ('3', [], u'Reply 23', u'6:58')]},
-                    'link': 'http://www.beatport.com/release/love-spy-love-dies/27944',
-                    'artists': [{'type': 'Main', 'name': u'Polygamy Boys'}], 'genre': [u'Tech House', u'Electro House']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = beatport.Release.release_from_url('http://www.beatport.com/release/love-spy-love-dies/27944')
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2006-04-19')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Karatemusik')
+        label_id.append_catalogue_nr(u'KM013')
+        expected.append_label_id(label_id)
+
+        expected.set_title(u'Love Spy / Love Dies')
+
+        artist = expected.create_artist()
+        artist.set_name(u'Polygamy Boys')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre(u'Tech House')
+        expected.append_genre(u'Electro House')
+
+        expected.set_url('http://www.beatport.com/release/love-spy-love-dies/27944')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Love Spy / Love Dies [Error Error Remix]')
+        track.set_length(447)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Error Error')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Love Spy / Love Dies')
+        track.set_length(427)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Reply 23')
+        track.set_length(418)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = beatport.ReleaseScraper.from_string('http://www.beatport.com/release/love-spy-love-dies/27944')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_various_artists(self):
-        expected = {'title': u'DJ Tunes Compilation', 'format': u'Album', 'label': [u'Carlo Cavalli Music Group'],
-                    'released': u'2012-01-05', 'catalog': [u'CMG117'], 'discs': {
-                1: [('1', [{'type': 'Main', 'name': u'Sam Be-Kay'}], u'Forever Loved', u'5:20'), (
-                    '2', [{'type': 'Main', 'name': u'Eros Locatelli'}, {'type': 'Remixer', 'name': u'Alex Faraci'}],
-                    u'Sweep [Alex Faraci Remix]', u'6:38'), ('3', [{'type': 'Main', 'name': u'Babette Duwez'},
-                        {'type': 'Main', 'name': u'Joel Reichert'}, {'type': 'Remixer', 'name': u'David Ahumada'}],
-                                                             u'Humo Y Neon [David Ahumada Remix]', u'4:58'), (
-                    '4', [{'type': 'Main', 'name': u'Alex Faraci'}, {'type': 'Remixer', 'name': u'Massimo Russo'}],
-                    u'Night Melody [Massimo Russo La Guitarra Remix]', u'6:17'),
-                    ('5', [{'type': 'Main', 'name': u'Fingers Clear'}], u'30 m [Original mix]', u'6:33'),
-                    ('6', [{'type': 'Main', 'name': u'Erion Gjuzi'}], u'Just Begin', u'7:09'),
-                    ('7', [{'type': 'Main', 'name': u'Dany Cohiba'}], u'Achakkar [Original mix]', u'6:28'), (
-                        '8',
-                        [{'type': 'Main', 'name': u'Massimo Russo'}, {'type': 'Remixer', 'name': u'Italianbeat Guys'}],
-                        u'Raveline [Italianbeat Guys Remix]', u'6:46'), (
-                        '9', [{'type': 'Main', 'name': u'Jurgen Cecconi'}, {'type': 'Main', 'name': u'Beethoven Tbs'}],
-                        u'Grey 2 Fade feat. Babette Duwez [Jurgen Cecconi Mix]', u'10:53'),
-                    ('10', [{'type': 'Main', 'name': u'Carlo Cavalli'}], u'Tanzmania', u'7:00')]},
-                    'link': 'http://www.beatport.com/release/dj-tunes-compilation/851318',
-                    'artists': [{'type': 'Main', 'name': 'Various'}],
-                    'genre': [u'Progressive House', u'House', u'Deep House', u'Minimal', u'Tech House']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = beatport.Release.release_from_url('http://www.beatport.com/release/dj-tunes-compilation/851318')
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2012-01-05')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(u'Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Carlo Cavalli Music Group')
+        label_id.append_catalogue_nr(u'CMG117')
+        expected.append_label_id(label_id)
+
+        expected.set_title(u'DJ Tunes Compilation')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre(u'Progressive House')
+        expected.append_genre(u'House')
+        expected.append_genre(u'Deep House')
+        expected.append_genre(u'Minimal')
+        expected.append_genre(u'Tech House')
+
+        expected.set_url('http://www.beatport.com/release/dj-tunes-compilation/851318')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Forever Loved')
+        track.set_length(320)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Sam Be-Kay')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Sweep [Alex Faraci Remix]')
+        track.set_length(398)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Eros Locatelli')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Alex Faraci')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Humo Y Neon [David Ahumada Remix]')
+        track.set_length(298)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Babette Duwez')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Joel Reichert')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'David Ahumada')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Night Melody [Massimo Russo La Guitarra Remix]')
+        track.set_length(377)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Alex Faraci')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Massimo Russo')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'30 m [Original mix]')
+        track.set_length(393)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Fingers Clear')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title(u'Just Begin')
+        track.set_length(429)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Erion Gjuzi')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'Achakkar [Original mix]')
+        track.set_length(388)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Dany Cohiba')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title(u'Raveline [Italianbeat Guys Remix]')
+        track.set_length(406)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Massimo Russo')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Italianbeat Guys')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title(u'Grey 2 Fade feat. Babette Duwez [Jurgen Cecconi Mix]')
+        track.set_length(653)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Jurgen Cecconi')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Beethoven Tbs')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title(u'Tanzmania')
+        track.set_length(420)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Carlo Cavalli')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = beatport.ReleaseScraper.from_string('http://www.beatport.com/release/dj-tunes-compilation/851318')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = beatport.Release.release_from_url('http://www.beatport.com/release/blubb/123')
-        try:
-            r.data
-            self.assertFalse(True)
-        except beatport.BeatportAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = beatport.ReleaseScraper.from_string('http://www.beatport.com/release/blubb/123')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class MetalarchivesTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'title': 'Century Child', 'format': 'Full-length', 'label': ['Spinefarm Records'],
-                    'released': 'June 24th, 2002', 'discs': {
-                1: [('1', [], 'Bless the Child', '06:12'), ('2', [], 'End of all Hope', '03:55'),
-                    ('3', [], 'Dead to the World', '04:20'), ('4', [], 'Ever Dream', '04:44'),
-                    ('5', [], 'Slaying the Dreamer', '04:32'), ('6', [], 'Forever Yours', '03:50'),
-                    ('7', [], 'Ocean Soul', '04:15'), ('8', [], 'Feel for You', '03:55'),
-                    ('9', [], 'The Phantom of the Opera', '04:10'), ('10', [], 'Beauty of the Beast', '10:22')]},
-                    'link': 'http://www.metal-archives.com/albums/Nightwish/Century_Child/3719',
-                    'artists': [{'type': 'Main', 'name': 'Nightwish'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = metalarchives.Release.release_from_url('http://www.metal-archives.com/albums/Nightwish/Century_Child/3719')
+        release_event = expected.create_release_event()
+        release_event.set_date('June 24th, 2002')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('Full-length')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Spinefarm Records')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Century Child')
+
+        artist = expected.create_artist()
+        artist.set_name('Nightwish')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://www.metal-archives.com/albums/Nightwish/Century_Child/3719')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Bless the Child')
+        track.set_length(372)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('End of all Hope')
+        track.set_length(235)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Dead to the World')
+        track.set_length(260)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Ever Dream')
+        track.set_length(284)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Slaying the Dreamer')
+        track.set_length(272)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Forever Yours')
+        track.set_length(230)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Ocean Soul')
+        track.set_length(255)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Feel for You')
+        track.set_length(235)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('The Phantom of the Opera')
+        track.set_length(250)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Beauty of the Beast')
+        track.set_length(622)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = metalarchives.ReleaseScraper.from_string('http://www.metal-archives.com/albums/Nightwish/Century_Child/3719')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_multiple_cds(self):
-        expected = {'title': 'Black Symphony', 'format': 'Live album', 'label': ['Roadrunner Records'],
-                    'released': 'September 22nd, 2008', 'discs': {
-                1: [('1', [], 'Ouverture', '07:43'), ('2', [], "Jillian (I'd Give My Heart)", '04:39'),
-                    ('3', [], 'The Howling', '06:31'), ('4', [], 'Stand My Ground', '04:33'),
-                    ('5', [], 'The Cross', '05:22'), ('6', [], 'What Have You Done?', '04:58'),
-                    ('7', [], 'Hand of Sorrow', '05:40'), ('8', [], 'The Heart of Everything', '05:48'),
-                    ('9', [], 'Forgiven', '04:53'), ('10', [], 'Somewhere', '04:24'),
-                    ('11', [], 'The Swan Song', '04:00'), ('12', [], 'Memories', '04:03')],
-                2: [('1', [], 'Our Solemn Hour', '05:22'), ('2', [], 'The Other Half (Of Me)', '05:04'),
-                    ('3', [], 'Frozen', '06:00'), ('4', [], 'The Promise', '04:32'), ('5', [], 'Angels', '08:15'),
-                    ('6', [], 'Mother Earth', '04:02'), ('7', [], 'The Truth Beneath the Rose', '07:23'),
-                    ('8', [], 'Deceiver of Fools', '07:38'), ('9', [], 'All I Need', '04:55'),
-                    ('10', [], 'Ice Queen', '07:15')]},
-                    'link': 'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779',
-                    'artists': [{'type': 'Main', 'name': 'Within Temptation'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = metalarchives.Release.release_from_url(
-            'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
+        release_event = expected.create_release_event()
+        release_event.set_date('September 22nd, 2008')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('Live album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Roadrunner Records')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Black Symphony')
+
+        artist = expected.create_artist()
+        artist.set_name('Within Temptation')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Ouverture')
+        track.set_length(463)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("Jillian (I'd Give My Heart)")
+        track.set_length(279)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('The Howling')
+        track.set_length(391)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Stand My Ground')
+        track.set_length(273)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('The Cross')
+        track.set_length(322)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('What Have You Done?')
+        track.set_length(298)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hand of Sorrow')
+        track.set_length(340)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('The Heart of Everything')
+        track.set_length(348)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Forgiven')
+        track.set_length(293)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Somewhere')
+        track.set_length(264)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('The Swan Song')
+        track.set_length(240)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Memories')
+        track.set_length(243)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Our Solemn Hour')
+        track.set_length(322)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('The Other Half (Of Me)')
+        track.set_length(304)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Frozen')
+        track.set_length(360)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('The Promise')
+        track.set_length(272)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Angels')
+        track.set_length(495)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Mother Earth')
+        track.set_length(242)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('The Truth Beneath the Rose')
+        track.set_length(443)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Deceiver of Fools')
+        track.set_length(458)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('All I Need')
+        track.set_length(295)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Ice Queen')
+        track.set_length(435)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = metalarchives.ReleaseScraper.from_string('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = metalarchives.Release.release_from_url(
-            'http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/999999999')
-        try:
-            r.data
-            self.assertFalse(True)
-        except metalarchives.MetalarchivesAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = metalarchives.ReleaseScraper.from_string('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/999999999')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class AudiojellyTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'title': u'Love \u221a Infinity (Love to the Square Root of Infinity)',
-                    'label': ['defamation records'], 'released': '2011-10-27', 'catalog': ['5055506333041'], 'discs': {
-                1: [('1', [], u'Love \u221a Infinity (Radio Edit)', '02:49'),
-                    ('2', [], u'Love \u221a Infinity (Vocal Club Mix)', '06:46'),
-                    ('3', [], u'Love \u221a Infinity (Instrumental Club Mix)', '06:46')]},
-                    'link': 'http://www.audiojelly.com/releases/love-infinity-love-to-the-square-root-of-infinity/211079'
-            , 'artists': [{'type': 'Main', 'name': 'AudioFreQ'}], 'genre': ['Electro House']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = audiojelly.Release.release_from_url(
-            'http://www.audiojelly.com/releases/love-infinity-love-to-the-square-root-of-infinity/211079')
+        release_event = expected.create_release_event()
+        release_event.set_date('1999-03-25')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
 
-    def test_featuring_main_artist(self):
-        expected = {'title': 'Where Is Love (Love Is Hard To Find)', 'label': ['Ultra Records'],
-                    'released': '2011-10-24', 'catalog': ['UL 2903'], 'discs': {
-                1: [('1', [], 'Where Is Love (Love Is Hard To Find) (Lucky Date Remix)', '06:15'),
-                    ('2', [], 'Where Is Love (Love Is Hard To Find) (Electrixx Radio Edit)', '03:54'),
-                    ('3', [], 'Where Is Love (Love Is Hard To Find) (Electrixx Remix)', '06:07'),
-                    ('4', [], 'Where Is Love (Love Is Hard To Find) (Matthew Sterling Remix)', '05:32'),
-                    ('5', [], 'Where Is Love (Love Is Hard To Find) (Disco Fries Remix)', '05:51'),
-                    ('6', [], 'Where Is Love (Love Is Hard To Find) (Mysto & Pizzi Remix)', '05:28'),
-                    ('7', [], 'Where Is Love (Love Is Hard To Find) (Ido Shoam Remix)', '05:01'),
-                    ('8', [], 'Where Is Love (Love Is Hard To Find) (SpacePlant Remix)', '06:11')]},
-                    'link': 'http://www.audiojelly.com/releases/where-is-love-love-is-hard-to-find/210428',
-                    'artists': [{'type': 'Main', 'name': 'Mysto'}, {'type': 'Main', 'name': 'Pizzi'},
-                            {'type': 'Feature', 'name': 'Johnny Rose'}], 'genre': ['Electronica']}
+        label_id = expected.create_label_id()
+        label_id.set_label('React')
+        label_id.append_catalogue_nr('REACT143')
+        expected.append_label_id(label_id)
 
-        r = audiojelly.Release.release_from_url(
-            'http://www.audiojelly.com/releases/where-is-love-love-is-hard-to-find/210428')
+        expected.set_title('Love On Love (The Remixes)')
 
-        self.assertEqual(expected, r.data)
+        artist = expected.create_artist()
+        artist.set_name('Candi Staton')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('House')
+
+        expected.set_url('http://www.audiojelly.com/releases/love-on-love-the-remixes/32730')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Love On Love (Now Voyager Radio Mix)')
+        track.set_length(208)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Love On Love (K-Klassic Radio Mix)')
+        track.set_length(233)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Love On Love (David Morales Classic Radio Mix)')
+        track.set_length(244)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Love On Love (K-Klassic Club Mix)')
+        track.set_length(462)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Love On Love (Now Voyager Club Mix)')
+        track.set_length(334)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Love On Love (David Morales Club Of Love Mix)')
+        track.set_length(434)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title("Love On Love (Robbie Rivera's Funkin Around Mix)")
+        track.set_length(409)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Love On Love (David Morales Classic Club Mix)')
+        track.set_length(517)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Love On Love (Robbie Riveras NYC Dub Mix)')
+        track.set_length(467)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Love On Love (David Morales Dub)')
+        track.set_length(947)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = audiojelly.ReleaseScraper.from_string('http://www.audiojelly.com/releases/love-on-love-the-remixes/32730')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_presenting_artist(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2013-05-17')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
+
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Mjuzieek Digital')
+        label_id.append_catalogue_nr('MJUZIEEK125')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Eternal Lover (Part 1)')
+
+        artist = expected.create_artist()
+        artist.set_name('Bibi')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Sami Dee')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Konga Motel')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('CeCe Peniston')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.FEATURING)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('House')
+
+        expected.set_url('http://www.audiojelly.com/releases/eternal-lover-part-1/295513')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title("Eternal Lover (Bbi's Original Mix)")
+        track.set_length(502)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("Eternal Lover (Sami Dee's Flamingo Zone Mix)")
+        track.set_length(496)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Eternal Lover (Sami Dee & Terry Burrus Sunday Afternoon Mix)')
+        track.set_length(484)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = audiojelly.ReleaseScraper.from_string('http://www.audiojelly.com/releases/eternal-lover-part-1/295513')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_multiple_featuring_main_artist(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2013-06-18')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
+
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('DubShot Records/Sound Bwoy Entertainment')
+        label_id.append_catalogue_nr('DSSB-005')
+        expected.append_label_id(label_id)
+
+        expected.set_title('1-One-1 Love (feat. Pitbull, Peetah Morgan) [Dance Remix]')
+
+        artist = expected.create_artist()
+        artist.set_name('IC2')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Pitbull')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.FEATURING)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Peetah Morgan')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.FEATURING)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Hard Dance')
+
+        expected.set_url('http://www.audiojelly.com/releases/1one1-love-feat-pitbull-peetah-morgan-dance-remix/300732')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('1-One-1 Love (feat. Pitbull, Peetah Morgan) (Dance Remix)')
+        track.set_length(217)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = audiojelly.ReleaseScraper.from_string('http://www.audiojelly.com/releases/1one1-love-feat-pitbull-peetah-morgan-dance-remix/300732')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_various_artists(self):
-        expected = {'title': 'Plus Various I', 'label': ['Sound Academy Plus'], 'released': '2012-04-01',
-                    'catalog': ['SAP042'], 'discs': {
-                1: [('1', [{'type': 'Main', 'name': 'Can Yuksel'}], 'With You Forever (Original Mix)', '07:08'), (
-                    '2', [{'type': 'Main', 'name': 'Ismael Casimiro'}, {'type': 'Main', 'name': 'Borja Maneje'}],
-                    'Electro Deep (Gokhan Guneyli Remix)', '08:48'),
-                    ('3', [{'type': 'Main', 'name': 'Roby B.'}], 'Deal (Original Mix)', '06:45'),
-                    ('4', [{'type': 'Main', 'name': 'Serdar Ors'}], 'Musica (Can Yuksel Remix)', '06:11')]},
-                    'link': 'http://www.audiojelly.com/releases/plus-various-i/230282',
-                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Tech House']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = audiojelly.Release.release_from_url('http://www.audiojelly.com/releases/plus-various-i/230282')
+        release_event = expected.create_release_event()
+        release_event.set_date('2013-06-21')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('South American Grooves')
+        label_id.append_catalogue_nr('SGR168')
+        expected.append_label_id(label_id)
+
+        expected.set_title('We Love This Groove 1')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('House')
+
+        expected.set_url('http://www.audiojelly.com/releases/we-love-this-groove-1/36423')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Black Story')
+        track.set_length(430)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Alvaro Smart')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Foxy')
+        track.set_length(395)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Alvaro Smart')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Keep the Funk Alive')
+        track.set_length(408)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Alvaro Smart')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('My Thang')
+        track.set_length(387)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Alvaro Smart')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Bullerengue (Hector Couto Remix)')
+        track.set_length(405)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Emeka')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Africamania')
+        track.set_length(422)
+        track_artist = expected.create_artist()
+        track_artist.set_name('German Brigante')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Sabrosura')
+        track.set_length(345)
+        track_artist = expected.create_artist()
+        track_artist.set_name('German Brigante')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Aymara')
+        track.set_length(390)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hector Couto')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('La Vida')
+        track.set_length(419)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hector Couto')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Palestina')
+        track.set_length(495)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Loui Fernandez')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = audiojelly.ReleaseScraper.from_string('http://www.audiojelly.com/releases/we-love-this-groove-1/36423')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = audiojelly.Release.release_from_url('http://www.audiojelly.com/releases/plus-various-i/999999')
-        try:
-            r.data
-            self.assertFalse(True)
-        except audiojelly.AudiojellyAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = audiojelly.ReleaseScraper.from_string('http://www.audiojelly.com/releases/plus-various-i/999999')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class JunodownloadTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'title': 'Love', 'label': ['3 Beat'], 'released': '3 July, 2011', 'catalog': ['3BEAT 051'],
-                    'discs': {1: [('1', [], 'Love (UK radio edit)', '02:31'), ('2', [], 'Love (club mix)', '04:59'),
-                        ('3', [], 'Love (eSquire radio edit)', '03:53'), ('4', [], 'Love (eSquire mix)', '05:57'),
-                        ('5', [], 'Love (7th Heaven radio edit)', '03:50'), ('6', [], 'Love (7th Heaven mix)', '06:34'),
-                        ('7', [], 'Love (Dandeej mix)', '05:15'), ('8', [], 'Love (DJ Andi mix)', '05:41'),
-                        ('9', [], 'Love (Klubfiller mix)', '06:35'), ('10', [], 'Love (Klubfiller dub mix)', '06:29')]},
-                    'link': 'http://www.junodownload.com/products/love/1774811-02/',
-                    'artists': [{'type': 'Main', 'name': 'Inna'}], 'genre': ['Funky', 'Club House']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = junodownload.Release.release_from_url('http://www.junodownload.com/products/love/1774811-02/')
+        release_event = expected.create_release_event()
+        release_event.set_date('3 July, 2011')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('3 Beat')
+        label_id.append_catalogue_nr('3BEAT 051')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Love')
+
+        artist = expected.create_artist()
+        artist.set_name('Inna')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Funky')
+        expected.append_genre('Club House')
+
+        expected.set_url('http://www.junodownload.com/products/love/1774811-02/')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Love (UK radio edit)')
+        track.set_length(151)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Love (club mix)')
+        track.set_length(299)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Love (eSquire radio edit)')
+        track.set_length(233)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Love (eSquire mix)')
+        track.set_length(357)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Love (7th Heaven radio edit)')
+        track.set_length(230)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Love (7th Heaven mix)')
+        track.set_length(394)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Love (Dandeej mix)')
+        track.set_length(315)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Love (DJ Andi mix)')
+        track.set_length(341)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Love (Klubfiller mix)')
+        track.set_length(395)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Love (Klubfiller dub mix)')
+        track.set_length(389)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = junodownload.ReleaseScraper.from_string('http://www.junodownload.com/products/love/1774811-02/')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_featuring_main_artist(self):
-        expected = {'title': 'Love', 'label': ['Staff Productions'], 'released': '12 November, 2010',
-                    'catalog': ['SFP 012'], 'discs': {1: [('1', [], 'Love (original Miami mix)', '05:01'),
-                ('2', [], "Love (Mustafa's Deep Piano mix)", '05:08'),
-                ('3', [], 'Love (D-Malice Afro-edit vocal)', '06:21'),
-                ('4', [], 'Love (RY meets Mustafa vocal mix)', '06:05'),
-                ('5', [], 'Love (Ospina & Oscar P remix)', '06:05'),
-                ('6', [], 'Love (Ospina & Oscar P Drum dub)', '06:05'), ('7', [], 'Love (Steven Stone remix)', '06:29'),
-                ('8', [], 'Love (David Mateo & Rafix club mix)', '04:57'),
-                ('9', [], 'Love (Rafael Yapudjian Meets RyB remix)', '07:29'),
-                ('10', [], 'Love (acoustic mix)', '03:52'),
-                ('11', [], 'Love (D-Malice Afro edit instrumental)', '06:21'),
-                ('12', [], 'Love (Ospina & Oscar P intru-mental)', '06:05'),
-                ('13', [], 'Love (Steven Stone instrumental remix)', '06:28'),
-                ('14', [], 'Love (David Mateo & Rafix radio club mix instrumental)', '04:57'),
-                ('15', [], 'Love (Rafael Yapudjian Meets RyB dub remix)', '07:29'),
-                ('16', [], 'Love (RY Meets Mustafa instrumental mix)', '06:05')]},
-                    'link': 'http://www.junodownload.com/products/love/1662955-02/',
-                    'artists': [{'type': 'Main', 'name': 'Mustafa'}, {'type': 'Feature', 'name': 'Tasita D mour'}],
-                    'genre': ['Broken Beat', 'Nu Jazz', 'Nu Soul']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = junodownload.Release.release_from_url('http://www.junodownload.com/products/love/1662955-02/')
+        release_event = expected.create_release_event()
+        release_event.set_date('12 November, 2010')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Staff Productions')
+        label_id.append_catalogue_nr('SFP 012')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Love')
+
+        artist = expected.create_artist()
+        artist.set_name('Mustafa')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Tasita D mour')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.FEATURING)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Broken Beat')
+        expected.append_genre('Nu Jazz')
+        expected.append_genre('Nu Soul')
+
+        expected.set_url('http://www.junodownload.com/products/love/1662955-02/')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Love (original Miami mix)')
+        track.set_length(301)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("Love (Mustafa's Deep Piano mix)")
+        track.set_length(308)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Love (D-Malice Afro-edit vocal)')
+        track.set_length(381)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Love (RY meets Mustafa vocal mix)')
+        track.set_length(365)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Love (Ospina & Oscar P remix)')
+        track.set_length(365)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Love (Ospina & Oscar P Drum dub)')
+        track.set_length(365)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Love (Steven Stone remix)')
+        track.set_length(389)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Love (David Mateo & Rafix club mix)')
+        track.set_length(297)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Love (Rafael Yapudjian Meets RyB remix)')
+        track.set_length(449)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Love (acoustic mix)')
+        track.set_length(232)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Love (D-Malice Afro edit instrumental)')
+        track.set_length(381)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Love (Ospina & Oscar P intru-mental)')
+        track.set_length(365)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Love (Steven Stone instrumental remix)')
+        track.set_length(388)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Love (David Mateo & Rafix radio club mix instrumental)')
+        track.set_length(297)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Love (Rafael Yapudjian Meets RyB dub remix)')
+        track.set_length(449)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Love (RY Meets Mustafa instrumental mix)')
+        track.set_length(365)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = junodownload.ReleaseScraper.from_string('http://www.junodownload.com/products/love/1662955-02/')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_mixed_various_main_artists(self):
-        expected = {'title': 'A Love Story 89-10 (unmixed tracks)', 'label': ['Bass Planet Germany'],
-                    'released': '21 July, 2010', 'catalog': ['425011 7613280'], 'discs': {
-                1: [('1', [], 'Westbam - Official Anthems (continuous DJ mix)', '1:03:00'),
-                    ('2', [], 'Westbam - Love Sounds 3000 (continuous DJ mix)', '1:19:27'),
-                    ('3', [], 'Westbam - The Original Feelings (continuous DJ mix)', '1:09:03'),
-                    ('4', [], "Westbam - Don't Look Back In Anger (short mix)", '03:21'),
-                    ('5', [], 'The Love Committee - Love Rules', '06:52'), (
-                        '6', [], 'WestBam & The Love Committee - Love Is Everywhere (New Location) (original mix)',
-                        '07:19')
-                    , ('7', [], 'WestBam & The Love Committee - Highway To Love (Final remix)', '07:40'),
-                    ('8', [], 'WestBam & The Love Committee - United States Of Love', '07:01'),
-                    ('9', [], 'Dr Motte & Westbam presents - Sunshine', '04:04'),
-                    ('10', [], 'Dr Motte & Westbam presents - One World One Future', '03:42'),
-                    ('11', [], "The Love Committee - You Can't Stop Us", '06:47'),
-                    ('12', [], 'Dr Motte & Westbam presents - Loveparade 2000', '03:28'),
-                    ('13', [], 'Dr Motte & Westbam presents - Music Is The Key', '08:19'),
-                    ('14', [], "Felix - Don't You Want Me (Hooj mix)", '05:55'),
-                    ('15', [], 'Blake Baxter - One More Time', '04:14'),
-                    ('16', [], 'The Break Boys - My House Is Your House (Miami Beach Break mix)', '06:20'),
-                    ('17', [], 'The Love Committee - We Feel Love', '05:34'),
-                    ('18', [], 'Paul & Fritz Kalkbrenner - Sky And Sand (Berlin Calling mix)', '03:59'),
-                    ('19', [], 'The Love Committee - Access Peace', '07:11'),
-                    ('20', [], 'Westbam - Spoon (unvergesslisch)', '06:59'), ('21', [], 'Westbam - Escalate', '06:27'),
-                    ('22', [], 'Deekline & Ed Solo - Handz Up (Stantons Warriors remix Westbam edit)', '04:48'),
-                    ('23', [], 'Westbam - Fake Blue Eyes', '04:33'),
-                    ('24', [], 'Moguai & Westbam - Original Hardcore EP', '04:48'),
-                    ('25', [], 'Jewelz - Get Down', '06:01'),
-                    ('26', [], 'Tom Wax & Strobe - Cantate (Lalai Lala) (radio mix)', '03:22'),
-                    ('27', [], 'Smash Hifi - Take You Back (VIP edit)', '05:02'),
-                    ('28', [], 'Elite Force & Hatiras & JELO & Vandal & Stanton Warriors - MAD', '07:08'),
-                    ('29', [], 'Mom & Dad - Judas (Dem Slackers remix)', '04:28'),
-                    ('30', [], 'DJ Icey - Yeah Right', '04:57'), ('31', [], 'Westbam - Sage Sage', '04:40'),
-                    ('32', [], 'Felix Cartal - Love', '05:14'),
-                    ('33', [], 'Westbam - Hard Times (Westbam edit)', '03:45'),
-                    ('34', [], 'Deadmau5 - Strobe (Plump DJs remix)', '05:43'),
-                    ('35', [], 'Members Of Mayday - Make My Day (short mix)', '03:28'),
-                    ('36', [], 'Boris Dlugosch - Bangkok', '05:23'), ('37', [], 'Westbam - Yeah Bla Whatever', '05:55'),
-                    ('38', [], 'Elite Force & Daniele Papini & Harnessnoise - Harness The Nonsense', '06:12'),
-                    ('39', [], 'Tom De Neef Presents Jacksquad - Boavista', '07:33'),
-                    ('40', [], 'Dennis Ferrer - Hey Hey (radio edit)', '03:09'),
-                    ('41', [], "Steve Aoki - I'm In The House (feat Zuper Blahq)", '03:19'),
-                    ('42', [], 'Peter Licht - Sonnendeck (Deck 5 mix)', '03:20'),
-                    ('43', [], 'Orbital - Chime (extended version)', '12:40'),
-                    ('44', [], 'Format 1 - Solid Session', '04:21'),
-                    ('45', [], 'Fierce Ruling Diva - Rubb It In', '05:05'),
-                    ('46', [], 'X-101 - Sonic Destroyer', '05:00'), ('47', [], 'Marusha - Ravechannel', '03:36'),
-                    ('48', [], 'DJ Dick - Malefactor', '06:16'), ('49', [], 'Westbam - My Life Of Crime', '05:13'),
-                    ('50', [], 'Westbam - Mr Peanut', '05:43'), ('51', [], 'Westbam - Endlos', '21:20'),
-                    ('52', [], 'The Nighttripper - Tone Explotation', '05:10'),
-                    ('53', [], 'Vein Melter - Hypnotized', '08:41'),
-                    ('54', [], 'Dr Mottes Euphorhythm - Patrik', '05:35'),
-                    ('55', [], 'Westbam - Super Old School Mix', '10:47'),
-                    ('56', [], 'Westbam & Nena - Oldschool Baby (piano mix)', '05:58'),
-                    ('57', [], 'Richie Rich - Salsa House', '06:59')]},
-                    'link': 'http://www.junodownload.com/products/a-love-story-89-10-unmixed-tracks/1609583-02/',
-                    'artists': [{'type': 'Main', 'name': 'Westbam'}], 'genre': ['Funky', 'Club House']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = junodownload.Release.release_from_url(
-            'http://www.junodownload.com/products/a-love-story-89-10-unmixed-tracks/1609583-02/')
+        release_event = expected.create_release_event()
+        release_event.set_date('21 July, 2010')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Bass Planet Germany')
+        label_id.append_catalogue_nr('425011 7613280')
+        expected.append_label_id(label_id)
+
+        expected.set_title('A Love Story 89-10 (unmixed tracks)')
+
+        artist = expected.create_artist()
+        artist.set_name('Westbam')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Funky')
+        expected.append_genre('Club House')
+
+        expected.set_url('http://www.junodownload.com/products/a-love-story-89-10-unmixed-tracks/1609583-02/')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Westbam - Official Anthems (continuous DJ mix)')
+        track.set_length(3780)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Westbam - Love Sounds 3000 (continuous DJ mix)')
+        track.set_length(4767)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Westbam - The Original Feelings (continuous DJ mix)')
+        track.set_length(4143)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title("Westbam - Don't Look Back In Anger (short mix)")
+        track.set_length(201)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('The Love Committee - Love Rules')
+        track.set_length(412)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('WestBam & The Love Committee - Love Is Everywhere (New Location) (original mix)')
+        track.set_length(439)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('WestBam & The Love Committee - Highway To Love (Final remix)')
+        track.set_length(460)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('WestBam & The Love Committee - United States Of Love')
+        track.set_length(421)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Dr Motte & Westbam presents - Sunshine')
+        track.set_length(244)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Dr Motte & Westbam presents - One World One Future')
+        track.set_length(222)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title("The Love Committee - You Can't Stop Us")
+        track.set_length(407)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Dr Motte & Westbam presents - Loveparade 2000')
+        track.set_length(208)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Dr Motte & Westbam presents - Music Is The Key')
+        track.set_length(499)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title("Felix - Don't You Want Me (Hooj mix)")
+        track.set_length(355)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Blake Baxter - One More Time')
+        track.set_length(254)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('The Break Boys - My House Is Your House (Miami Beach Break mix)')
+        track.set_length(380)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('The Love Committee - We Feel Love')
+        track.set_length(334)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('Paul & Fritz Kalkbrenner - Sky And Sand (Berlin Calling mix)')
+        track.set_length(239)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title('The Love Committee - Access Peace')
+        track.set_length(431)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title('Westbam - Spoon (unvergesslisch)')
+        track.set_length(419)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('21')
+        track.set_title('Westbam - Escalate')
+        track.set_length(387)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('22')
+        track.set_title('Deekline & Ed Solo - Handz Up (Stantons Warriors remix Westbam edit)')
+        track.set_length(288)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('23')
+        track.set_title('Westbam - Fake Blue Eyes')
+        track.set_length(273)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('24')
+        track.set_title('Moguai & Westbam - Original Hardcore EP')
+        track.set_length(288)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('25')
+        track.set_title('Jewelz - Get Down')
+        track.set_length(361)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('26')
+        track.set_title('Tom Wax & Strobe - Cantate (Lalai Lala) (radio mix)')
+        track.set_length(202)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('27')
+        track.set_title('Smash Hifi - Take You Back (VIP edit)')
+        track.set_length(302)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('28')
+        track.set_title('Elite Force & Hatiras & JELO & Vandal & Stanton Warriors - MAD')
+        track.set_length(428)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('29')
+        track.set_title('Mom & Dad - Judas (Dem Slackers remix)')
+        track.set_length(268)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('30')
+        track.set_title('DJ Icey - Yeah Right')
+        track.set_length(297)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('31')
+        track.set_title('Westbam - Sage Sage')
+        track.set_length(280)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('32')
+        track.set_title('Felix Cartal - Love')
+        track.set_length(314)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('33')
+        track.set_title('Westbam - Hard Times (Westbam edit)')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('34')
+        track.set_title('Deadmau5 - Strobe (Plump DJs remix)')
+        track.set_length(343)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('35')
+        track.set_title('Members Of Mayday - Make My Day (short mix)')
+        track.set_length(208)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('36')
+        track.set_title('Boris Dlugosch - Bangkok')
+        track.set_length(323)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('37')
+        track.set_title('Westbam - Yeah Bla Whatever')
+        track.set_length(355)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('38')
+        track.set_title('Elite Force & Daniele Papini & Harnessnoise - Harness The Nonsense')
+        track.set_length(372)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('39')
+        track.set_title('Tom De Neef Presents Jacksquad - Boavista')
+        track.set_length(453)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('40')
+        track.set_title('Dennis Ferrer - Hey Hey (radio edit)')
+        track.set_length(189)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('41')
+        track.set_title("Steve Aoki - I'm In The House (feat Zuper Blahq)")
+        track.set_length(199)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('42')
+        track.set_title('Peter Licht - Sonnendeck (Deck 5 mix)')
+        track.set_length(200)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('43')
+        track.set_title('Orbital - Chime (extended version)')
+        track.set_length(760)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('44')
+        track.set_title('Format 1 - Solid Session')
+        track.set_length(261)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('45')
+        track.set_title('Fierce Ruling Diva - Rubb It In')
+        track.set_length(305)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('46')
+        track.set_title('X-101 - Sonic Destroyer')
+        track.set_length(300)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('47')
+        track.set_title('Marusha - Ravechannel')
+        track.set_length(216)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('48')
+        track.set_title('DJ Dick - Malefactor')
+        track.set_length(376)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('49')
+        track.set_title('Westbam - My Life Of Crime')
+        track.set_length(313)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('50')
+        track.set_title('Westbam - Mr Peanut')
+        track.set_length(343)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('51')
+        track.set_title('Westbam - Endlos')
+        track.set_length(1280)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('52')
+        track.set_title('The Nighttripper - Tone Explotation')
+        track.set_length(310)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('53')
+        track.set_title('Vein Melter - Hypnotized')
+        track.set_length(521)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('54')
+        track.set_title('Dr Mottes Euphorhythm - Patrik')
+        track.set_length(335)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('55')
+        track.set_title('Westbam - Super Old School Mix')
+        track.set_length(647)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('56')
+        track.set_title('Westbam & Nena - Oldschool Baby (piano mix)')
+        track.set_length(358)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('57')
+        track.set_title('Richie Rich - Salsa House')
+        track.set_length(419)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = junodownload.ReleaseScraper.from_string('http://www.junodownload.com/products/a-love-story-89-10-unmixed-tracks/1609583-02/')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_various_artists(self):
-        expected = {'title': '2008 MOST USEFUL TOOLS', 'label': ['NuZone Tools'], 'released': '30 December, 2008',
-                    'catalog': ['NZT 015'], 'discs': {
-                1: [('1', [], 'Sygma - Nightlights', '08:42'), ('2', [], "Adolfo Morrone - I'm Nervhouse", '07:35'),
-                    ('3', [], 'Jonathan Carey - The Science Of Music', '05:54'),
-                    ('4', [], 'Lorenzo Venturini - New Era', '06:55'),
-                    ('5', [], 'E-Mark - Anthem For Deejays Part 2', '07:00'),
-                    ('6', [], 'Alex Spadoni - Sunset', '07:31'),
-                    ('7', [], 'Jordan Baxxter feat Aedo - What It Feels Like For A Girl?', '07:50'),
-                    ('8', [], 'Hildebrand - Raindrops', '08:39'), ('9', [], 'Dario Maffia - Phaelon', '09:05'),
-                    ('10', [], 'Emerald Coast - Exhausted', '05:38'), ('11', [], 'Sygma - Children', '08:59'),
-                    ('12', [], 'GoldSaint - Tonight', '06:45'), ('13', [], 'Peter Santos - Back To You', '07:34'),
-                    ('14', [], 'Oscar Burnside - Dark Side', '05:34'), ('15', [], 'GoldSaint - Recharge', '08:30'),
-                    ('16', [], 'Luca Lux - Wildest Dream', '07:08'), ('17', [], 'SimoX DJ - Star', '05:17'),
-                    ('18', [], 'Greek S - The Sound (09 mix)', '08:37'),
-                    ('19', [], 'Various - Mixed Tools 2008 (Part 1 - mixed by Sygma)', '41:34'),
-                    ('20', [], 'Various - Mixed Tools 2008 (Part 2 - mixed by Peter Santos)', '38:54')]},
-                    'link': 'http://www.junodownload.com/products/2008-most-useful-tools/1384246-02/',
-                    'genre': ['Progressive House'], 'artists': [{'type': 'Main', 'name': 'Various'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = junodownload.Release.release_from_url(
-            'http://www.junodownload.com/products/2008-most-useful-tools/1384246-02/')
+        release_event = expected.create_release_event()
+        release_event.set_date('30 December, 2008')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        label_id = expected.create_label_id()
+        label_id.set_label('NuZone Tools')
+        label_id.append_catalogue_nr('NZT 015')
+        expected.append_label_id(label_id)
+
+        expected.set_title('2008 MOST USEFUL TOOLS')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Progressive House')
+
+        expected.set_url('http://www.junodownload.com/products/2008-most-useful-tools/1384246-02/')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Sygma - Nightlights')
+        track.set_length(522)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("Adolfo Morrone - I'm Nervhouse")
+        track.set_length(455)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Jonathan Carey - The Science Of Music')
+        track.set_length(354)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Lorenzo Venturini - New Era')
+        track.set_length(415)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('E-Mark - Anthem For Deejays Part 2')
+        track.set_length(420)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Alex Spadoni - Sunset')
+        track.set_length(451)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Jordan Baxxter feat Aedo - What It Feels Like For A Girl?')
+        track.set_length(470)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Hildebrand - Raindrops')
+        track.set_length(519)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Dario Maffia - Phaelon')
+        track.set_length(545)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Emerald Coast - Exhausted')
+        track.set_length(338)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Sygma - Children')
+        track.set_length(539)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('GoldSaint - Tonight')
+        track.set_length(405)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Peter Santos - Back To You')
+        track.set_length(454)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Oscar Burnside - Dark Side')
+        track.set_length(334)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('GoldSaint - Recharge')
+        track.set_length(510)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Luca Lux - Wildest Dream')
+        track.set_length(428)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('SimoX DJ - Star')
+        track.set_length(317)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('Greek S - The Sound (09 mix)')
+        track.set_length(517)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title('Various - Mixed Tools 2008 (Part 1 - mixed by Sygma)')
+        track.set_length(2494)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title('Various - Mixed Tools 2008 (Part 2 - mixed by Peter Santos)')
+        track.set_length(2334)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = junodownload.ReleaseScraper.from_string('http://www.junodownload.com/products/2008-most-useful-tools/1384246-02/')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = junodownload.Release.release_from_url(
-            'http://www.junodownload.com/products/2008-most-useful-tools/99999999/')
-        try:
-            r.data
-            self.assertFalse(True)
-        except junodownload.JunodownloadAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = junodownload.ReleaseScraper.from_string('http://www.junodownload.com/products/2008-most-useful-tools/99999999/')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class ITunesTest(TestCase):
     maxDiff = None
 
     def test_simple_album(self):
-        expected = {'title': 'Love (Remastered)', 'released': '1985', 'discs': {
-            1: [('1', [], 'Nirvana', '5:26'), ('2', [], 'Big Neon Glitter', '4:51'), ('3', [], 'Love', '5:29'),
-                ('4', [], 'Brother Wolf, Sister Moon', '6:47'), ('5', [], 'Rain', '3:56'), ('6', [], 'Phoenix', '5:06'),
-                ('7', [], 'Hollow Man', '4:45'), ('8', [], 'Revolution', '5:26'),
-                ('9', [], 'She Sells Sanctuary', '4:23'), ('10', [], 'Black Angel', '5:22')]},
-                    'link': 'http://itunes.apple.com/us/album/love-remastered/id3022929?ign-mpt=uo%3D4',
-                    'artists': [{'type': 'Main', 'name': 'The Cult'}],
-                    'genre': ['Rock', 'Adult Alternative', 'Hard Rock', 'Alternative', 'Goth Rock', 'College Rock']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/love-remastered/id3022929?ign-mpt=uo%3D4')
+        release_event = expected.create_release_event()
+        release_event.set_date('1985')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        expected.set_title('Love (Remastered)')
+
+        artist = expected.create_artist()
+        artist.set_name('The Cult')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Rock')
+        expected.append_genre('Adult Alternative')
+        expected.append_genre('Hard Rock')
+        expected.append_genre('Alternative')
+        expected.append_genre('Goth Rock')
+        expected.append_genre('College Rock')
+
+        expected.set_url('http://itunes.apple.com/us/album/love-remastered/id3022929?ign-mpt=uo%3D4')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Nirvana')
+        track.set_length(326)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Big Neon Glitter')
+        track.set_length(291)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Love')
+        track.set_length(329)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Brother Wolf, Sister Moon')
+        track.set_length(407)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Rain')
+        track.set_length(236)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Phoenix')
+        track.set_length(306)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hollow Man')
+        track.set_length(285)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Revolution')
+        track.set_length(326)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('She Sells Sanctuary')
+        track.set_length(263)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Black Angel')
+        track.set_length(322)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = itunes.ReleaseScraper.from_string('http://itunes.apple.com/us/album/love-remastered/id3022929?ign-mpt=uo%3D4')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_multiple_cds(self):
-        expected = {'title': 'Requiembryo', 'released': 'Mar 29, 2003', 'discs': {
-            1: [('1', [], u'\xf7Ff\xe4hrte', '5:55'), ('2', [], 'Coming Home', '4:47'),
-                ('3', [], 'De Profundis', '3:53'), ('4', [], u'Pavor Diurnus (Fremde Tr\xe4ume 1)', '1:23'),
-                ('5', [], 'Duett (Das Minnellied der Incubi)', '4:37'), ('6', [], 'Schmetterflug', '2:58'),
-                ('7', [], 'Frostbrand', '5:22'), ('8', [], 'Ich bin ein wahrer Satan', '5:55'),
-                ('9', [], 'Erinnerungen eines Fremden', '2:16'), ('10', [], 'Raserei', '5:13'),
-                ('11', [], 'Das Erwachen', '7:03'), ('12', [], 'Erinnerungen eines Fremden (Reprise)', '1:23'),
-                ('13', [], 'Finger Weg! Finger!', '3:37')], 2: [('1', [], 'Requiem 01 - Introitus Interruptus', '3:21'),
-                ('2', [], 'Requiem 02 - Kyrie Elesion Mercy', '3:47'),
-                ('3', [], 'Requiem 03 - Kyrie Litani Agnus Die', '2:34'),
-                ('4', [], 'Requiem 04 - Die arIse (Sequenz)', '5:28'),
-                ('5', [], 'Requiem 05 - Nimm Mich! (Suffertorium)', '3:33'),
-                ('6', [], 'Requiem 06 - Sanctus/ Benedictus', '2:38'), ('7', [], 'Requiem 07 - Lux Aeterna', '0:52'),
-                ('8', [], 'Requiem 08 - Hymnus Heaven', '2:55'), ('9', [], 'Requiem 09 - Exsequien Hell', '2:42'),
-                ('10', [], 'Nekrolog', '5:00'), ('11', [], u'Pavor Nocturnis (Fremde Tr\xe4ume 2)', '1:04'),
-                ('12', [], 'Biotopia', '6:26'), ('13', [], 'How Far Would You Go?', '4:06'),
-                ('14', [], 'Nie Mehr', '6:03'), ('15', [], u'Off\xe4hrte (Reprise)', '1:17')]},
-                    'link': 'http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4',
-                    'artists': [{'type': 'Main', 'name': 'ASP'}],
-                    'genre': ['Rock', 'Alternative', 'Goth Rock', 'Metal']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4')
+        release_event = expected.create_release_event()
+        release_event.set_date('Mar 29, 2003')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        expected.set_title('Requiembryo')
+
+        artist = expected.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Rock')
+        expected.append_genre('Alternative')
+        expected.append_genre('Goth Rock')
+        expected.append_genre('Metal')
+
+        expected.set_url('http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'\xf7Ff\xe4hrte')
+        track.set_length(355)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Coming Home')
+        track.set_length(287)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('De Profundis')
+        track.set_length(233)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Pavor Diurnus (Fremde Tr\xe4ume 1)')
+        track.set_length(83)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Duett (Das Minnellied der Incubi)')
+        track.set_length(277)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Schmetterflug')
+        track.set_length(178)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Frostbrand')
+        track.set_length(322)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Ich bin ein wahrer Satan')
+        track.set_length(355)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Erinnerungen eines Fremden')
+        track.set_length(136)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Raserei')
+        track.set_length(313)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Das Erwachen')
+        track.set_length(423)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Erinnerungen eines Fremden (Reprise)')
+        track.set_length(83)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Finger Weg! Finger!')
+        track.set_length(217)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Requiem 01 - Introitus Interruptus')
+        track.set_length(201)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Requiem 02 - Kyrie Elesion Mercy')
+        track.set_length(227)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Requiem 03 - Kyrie Litani Agnus Die')
+        track.set_length(154)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Requiem 04 - Die arIse (Sequenz)')
+        track.set_length(328)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Requiem 05 - Nimm Mich! (Suffertorium)')
+        track.set_length(213)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Requiem 06 - Sanctus/ Benedictus')
+        track.set_length(158)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Requiem 07 - Lux Aeterna')
+        track.set_length(52)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Requiem 08 - Hymnus Heaven')
+        track.set_length(175)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Requiem 09 - Exsequien Hell')
+        track.set_length(162)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Nekrolog')
+        track.set_length(300)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title(u'Pavor Nocturnis (Fremde Tr\xe4ume 2)')
+        track.set_length(64)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Biotopia')
+        track.set_length(386)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('How Far Would You Go?')
+        track.set_length(246)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Nie Mehr')
+        track.set_length(363)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title(u'Off\xe4hrte (Reprise)')
+        track.set_length(77)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = itunes.ReleaseScraper.from_string('http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_various_artists(self):
-        expected = {'title': '2011 Warped Tour Compilation', 'released': 'Jun 07, 2011', 'discs': {
-            1: [('1', [{'type': 'Main', 'name': 'Paramore'}], "For a Pessimist, I'm Pretty Optimistic", '3:48'),
-                ('2', [{'type': 'Main', 'name': 'A Day to Remember'}], 'All Signs Point to Lauderdale', '3:17'),
-                ('3', [{'type': 'Main', 'name': 'Set Your Goals'}], 'Certain', '3:01'),
-                ('4', [{'type': 'Main', 'name': 'The Devil Wears Prada'}], 'Anatomy', '3:46'),
-                ('5', [{'type': 'Main', 'name': 'Asking Alexandria'}], 'Closure', '3:58'),
-                ('6', [{'type': 'Main', 'name': 'Attack Attack! (US)'}], 'A for Andrew', '3:22'),
-                ('7', [{'type': 'Main', 'name': 'Big D and the Kids Table'}], 'Modern American Gypsy', '2:38'),
-                ('8', [{'type': 'Main', 'name': 'Vonnegutt'}], 'Bright Eyes', '3:20'),
-                ('9', [{'type': 'Main', 'name': 'Moving Mountains'}], 'Where Two Bodies Lie', '4:17'),
-                ('10', [{'type': 'Main', 'name': 'The Wonder Years'}], "Don't Let Me Cave In", '3:23'),
-                ('11', [{'type': 'Main', 'name': 'Neo Geo'}], "Can't Catch Me", '3:24'),
-                ('12', [{'type': 'Main', 'name': 'Hellogoodbye'}], 'Finding Something to Do', '2:55'),
-                ('13', [{'type': 'Main', 'name': 'Family Force 5'}], 'Wobble', '3:42'),
-                ('14', [{'type': 'Main', 'name': 'Abandon All Ships'}], 'Take One Last Breath', '3:39'),
-                ('15', [{'type': 'Main', 'name': 'Of Mice & Men'}], 'Purified', '3:35'),
-                ('16', [{'type': 'Main', 'name': 'Veara'}], 'Pull Your Own Weight', '2:55'),
-                ('17', [{'type': 'Main', 'name': 'The Dangerous Summer'}], 'Good Things', '3:38'),
-                ('18', [{'type': 'Main', 'name': 'Every Avenue'}], "Tell Me I'm a Wreck", '3:39'),
-                ('19', [{'type': 'Main', 'name': 'A Skylit Drive'}], 'Too Little Too Late', '3:11'),
-                ('20', [{'type': 'Main', 'name': 'Big Chocolate'}], 'Sound of My Voice (feat. Weerd Science)', '3:30'),
-                ('21', [{'type': 'Main', 'name': 'The Dance Party'}], "Sasha Don't Sleep", '3:27'),
-                ('22', [{'type': 'Main', 'name': 'Street Dogs'}], 'Punk Rock and Roll', '2:34'),
-                ('23', [{'type': 'Main', 'name': 'Blacklist Royals'}], 'Riverside', '2:55'),
-                ('24', [{'type': 'Main', 'name': 'Elway'}], 'Whispers In a Shot Glass', '1:39'),
-                ('25', [{'type': 'Main', 'name': 'The Copyrights'}], 'Worn Out Passport', '2:05'),
-                ('26', [{'type': 'Main', 'name': 'Against Me!'}], 'Because of the Shame', '4:20'),
-                ('27', [{'type': 'Main', 'name': 'Lucero'}], "I Don't Wanna Be the One", '3:09'),
-                ('28', [{'type': 'Main', 'name': 'August Burns Red'}], 'Meddler', '3:53'),
-                ('29', [{'type': 'Main', 'name': 'Dance Gavin Dance'}], 'Pounce Bounce', '2:26'),
-                ('30', [{'type': 'Main', 'name': 'Larry and His Flask'}], 'Blood Drunk', '3:34'),
-                ('31', [{'type': 'Main', 'name': 'River City Extension'}], 'Our New Intelligence', '3:54'),
-                ('32', [{'type': 'Main', 'name': 'Brothers of Brazil'}], 'Samba Around the Clock', '2:39'),
-                ('33', [{'type': 'Main', 'name': 'Lionize'}], 'Your Trying to Kill Me', '2:48'),
-                ('34', [{'type': 'Main', 'name': 'The Agrrolites'}], 'Complicated Girl', '2:04'),
-                ('35', [{'type': 'Main', 'name': 'The Black Pacific'}], 'The System', '2:43'),
-                ('36', [{'type': 'Main', 'name': 'Sharks'}], 'It All Relates', '3:10'),
-                ('37', [{'type': 'Main', 'name': 'The Menzingers'}], 'Deep Sleep', '2:37'),
-                ('38', [{'type': 'Main', 'name': 'Go Radio'}], 'Any Other Heart', '3:52'),
-                ('39', [{'type': 'Main', 'name': 'There for Tomorrow'}], 'The Joyride', '4:09'),
-                ('40', [{'type': 'Main', 'name': 'Places and Numbers'}], 'Notes from the Dead Zone', '3:05'),
-                ('41', [{'type': 'Main', 'name': 'Grieves'}], 'Bloody Poetry', '3:21'),
-                ('42', [{'type': 'Main', 'name': 'I Set My Friends On Fire'}], 'It Comes Naturally', '3:36'),
-                ('43', [{'type': 'Main', 'name': 'Woe, Is Me'}], '[&] Delinquents', '2:55'),
-                ('44', [{'type': 'Main', 'name': 'Miss May I'}], 'Relentless Chaos', '3:25'),
-                ('45', [{'type': 'Main', 'name': 'Motionless In White'}], 'Creatures', '3:47'),
-                ('46', [{'type': 'Main', 'name': 'The Word Alive'}], '2012', '3:01'),
-                ('47', [{'type': 'Main', 'name': 'Sick of Sarah'}], 'Autograph', '3:13'),
-                ('48', [{'type': 'Main', 'name': 'The Darlings'}], 'Hypnotize', '3:13'),
-                ('49', [{'type': 'Main', 'name': 'To Your Demised'}], 'The Exposed', '3:29'),
-                ('50', [{'type': 'Main', 'name': 'No Reservations'}], 'Continental', '3:31'),
-                ('51', [{'type': 'Main', 'name': 'Winds Of Plauge'}], 'California', '3:28'),
-                ('52', [{'type': 'Main', 'name': "That's Outrageous!"}], '#Winning', '2:42'),
-                ('53', [{'type': 'Main', 'name': 'Eyes Set to Kill'}], 'The Secrets Between', '3:47'),
-                ('54', [{'type': 'Main', 'name': 'Verah Falls'}], 'A Family Affair', '5:21'),
-                ('55', [{'type': 'Main', 'name': 'The Human Abstract'}], 'Horizon to Zenith', '4:19')]},
-                    'link': 'http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4',
-                    'artists': [{'type': 'Main', 'name': 'Various'}], 'genre': ['Alternative']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = itunes.Release.release_from_url(
-            'http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4')
+        release_event = expected.create_release_event()
+        release_event.set_date('Jun 07, 2011')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        expected.set_title('2011 Warped Tour Compilation')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Alternative')
+
+        expected.set_url('http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title("For a Pessimist, I'm Pretty Optimistic")
+        track.set_length(228)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Paramore')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('All Signs Point to Lauderdale')
+        track.set_length(197)
+        track_artist = expected.create_artist()
+        track_artist.set_name('A Day to Remember')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Certain')
+        track.set_length(181)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Set Your Goals')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Anatomy')
+        track.set_length(226)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Devil Wears Prada')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Closure')
+        track.set_length(238)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Asking Alexandria')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('A for Andrew')
+        track.set_length(202)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Attack Attack! (US)')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Modern American Gypsy')
+        track.set_length(158)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Big D and the Kids Table')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Bright Eyes')
+        track.set_length(200)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Vonnegutt')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Where Two Bodies Lie')
+        track.set_length(257)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Moving Mountains')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title("Don't Let Me Cave In")
+        track.set_length(203)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Wonder Years')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title("Can't Catch Me")
+        track.set_length(204)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Neo Geo')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Finding Something to Do')
+        track.set_length(175)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hellogoodbye')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Wobble')
+        track.set_length(222)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Family Force 5')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Take One Last Breath')
+        track.set_length(219)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Abandon All Ships')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Purified')
+        track.set_length(215)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Of Mice & Men')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Pull Your Own Weight')
+        track.set_length(175)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Veara')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('Good Things')
+        track.set_length(218)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Dangerous Summer')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title("Tell Me I'm a Wreck")
+        track.set_length(219)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Every Avenue')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title('Too Little Too Late')
+        track.set_length(191)
+        track_artist = expected.create_artist()
+        track_artist.set_name('A Skylit Drive')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title('Sound of My Voice (feat. Weerd Science)')
+        track.set_length(210)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Big Chocolate')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('21')
+        track.set_title("Sasha Don't Sleep")
+        track.set_length(207)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Dance Party')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('22')
+        track.set_title('Punk Rock and Roll')
+        track.set_length(154)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Street Dogs')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('23')
+        track.set_title('Riverside')
+        track.set_length(175)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Blacklist Royals')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('24')
+        track.set_title('Whispers In a Shot Glass')
+        track.set_length(99)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Elway')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('25')
+        track.set_title('Worn Out Passport')
+        track.set_length(125)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Copyrights')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('26')
+        track.set_title('Because of the Shame')
+        track.set_length(260)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Against Me!')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('27')
+        track.set_title("I Don't Wanna Be the One")
+        track.set_length(189)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Lucero')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('28')
+        track.set_title('Meddler')
+        track.set_length(233)
+        track_artist = expected.create_artist()
+        track_artist.set_name('August Burns Red')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('29')
+        track.set_title('Pounce Bounce')
+        track.set_length(146)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Dance Gavin Dance')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('30')
+        track.set_title('Blood Drunk')
+        track.set_length(214)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Larry and His Flask')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('31')
+        track.set_title('Our New Intelligence')
+        track.set_length(234)
+        track_artist = expected.create_artist()
+        track_artist.set_name('River City Extension')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('32')
+        track.set_title('Samba Around the Clock')
+        track.set_length(159)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Brothers of Brazil')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('33')
+        track.set_title('Your Trying to Kill Me')
+        track.set_length(168)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Lionize')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('34')
+        track.set_title('Complicated Girl')
+        track.set_length(124)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Agrrolites')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('35')
+        track.set_title('The System')
+        track.set_length(163)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Black Pacific')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('36')
+        track.set_title('It All Relates')
+        track.set_length(190)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Sharks')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('37')
+        track.set_title('Deep Sleep')
+        track.set_length(157)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Menzingers')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('38')
+        track.set_title('Any Other Heart')
+        track.set_length(232)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Go Radio')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('39')
+        track.set_title('The Joyride')
+        track.set_length(249)
+        track_artist = expected.create_artist()
+        track_artist.set_name('There for Tomorrow')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('40')
+        track.set_title('Notes from the Dead Zone')
+        track.set_length(185)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Places and Numbers')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('41')
+        track.set_title('Bloody Poetry')
+        track.set_length(201)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Grieves')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('42')
+        track.set_title('It Comes Naturally')
+        track.set_length(216)
+        track_artist = expected.create_artist()
+        track_artist.set_name('I Set My Friends On Fire')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('43')
+        track.set_title('[&] Delinquents')
+        track.set_length(175)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Woe, Is Me')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('44')
+        track.set_title('Relentless Chaos')
+        track.set_length(205)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Miss May I')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('45')
+        track.set_title('Creatures')
+        track.set_length(227)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Motionless In White')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('46')
+        track.set_title('2012')
+        track.set_length(181)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Word Alive')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('47')
+        track.set_title('Autograph')
+        track.set_length(193)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Sick of Sarah')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('48')
+        track.set_title('Hypnotize')
+        track.set_length(193)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Darlings')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('49')
+        track.set_title('The Exposed')
+        track.set_length(209)
+        track_artist = expected.create_artist()
+        track_artist.set_name('To Your Demised')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('50')
+        track.set_title('Continental')
+        track.set_length(211)
+        track_artist = expected.create_artist()
+        track_artist.set_name('No Reservations')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('51')
+        track.set_title('California')
+        track.set_length(208)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Winds Of Plauge')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('52')
+        track.set_title('#Winning')
+        track.set_length(162)
+        track_artist = expected.create_artist()
+        track_artist.set_name("That's Outrageous!")
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('53')
+        track.set_title('The Secrets Between')
+        track.set_length(227)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Eyes Set to Kill')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('54')
+        track.set_title('A Family Affair')
+        track.set_length(321)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Verah Falls')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('55')
+        track.set_title('Horizon to Zenith')
+        track.set_length(259)
+        track_artist = expected.create_artist()
+        track_artist.set_name('The Human Abstract')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = itunes.ReleaseScraper.from_string('http://itunes.apple.com/us/album/2011-warped-tour-compilation/id439590029?uo=4')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_non_us_store(self):
-        expected = {'title': u'Puissance Ra\xef RnB 2011', 'released': '14 mars 2011', 'discs': {1: [(
-        '1', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Alger Casa Tunis...Ou Paris (Feat. Ap Du 113 & Reda Taliani)',
-        '4:23'), ('2', [{'type': 'Main', 'name': "L'algerino"}], 'Marseille By Night', '3:40'),
-            ('3', [{'type': 'Main', 'name': 'El Matador'}], 'Allez Allez (Feat. Amar)', '3:30'),
-            ('4', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Bolly Rai (Feat. Tlf, Rayan & Amal)', '3:45'),
-            ('5', [{'type': 'Main', 'name': 'Hasni'}], 'Rani Mourak', '3:54'),
-            ('6', [{'type': 'Main', 'name': 'Zinou le Parisien'}], 'Enti Balouta', '3:48'),
-            ('7', [{'type': 'Main', 'name': 'Black Barbie'}], 'Amour Kabyle (Feat. Alilou)', '3:51'),
-            ('8', [{'type': 'Main', 'name': 'Cheb Sahraoui'}], 'Hasni', '3:50'),
-            ('9', [{'type': 'Main', 'name': 'Marsaoui'}], 'Petitates', '3:53'),
-            ('10', [{'type': 'Main', 'name': 'Rimitti'}], 'Hina Ou Hina', '3:58'),
-            ('11', [{'type': 'Main', 'name': 'Rachida'}], "Ya H'Bibi", '3:48'),
-            ('12', [{'type': 'Main', 'name': 'Ouarda'}], "Haya N'Aaaoulou", '3:47'),
-            ('13', [{'type': 'Main', 'name': 'Chaba Djenet'}], 'Jalouse', '4:14'),
-            ('14', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Always On My Mind (Feat. Big Ali & Mohamed Lamine)', '3:20'),
-            ('15', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Chehal Fia Houssad Yehadrou', '4:06'),
-            ('16', [{'type': 'Main', 'name': 'Cheb Abbes'}], "L'Histoire Maak Bdate", '4:15'),
-            ('17', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Habssine', '4:12'),
-            ('18', [{'type': 'Main', 'name': 'Cheba Faiza'}], 'Mathawache Alia', '4:16'),
-            ('19', [{'type': 'Main', 'name': 'Faycal'}], 'Manfoutakche Explosif Mix By Dj Meyd', '4:40'), (
-            '20', [{'type': 'Main', 'name': 'DJ Idsa'}],
-            'Tout Le Monde Danse (Remix) [Feat. Jesse Matador & Amal & Dollarman]', '3:40'),
-            ('21', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Rai Afrika (Feat. Big Ali)', '3:07'),
-            ('22', [{'type': 'Main', 'name': 'Sixieme Sens'}], 'Citoyens Du Monde (Exclus) [Feat. Rahib]', '4:27'),
-            ('23', [{'type': 'Main', 'name': 'Cheb Fouzi'}], 'On Va Danser (Feat. Alibi Montana)', '3:24'),
-            ('24', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Hit The Rai Floor (Feat. Big Ali & Cheb Akil)', '3:44'),
-            ('25', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Laab Baid', '3:12'),
-            ('26', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Manbghiche Alik (Feat. Mc Harage & Dj Faouzi)', '4:12'),
-            ('27', [{'type': 'Main', 'name': 'Houari Manar'}], 'One Two Three Khala Galbi Yevibri', '4:05'),
-            ('28', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Bla Bik', '3:58'),
-            ('29', [{'type': 'Main', 'name': 'Ouarda'}], 'Bouya', '3:58'),
-            ('30', [{'type': 'Main', 'name': 'DJ Idsa'}], 'Chicoter (Feat. Jacky Brown & Akil)', '4:01'),
-            ('31', [{'type': 'Main', 'name': 'Faycal'}], 'Mathawsich Alia By Dj Zahir', '2:23'),
-            ('32', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Ya Loukane Galbak', '3:57'),
-            ('33', [{'type': 'Main', 'name': 'Hasni Seghir'}], 'Gouli Wine Rak Anaya Nejika', '4:59'), (
-            '34', [{'type': 'Main', 'name': 'DJ Goldfingers'}], 'La Corniche (Feat. Tunisiano & Zahouania) [Remix]',
-            '4:03'),
-            ('35', [{'type': 'Main', 'name': 'Elephant Man'}], 'Bullit (Feat. Mokobe Du 113 & Sheryne)', '3:21'),
-            ('36', [{'type': 'Main', 'name': 'Rachida'}], 'Aar Rabi', '4:59'),
-            ('37', [{'type': 'Main', 'name': 'Hasni'}], 'Ayet Manaalam', '5:13'),
-            ('38', [{'type': 'Main', 'name': 'Shyneze'}], 'All Rai On Me (Feat. Mohamed Lamine)', '3:23'),
-            ('39', [{'type': 'Main', 'name': 'Swen'}], 'Emmene Moi (Feat. Najim)', '3:43'),
-            ('40', [{'type': 'Main', 'name': "L'algerino"}], "M'Zia (Feat. Reda Taliani)", '3:54')], 2: [
-            ('1', [{'type': 'Main', 'name': 'Algeria United'}], '1 2 3 Viva Algeria', '4:39'),
-            ('2', [{'type': 'Main', 'name': 'Milano & Torino'}], 'Fort Fort', '3:24'),
-            ('3', [{'type': 'Main', 'name': 'Hasni'}], 'Consulat', '3:52'),
-            ('4', [{'type': 'Main', 'name': 'Reda Taliani'}], u'\xc7a Passe Ou \xc7a Casse (Feat. Tunisiano)', '3:06'),
-            ('5', [{'type': 'Main', 'name': 'Cheb Sahraoui'}], 'Pas De Chance', '4:07'),
-            ('6', [{'type': 'Main', 'name': 'Marsaoui'}], 'Rani Mara Hna', '4:06'),
-            ('7', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Adabtek Nti Bizarre', '4:03'),
-            ('8', [{'type': 'Main', 'name': 'Chaba Djenet'}], 'Kedab', '4:11'),
-            ('9', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Achekek Abonne Duo Avec Abbes', '3:40'),
-            ('10', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Fidel (Feat. Amine Dib)', '3:50'),
-            ('11', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Bafana Bafana', '4:44'),
-            ('12', [{'type': 'Main', 'name': 'Ouarda'}], 'Dalmouni', '3:55'),
-            ('13', [{'type': 'Main', 'name': 'Rachida'}], 'Sabat El Ouarda', '4:05'),
-            ('14', [{'type': 'Main', 'name': 'Rimitti'}], 'Rah Glaibi Andak', '3:43'),
-            ('15', [{'type': 'Main', 'name': 'Zinou le Parisien'}], 'Ma Nebghik', '4:31'),
-            ('16', [{'type': 'Main', 'name': 'Cheba Faiza'}], 'Galbi 4 Giga', '3:59'),
-            ('17', [{'type': 'Main', 'name': 'Cheba Kheira'}], 'Dayarni Fi Ainih', '3:44'),
-            ('18', [{'type': 'Main', 'name': 'Faycal'}], 'Nesimik Omri Youy Youy', '3:56'),
-            ('19', [{'type': 'Main', 'name': 'Hasni Seghir'}], 'Andi Madama', '3:39'),
-            ('20', [{'type': 'Main', 'name': 'Houari Manar'}], 'Charikat Non Tehleb', '3:37'),
-            ('21', [{'type': 'Main', 'name': 'Khaled'}], 'Aicha', '4:15'),
-            ('22', [{'type': 'Main', 'name': 'Amina'}], u'Le Dernier Qui A Parl\xe9', '3:16'),
-            ('23', [{'type': 'Main', 'name': 'Reda Taliani'}], 'Josephine', '4:07'),
-            ('24', [{'type': 'Main', 'name': 'ONB'}], 'Bnet Paris', '4:13'),
-            ('25', [{'type': 'Main', 'name': 'Ofra Haza'}], 'Im Nin Alu-2000', '3:30'),
-            ('26', [{'type': 'Main', 'name': 'Chaba Kheira'}], 'Ki Yaajabni Houbi', '4:01'),
-            ('27', [{'type': 'Main', 'name': 'Cheb Abbes'}], 'Mali Mali (Feat. Chabba Djenet)', '4:05'),
-            ('28', [{'type': 'Main', 'name': 'Cheb Bilal'}], 'Ntiya Omri Ntiya Ma Vie Version Salsa', '4:14'),
-            ('29', [{'type': 'Main', 'name': 'Faycal'}], 'Dour Dour', '4:07'),
-            ('30', [{'type': 'Main', 'name': 'Houari Manar'}], 'Wajh Ghnas', '4:03'),
-            ('31', [{'type': 'Main', 'name': 'Houary Dauphin'}], 'Maniche Aaref Chta Srali', '3:43'),
-            ('32', [{'type': 'Main', 'name': 'Mahfoud'}], 'One Two Three (Feat. Sonia & Univers)', '3:54'),
-            ('33', [{'type': 'Main', 'name': 'Kader Japonais'}], 'Shrouha Fort', '3:49'),
-            ('34', [{'type': 'Main', 'name': 'Zinou le Parisien'}], 'Chira Malha', '4:00'),
-            ('35', [{'type': 'Main', 'name': 'Hasni'}], 'Yaghazal', '4:02'),
-            ('36', [{'type': 'Main', 'name': 'Marsaoui'}], 'Chouli', '4:03'),
-            ('37', [{'type': 'Main', 'name': 'Rimitti'}], 'Liyah Liyah', '4:10'),
-            ('38', [{'type': 'Main', 'name': 'Rachida'}], 'Salou Salou', '3:51'),
-            ('39', [{'type': 'Main', 'name': 'Ouarda'}], 'Gendarme', '3:45'),
-            ('40', [{'type': 'Main', 'name': 'Rayan'}], 'Dana Dana (Feat. Rima)', '4:04')]},
-                    'link': 'http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770',
-                    'artists': [{'type': 'Main', 'name': u'Compilation Puissance Ra\xef RnB'}], 'genre': ['Musiques du monde', 'Musique']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = itunes.Release.release_from_url('http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770')
+        release_event = expected.create_release_event()
+        release_event.set_date('14 mars 2011')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        expected.set_title(u'Puissance Ra\xef RnB 2011')
+
+        artist = expected.create_artist()
+        artist.set_name(u'Compilation Puissance Ra\xef RnB')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Musiques du monde')
+        expected.append_genre('Musique')
+
+        expected.set_url('http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Alger Casa Tunis...Ou Paris (Feat. Ap Du 113 & Reda Taliani)')
+        track.set_length(263)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Idsa')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Marseille By Night')
+        track.set_length(220)
+        track_artist = expected.create_artist()
+        track_artist.set_name("L'algerino")
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Allez Allez (Feat. Amar)')
+        track.set_length(210)
+        track_artist = expected.create_artist()
+        track_artist.set_name('El Matador')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Bolly Rai (Feat. Tlf, Rayan & Amal)')
+        track.set_length(225)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Idsa')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Rani Mourak')
+        track.set_length(234)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hasni')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Enti Balouta')
+        track.set_length(228)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Zinou le Parisien')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Amour Kabyle (Feat. Alilou)')
+        track.set_length(231)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Black Barbie')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Hasni')
+        track.set_length(230)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Sahraoui')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Petitates')
+        track.set_length(233)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Marsaoui')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Hina Ou Hina')
+        track.set_length(238)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rimitti')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title("Ya H'Bibi")
+        track.set_length(228)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rachida')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title("Haya N'Aaaoulou")
+        track.set_length(227)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ouarda')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Jalouse')
+        track.set_length(254)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chaba Djenet')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Always On My Mind (Feat. Big Ali & Mohamed Lamine)')
+        track.set_length(200)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Idsa')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Chehal Fia Houssad Yehadrou')
+        track.set_length(246)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chaba Kheira')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title("L'Histoire Maak Bdate")
+        track.set_length(255)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Abbes')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('Habssine')
+        track.set_length(252)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Bilal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('Mathawache Alia')
+        track.set_length(256)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheba Faiza')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title('Manfoutakche Explosif Mix By Dj Meyd')
+        track.set_length(280)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Faycal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title('Tout Le Monde Danse (Remix) [Feat. Jesse Matador & Amal & Dollarman]')
+        track.set_length(220)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Idsa')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('21')
+        track.set_title('Rai Afrika (Feat. Big Ali)')
+        track.set_length(187)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Reda Taliani')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('22')
+        track.set_title('Citoyens Du Monde (Exclus) [Feat. Rahib]')
+        track.set_length(267)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Sixieme Sens')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('23')
+        track.set_title('On Va Danser (Feat. Alibi Montana)')
+        track.set_length(204)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Fouzi')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('24')
+        track.set_title('Hit The Rai Floor (Feat. Big Ali & Cheb Akil)')
+        track.set_length(224)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Idsa')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('25')
+        track.set_title('Laab Baid')
+        track.set_length(192)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Bilal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('26')
+        track.set_title('Manbghiche Alik (Feat. Mc Harage & Dj Faouzi)')
+        track.set_length(252)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Abbes')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('27')
+        track.set_title('One Two Three Khala Galbi Yevibri')
+        track.set_length(245)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Houari Manar')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('28')
+        track.set_title('Bla Bik')
+        track.set_length(238)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Kader Japonais')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('29')
+        track.set_title('Bouya')
+        track.set_length(238)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ouarda')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('30')
+        track.set_title('Chicoter (Feat. Jacky Brown & Akil)')
+        track.set_length(241)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Idsa')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('31')
+        track.set_title('Mathawsich Alia By Dj Zahir')
+        track.set_length(143)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Faycal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('32')
+        track.set_title('Ya Loukane Galbak')
+        track.set_length(237)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chaba Kheira')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('33')
+        track.set_title('Gouli Wine Rak Anaya Nejika')
+        track.set_length(299)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hasni Seghir')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('34')
+        track.set_title('La Corniche (Feat. Tunisiano & Zahouania) [Remix]')
+        track.set_length(243)
+        track_artist = expected.create_artist()
+        track_artist.set_name('DJ Goldfingers')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('35')
+        track.set_title('Bullit (Feat. Mokobe Du 113 & Sheryne)')
+        track.set_length(201)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Elephant Man')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('36')
+        track.set_title('Aar Rabi')
+        track.set_length(299)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rachida')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('37')
+        track.set_title('Ayet Manaalam')
+        track.set_length(313)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hasni')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('38')
+        track.set_title('All Rai On Me (Feat. Mohamed Lamine)')
+        track.set_length(203)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Shyneze')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('39')
+        track.set_title('Emmene Moi (Feat. Najim)')
+        track.set_length(223)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Swen')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('40')
+        track.set_title("M'Zia (Feat. Reda Taliani)")
+        track.set_length(234)
+        track_artist = expected.create_artist()
+        track_artist.set_name("L'algerino")
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('1 2 3 Viva Algeria')
+        track.set_length(279)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Algeria United')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Fort Fort')
+        track.set_length(204)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Milano & Torino')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Consulat')
+        track.set_length(232)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hasni')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'\xc7a Passe Ou \xc7a Casse (Feat. Tunisiano)')
+        track.set_length(186)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Reda Taliani')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Pas De Chance')
+        track.set_length(247)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Sahraoui')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Rani Mara Hna')
+        track.set_length(246)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Marsaoui')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Adabtek Nti Bizarre')
+        track.set_length(243)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Kader Japonais')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Kedab')
+        track.set_length(251)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chaba Djenet')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Achekek Abonne Duo Avec Abbes')
+        track.set_length(220)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chaba Kheira')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Fidel (Feat. Amine Dib)')
+        track.set_length(230)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Abbes')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Bafana Bafana')
+        track.set_length(284)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Bilal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Dalmouni')
+        track.set_length(235)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ouarda')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Sabat El Ouarda')
+        track.set_length(245)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rachida')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Rah Glaibi Andak')
+        track.set_length(223)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rimitti')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Ma Nebghik')
+        track.set_length(271)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Zinou le Parisien')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Galbi 4 Giga')
+        track.set_length(239)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheba Faiza')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('Dayarni Fi Ainih')
+        track.set_length(224)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheba Kheira')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('Nesimik Omri Youy Youy')
+        track.set_length(236)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Faycal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title('Andi Madama')
+        track.set_length(219)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hasni Seghir')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title('Charikat Non Tehleb')
+        track.set_length(217)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Houari Manar')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('21')
+        track.set_title('Aicha')
+        track.set_length(255)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Khaled')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('22')
+        track.set_title(u'Le Dernier Qui A Parl\xe9')
+        track.set_length(196)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Amina')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('23')
+        track.set_title('Josephine')
+        track.set_length(247)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Reda Taliani')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('24')
+        track.set_title('Bnet Paris')
+        track.set_length(253)
+        track_artist = expected.create_artist()
+        track_artist.set_name('ONB')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('25')
+        track.set_title('Im Nin Alu-2000')
+        track.set_length(210)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ofra Haza')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('26')
+        track.set_title('Ki Yaajabni Houbi')
+        track.set_length(241)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Chaba Kheira')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('27')
+        track.set_title('Mali Mali (Feat. Chabba Djenet)')
+        track.set_length(245)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Abbes')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('28')
+        track.set_title('Ntiya Omri Ntiya Ma Vie Version Salsa')
+        track.set_length(254)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Cheb Bilal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('29')
+        track.set_title('Dour Dour')
+        track.set_length(247)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Faycal')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('30')
+        track.set_title('Wajh Ghnas')
+        track.set_length(243)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Houari Manar')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('31')
+        track.set_title('Maniche Aaref Chta Srali')
+        track.set_length(223)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Houary Dauphin')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('32')
+        track.set_title('One Two Three (Feat. Sonia & Univers)')
+        track.set_length(234)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Mahfoud')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('33')
+        track.set_title('Shrouha Fort')
+        track.set_length(229)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Kader Japonais')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('34')
+        track.set_title('Chira Malha')
+        track.set_length(240)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Zinou le Parisien')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('35')
+        track.set_title('Yaghazal')
+        track.set_length(242)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Hasni')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('36')
+        track.set_title('Chouli')
+        track.set_length(243)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Marsaoui')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('37')
+        track.set_title('Liyah Liyah')
+        track.set_length(250)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rimitti')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('38')
+        track.set_title('Salou Salou')
+        track.set_length(231)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rachida')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('39')
+        track.set_title('Gendarme')
+        track.set_length(225)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Ouarda')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('40')
+        track.set_title('Dana Dana (Feat. Rima)')
+        track.set_length(244)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Rayan')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = itunes.ReleaseScraper.from_string('http://itunes.apple.com/fr/album/puissance-rai-rnb-2011/id423552770')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_tracknum_in_name_column(self):
-        expected = {'title': 'Chopin: Piano Works', 'released': 'Jun 01, 2005', 'discs': {
-            1: [('1', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'No. 1. in C', '2:16'), (
-                '2', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 2. in A Minor "chromatique"',
-                '1:24'), (
-                    '3', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 3. in E "Tristesse"',
-                    '4:03'), (
-                    '4', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 4. in C-Sharp Minor',
-                    '2:08'), ('5', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                              '12 Etudes, Op.10: No. 5. in G-Flat "Black Keys"', '1:42'), (
-                    '6', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 6. in E-Flat Minor',
-                    '3:15'),
-                ('7', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 7. in C', '1:32'),
-                ('8', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 8. in F', '2:43'),
-                ('9', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 9. in F Minor', '2:17'),
-                ('10', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 10. in A-Flat', '2:20'),
-                ('11', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.10: No. 11. in E-Flat', '2:15'),
-                ('12', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                 '12 Etudes, Op.10: No. 12. in C Minor "Revolutionary"', '2:53'),
-                ('13', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'No. 1 in A-Flat - "Harp Study"', '2:51'),
-                ('14', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 2 in F Minor', '1:32'),
-                ('15', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 3 in F Major', '1:43'),
-                ('16', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 4 in A Minor', '1:28'),
-                ('17', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 5 in E Minor', '3:18'),
-                ('18', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 6 in G-Sharp Minor',
-                 '1:57'), (
-                    '19', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 7 in C-Sharp Minor',
-                    '5:12'),
-                ('20', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 8 in D-Flat', '1:06'), (
-                    '21', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                    '12 Etudes, Op.25: No. 9 in G-Flat, "Butterfly Wings"', '1:02'),
-                ('22', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], '12 Etudes, Op.25: No. 10 in B Minor', '4:04'),
-                ('23', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                 '12 Etudes, Op.25: No. 11 in A Minor "Winter Wind"', '3:35'),
-                ('24', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'No. 12 in C Minor', '2:48'),
-                ('25', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Impromptu No. 1 in A-Flat, Op.29', '3:53'),
-                ('26', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Impromptu No. 2 in F-Sharp, Op.36', '5:51'),
-                ('27', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Impromptu No. 3 in G-Flat, Op.51', '4:44'), (
-                    '28', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                    'Impromptu No. 4 in C-Sharp Minor, Op. 66 "Fantaisie-Impromptu"', '4:51')],
-            2: [('1', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'I. Grave - Doppio Movimento', '5:31'), (
-                '2', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], u'II. Scherzo - Pi\xf9 Lento - Tempo I', '6:37'),
-                ('3', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], u'III. Marche Fun\xe8bre (Lento)', '8:23'),
-                ('4', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'IV. Finale (Presto)', '1:37'),
-                ('5', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'I. Allegro Maestoso', '8:53'),
-                ('6', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'II. Scherzo (Molto Vivace)', '2:50'),
-                ('7', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'III. Largo', '9:21'),
-                ('8', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'IV. Finale (Presto Non Tanto)', '5:09'), (
-                    '9', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 54 in D: Allegro Non Troppo',
-                    '1:11'), (
-                    '10', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 46 in C Op.67 No.3: Allegretto',
-                    '1:28'), ('11', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                              'Mazurka No. 49 in A Minor Op. 68, No. 2: Lento', '2:35'), (
-                    '12', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 5 in B-Flat Op. 7, No. 1: Vivace',
-                    '2:20'), ('13', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                              'Introduction and Variations On a German National Air Op.posth. (KK 925-927)', '6:27'), (
-                    '14', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Mazurka No. 58 in A-Flat: Poco Mosso', '1:17'),
-                ('15', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Berceuse in D-Flat, Op. 57: Andante', '5:16'),
-                ('16', [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}],
-                 'Polonaise No. 6 in A-Flat, Op. 53 -"Heroic": Maestoso', '6:53')], 3: [('1', [
-            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Jerzy Semkow'},
-            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'I. Allegro Maestoso', '20:15'), ('2', [
-            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Jerzy Semkow'},
-            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'II. Romance (Larghetto)', '10:36'), ('3', [
-            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Jerzy Semkow'},
-            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'III. Rondo (Vivace)', '10:19'), ('4', [
-            {'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Janos Kulka'},
-            {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Piano Concerto No. 2 in F Minor, Op. 21: I. Maestoso', '15:01'),
-            ('5', [{'type': 'Main', 'name': u'Berliner Philharmoniker'}, {'type': 'Main', 'name': u'Janos Kulka'},
-                   {'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Piano Concerto No. 2 in F Minor, Op. 21: II. Larghetto', '9:43'),
-            ('6', [{'type': 'Main', 'name': u'Berliner Philharmoniker'},
-                   {'type': 'Main','name': u'Janos Kulka'},
-                   {'type': 'Main','name': u'Tam\xe1s V\xe1s\xe1ry'}], 'Piano Concerto No. 2 in F Minor, Op. 21: III. Allegro Vivace', '8:44')]},
-                    'link': 'https://itunes.apple.com/us/album/chopin-piano-works/id77261376',
-                    'artists': [{'type': 'Main', 'name': u'Tam\xe1s V\xe1s\xe1ry'}], 'genre': ['Classical']}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = itunes.Release.release_from_url('https://itunes.apple.com/us/album/chopin-piano-works/id77261376')
+        release_event = expected.create_release_event()
+        release_event.set_date('Jun 01, 2005')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format(None)
+
+        expected.set_title('Chopin: Piano Works')
+
+        artist = expected.create_artist()
+        artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Classical')
+
+        expected.set_url('https://itunes.apple.com/us/album/chopin-piano-works/id77261376')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('No. 1. in C')
+        track.set_length(136)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('12 Etudes, Op.10: No. 2. in A Minor "chromatique"')
+        track.set_length(84)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('12 Etudes, Op.10: No. 3. in E "Tristesse"')
+        track.set_length(243)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('12 Etudes, Op.10: No. 4. in C-Sharp Minor')
+        track.set_length(128)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('12 Etudes, Op.10: No. 5. in G-Flat "Black Keys"')
+        track.set_length(102)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('12 Etudes, Op.10: No. 6. in E-Flat Minor')
+        track.set_length(195)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('12 Etudes, Op.10: No. 7. in C')
+        track.set_length(92)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('12 Etudes, Op.10: No. 8. in F')
+        track.set_length(163)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('12 Etudes, Op.10: No. 9. in F Minor')
+        track.set_length(137)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('12 Etudes, Op.10: No. 10. in A-Flat')
+        track.set_length(140)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('12 Etudes, Op.10: No. 11. in E-Flat')
+        track.set_length(135)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('12 Etudes, Op.10: No. 12. in C Minor "Revolutionary"')
+        track.set_length(173)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('No. 1 in A-Flat - "Harp Study"')
+        track.set_length(171)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('12 Etudes, Op.25: No. 2 in F Minor')
+        track.set_length(92)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('12 Etudes, Op.25: No. 3 in F Major')
+        track.set_length(103)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('12 Etudes, Op.25: No. 4 in A Minor')
+        track.set_length(88)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('12 Etudes, Op.25: No. 5 in E Minor')
+        track.set_length(198)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('12 Etudes, Op.25: No. 6 in G-Sharp Minor')
+        track.set_length(117)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title('12 Etudes, Op.25: No. 7 in C-Sharp Minor')
+        track.set_length(312)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title('12 Etudes, Op.25: No. 8 in D-Flat')
+        track.set_length(66)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('21')
+        track.set_title('12 Etudes, Op.25: No. 9 in G-Flat, "Butterfly Wings"')
+        track.set_length(62)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('22')
+        track.set_title('12 Etudes, Op.25: No. 10 in B Minor')
+        track.set_length(244)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('23')
+        track.set_title('12 Etudes, Op.25: No. 11 in A Minor "Winter Wind"')
+        track.set_length(215)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('24')
+        track.set_title('No. 12 in C Minor')
+        track.set_length(168)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('25')
+        track.set_title('Impromptu No. 1 in A-Flat, Op.29')
+        track.set_length(233)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('26')
+        track.set_title('Impromptu No. 2 in F-Sharp, Op.36')
+        track.set_length(351)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('27')
+        track.set_title('Impromptu No. 3 in G-Flat, Op.51')
+        track.set_length(284)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('28')
+        track.set_title('Impromptu No. 4 in C-Sharp Minor, Op. 66 "Fantaisie-Impromptu"')
+        track.set_length(291)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('I. Grave - Doppio Movimento')
+        track.set_length(331)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'II. Scherzo - Pi\xf9 Lento - Tempo I')
+        track.set_length(397)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'III. Marche Fun\xe8bre (Lento)')
+        track.set_length(503)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('IV. Finale (Presto)')
+        track.set_length(97)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('I. Allegro Maestoso')
+        track.set_length(533)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('II. Scherzo (Molto Vivace)')
+        track.set_length(170)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('III. Largo')
+        track.set_length(561)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('IV. Finale (Presto Non Tanto)')
+        track.set_length(309)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Mazurka No. 54 in D: Allegro Non Troppo')
+        track.set_length(71)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Mazurka No. 46 in C Op.67 No.3: Allegretto')
+        track.set_length(88)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Mazurka No. 49 in A Minor Op. 68, No. 2: Lento')
+        track.set_length(155)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Mazurka No. 5 in B-Flat Op. 7, No. 1: Vivace')
+        track.set_length(140)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Introduction and Variations On a German National Air Op.posth. (KK 925-927)')
+        track.set_length(387)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Mazurka No. 58 in A-Flat: Poco Mosso')
+        track.set_length(77)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Berceuse in D-Flat, Op. 57: Andante')
+        track.set_length(316)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Polonaise No. 6 in A-Flat, Op. 53 -"Heroic": Maestoso')
+        track.set_length(413)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(3)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('I. Allegro Maestoso')
+        track.set_length(1215)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Jerzy Semkow')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('II. Romance (Larghetto)')
+        track.set_length(636)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Jerzy Semkow')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('III. Rondo (Vivace)')
+        track.set_length(619)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Jerzy Semkow')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Piano Concerto No. 2 in F Minor, Op. 21: I. Maestoso')
+        track.set_length(901)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Janos Kulka')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Piano Concerto No. 2 in F Minor, Op. 21: II. Larghetto')
+        track.set_length(583)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Janos Kulka')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Piano Concerto No. 2 in F Minor, Op. 21: III. Allegro Vivace')
+        track.set_length(524)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Janos Kulka')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = itunes.ReleaseScraper.from_string('https://itunes.apple.com/us/album/chopin-piano-works/id77261376')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = itunes.Release.release_from_url('http://itunes.apple.com/us/album/blubb/id999999999999')
-        try:
-            r.data
-            self.assertFalse(True)
-        except itunes.iTunesAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = itunes.ReleaseScraper.from_string('http://itunes.apple.com/us/album/blubb/id999999999999')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_non_us_404(self):
-        r = itunes.Release.release_from_url('http://itunes.apple.com/fr/album/blubb/id999999999999')
-        try:
-            r.data
-            self.assertFalse(True)
-        except itunes.iTunesAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = itunes.ReleaseScraper.from_string('http://itunes.apple.com/fr/album/blubb/id999999999999')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
 
 class BandcampTest(TestCase):
     maxDiff = None
 
     def test_album_with_band_name(self):
-        expected = {'artists': [{'type': 'Main', 'name': u'Love Sex Machine'}], 'released': u'2012',
-                    'title': u'Love Sex Machine', 'discs': {
-            1: [('1', [], u'Anal On Deceased Virgin', u'5:35'), ('2', [], u'Deafening Peepshow', u'4:30'),
-                ('3', [], u'Fucking Battle', u'2:37'), ('4', [], u'Antagonism Can STFU', u'2:59'),
-                ('5', [], u'Plenty Of Feelings', u'2:26'), ('6', [], u'Vagina Curse', u'5:20'),
-                ('7', [], u'Killed With A Monster Cock', u'4:44'), ('8', [], u'Warstrike Takes The Piss', u'4:35')]},
-                    'format': 'WEB release', 'link': 'http://music.throatruinerrecords.com/album/love-sex-machine'}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = bandcamp.Release.release_from_url('http://music.throatruinerrecords.com/album/love-sex-machine')
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2012')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('WEB release')
 
-    def test_album_without_band_name(self):
-        expected = {'artists': [{'type': 'Main', 'name': u'BORN'}], 'released': u'2012', 'title': u'THE WAKE',
-                    'discs': {1: [('1', [], u'STILL- BORN', u'3:21'), ('2', [], u'THE FEELING', u'4:26'),
-                                  ('3', [], u'MIC CHECK', u'3:06'), ('4', [], u'WRITERS BLOCK', u'3:54'),
-                                  ('5', [], u'VIRGINS', u'4:35'),
-                                  ('6', [], u'THE PAIN ft. Alley Cat, Barry Smooth, Rome', u'4:32'),
-                                  ('7', [], u'THE B-SIDE', u'3:53'),
-                                  ('8', [], u'TOMORROW NEVER COMES ft. Jenna Messer', u'4:59'),
-                                  ('9', [], u'DEFINITION OF HEAVEN ft. Barry Smooth', u'3:38'),
-                                  ('10', [], u'OUTTA WORK VIDEO GIRL', u'3:50'), ('11', [], u'CASSADAGA', u'3:41'),
-                                  ('12', [], u'THE DREAMS OVER', u'4:24')]}, 'format': 'WEB release',
-                    'link': 'http://bornmc.bandcamp.com/album/the-wake',}
+        expected.set_title(u'Love Sex Machine')
 
-        r = bandcamp.Release.release_from_url('http://bornmc.bandcamp.com/album/the-wake')
+        artist = expected.create_artist()
+        artist.set_name(u'Love Sex Machine')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
 
-        self.assertEqual(expected, r.data)
+        expected.set_url('http://music.throatruinerrecords.com/album/love-sex-machine')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Anal On Deceased Virgin')
+        track.set_length(335)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Deafening Peepshow')
+        track.set_length(270)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Fucking Battle')
+        track.set_length(157)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Antagonism Can STFU')
+        track.set_length(179)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'Plenty Of Feelings')
+        track.set_length(147)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title(u'Vagina Curse')
+        track.set_length(320)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'Killed With A Monster Cock')
+        track.set_length(284)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title(u'Warstrike Takes The Piss')
+        track.set_length(275)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = bandcamp.ReleaseScraper.from_string('http://music.throatruinerrecords.com/album/love-sex-machine')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    # there was a test with this name, but I don't know what it did...
+    # def test_album_without_band_name(self):
+    #     pass
+
+    def test_album_with_various_artists(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2013')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
+
+        expected.set_format('WEB release')
+
+        expected.set_title(u'Indietracks Compilation 2013')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://indietracks.bandcamp.com/album/indietracks-compilation-2013')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'If You Still Want Him')
+        track.set_length(250)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The French Defence')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Is Anybody Out There?')
+        track.set_length(246)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Ballet')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Rulers And The States')
+        track.set_length(165)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'bis')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Temporary Tattoo')
+        track.set_length(171)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Lardpony')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'Always Want Us To')
+        track.set_length(192)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'EXPENSIVE')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title(u'Stockport')
+        track.set_length(328)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Wake')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'Secret')
+        track.set_length(132)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Frozy')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title(u'Jackie')
+        track.set_length(218)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Understudies')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title(u'Ticket Machine')
+        track.set_length(184)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Making Marks')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title(u'Echoing Days')
+        track.set_length(204)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Monnone Alone')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title(u'Swanwick Junction')
+        track.set_length(172)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Northern Spies')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title(u'Terrible Things')
+        track.set_length(141)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Owl & Mouse')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title(u"She'll Come Back for Indian Summer")
+        track.set_length(218)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Alpaca Sports')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title(u'Glockelbar')
+        track.set_length(137)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Haiku Salut')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title(u'Astronaut')
+        track.set_length(190)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Woog Riots')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title(u'Tut Tut Tut')
+        track.set_length(150)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Tuts')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title(u'Mosaic')
+        track.set_length(161)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Fear Of Men')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title(u'Only You')
+        track.set_length(194)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Big Wave')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('19')
+        track.set_title(u'The Things That You Said')
+        track.set_length(200)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Fireworks')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('20')
+        track.set_title(u'Glue')
+        track.set_length(276)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Fever Dream')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('21')
+        track.set_title(u'Slackjawed')
+        track.set_length(175)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Tunabunny')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('22')
+        track.set_title(u'Lie')
+        track.set_length(224)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Cars Can Be Blue')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('23')
+        track.set_title(u'Br\xe4nn\xf6')
+        track.set_length(223)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Finnmark!')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('24')
+        track.set_title(u'Sorry')
+        track.set_length(166)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Art Club')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('25')
+        track.set_title(u'Food')
+        track.set_length(181)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Lovely Eggs')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('26')
+        track.set_title(u'Clean Up Yr Own Shit, Pal')
+        track.set_length(132)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Good Grief')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('27')
+        track.set_title(u'Sycamore')
+        track.set_length(162)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Martha')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('28')
+        track.set_title(u'Disappear')
+        track.set_length(147)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Bloomer')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('29')
+        track.set_title(u'You Held My Hand')
+        track.set_length(158)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Flowers')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('30')
+        track.set_title(u'J.K.')
+        track.set_length(139)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'David Leach')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('31')
+        track.set_title(u'Always Thought')
+        track.set_length(294)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Jupiter In Jars')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('32')
+        track.set_title(u'My Old Friend')
+        track.set_length(164)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u"Enderby's Room")
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('33')
+        track.set_title(u'I Got The Answer')
+        track.set_length(172)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Magic Theatre')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('34')
+        track.set_title(u'I Love You')
+        track.set_length(178)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Wave Pictures')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('35')
+        track.set_title(u'Pilot Light')
+        track.set_length(234)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Pete Green')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('36')
+        track.set_title(u"Let's Go Surfing")
+        track.set_length(181)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Helen Love')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('37')
+        track.set_title(u'Summer, You And Me')
+        track.set_length(180)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'When Nalda Became Punk')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('38')
+        track.set_title(u'Secret Wish')
+        track.set_length(89)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The McTells')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('39')
+        track.set_title(u'Better Than Love')
+        track.set_length(163)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Pale Spectres')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('40')
+        track.set_title(u'Without You')
+        track.set_length(147)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Milky Wimpshake')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('41')
+        track.set_title(u"Let's Stay Undecided")
+        track.set_length(181)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Soulboy Collective mit Antenne Danger')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('42')
+        track.set_title(u'Age Of Victoria')
+        track.set_length(261)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Secret History')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('43')
+        track.set_title(u'Eating Me, Eating You')
+        track.set_length(202)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Beautiful Word')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('44')
+        track.set_title(u'Scared And Worried')
+        track.set_length(142)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Without Feathers')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('45')
+        track.set_title(u'Save Me')
+        track.set_length(155)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Choo Choo Trains')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('46')
+        track.set_title(u'Evil/Shy (Acoustic Version)')
+        track.set_length(187)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'The Mini Skips')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('47')
+        track.set_title(u'Slow Trains')
+        track.set_length(201)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'anaesthetics')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = bandcamp.ReleaseScraper.from_string('http://indietracks.bandcamp.com/album/indietracks-compilation-2013')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_album_with_track_artist(self):
-        expected = {'title': u'Love Everyday EP', 'format': 'WEB release', 'released': u'2012', 'discs': {
-            1: [('1', [], u'For You', u'1:31'), ('2', [], u'Love Everyday', u'3:30'), ('3', [], u'Stole the Show', u'2:57'),
-                ('4', [], u'Love is a Song', u'4:52'), ('5', [], u'Body High ft. Breezy Lovejoy & Jose Rios', u'4:26'),
-                ('6', [], u'Not Right Now ft. Wax', u'2:53'),
-                ('7', [{'type': 'Main', 'name': u'Breezy Lovejoy'}], u'Breezy Lovejoy - Paradise', u'3:22')]},
-                    'link': 'http://music.dumbfoundead.com/album/love-everyday-ep',
-                    'artists': [{'type': 'Main', 'name': u'Dumbfoundead'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = bandcamp.Release.release_from_url('http://music.dumbfoundead.com/album/love-everyday-ep')
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2012')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('WEB release')
+
+        expected.set_title(u'Love Everyday EP')
+
+        artist = expected.create_artist()
+        artist.set_name(u'Dumbfoundead')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://music.dumbfoundead.com/album/love-everyday-ep')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'For You')
+        track.set_length(91)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Love Everyday')
+        track.set_length(211)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Stole the Show')
+        track.set_length(177)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Love is a Song')
+        track.set_length(292)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'Body High ft. Breezy Lovejoy & Jose Rios')
+        track.set_length(267)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title(u'Not Right Now ft. Wax')
+        track.set_length(173)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'Breezy Lovejoy - Paradise')
+        track.set_length(202)
+        track_artist = expected.create_artist()
+        track_artist.set_name(u'Breezy Lovejoy')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = bandcamp.ReleaseScraper.from_string('http://music.dumbfoundead.com/album/love-everyday-ep')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_album_with_utf8_characters(self):
-        expected = {'title': u'Illusions', 'format': 'WEB release', 'released': u'2012', 'discs': {
-            1: [('1', [], u'Sugar High', u'2:41'), ('2', [], u'Illusion (feat. Brenton Mattheus)', u'4:26'),
-                ('3', [], u'Beer Remastered', u'4:41'), ('4', [], u'Snowfall', u'4:30'), ('5', [], u'Love Theory', u'2:37'),
-                ('6', [], u'Canc\xfan', u'4:17'), ('7', [], u'South Side', u'4:28'),
-                ('8', [], u'Illusion (Instrumental)', u'4:26'), ('9', [], u'Love Theory (Instrumental)', u'2:37'),
-                ('10', [], u'Illusion (Extended Mix) [feat. Brenton Mattheus]', u'6:11'),
-                ('11', [], u'Beer Remastered (Extended Mix)', u'7:00'), ('12', [], u'Snowfall (Extended Mix)', u'7:04'),
-                ('13', [], u'Love Theory (Extended Mix)', u'4:58'), ('14', [], u'Canc\xfan (Extended Mix)', u'6:13'),
-                ('15', [], u'South Side (Extended Mix)', u'6:13'), ('16', [], u'Illusions Continuous Mix', u'33:37'),
-                ('17', [], u'Illusions Continuous Instrumental Mix', u'33:37')]},
-                    'link': 'http://music.approachingnirvana.com/album/illusions',
-                    'artists': [{'type': 'Main', 'name': u'Approaching Nirvana'}]}
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
 
-        r = bandcamp.Release.release_from_url('http://music.approachingnirvana.com/album/illusions')
+        release_event = expected.create_release_event()
+        release_event.set_date(u'2012')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
 
-        self.assertEqual(expected, r.data)
+        expected.set_format('WEB release')
+
+        expected.set_title(u'Illusions')
+
+        artist = expected.create_artist()
+        artist.set_name(u'Approaching Nirvana')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://music.approachingnirvana.com/album/illusions')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Sugar High')
+        track.set_length(162)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Illusion (feat. Brenton Mattheus)')
+        track.set_length(267)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title(u'Beer Remastered')
+        track.set_length(281)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title(u'Snowfall')
+        track.set_length(270)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'Love Theory')
+        track.set_length(157)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title(u'Canc\xfan')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'South Side')
+        track.set_length(268)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title(u'Illusion (Instrumental)')
+        track.set_length(267)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title(u'Love Theory (Instrumental)')
+        track.set_length(157)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title(u'Illusion (Extended Mix) [feat. Brenton Mattheus]')
+        track.set_length(372)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title(u'Beer Remastered (Extended Mix)')
+        track.set_length(420)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title(u'Snowfall (Extended Mix)')
+        track.set_length(424)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title(u'Love Theory (Extended Mix)')
+        track.set_length(299)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title(u'Canc\xfan (Extended Mix)')
+        track.set_length(374)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title(u'South Side (Extended Mix)')
+        track.set_length(374)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title(u'Illusions Continuous Mix')
+        track.set_length(2018)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title(u'Illusions Continuous Instrumental Mix')
+        track.set_length(2018)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = bandcamp.ReleaseScraper.from_string('http://music.approachingnirvana.com/album/illusions')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
-        r = bandcamp.Release.release_from_url('http://blubb.bla.com/album/blubb')
-        try:
-            r.data
-            self.assertFalse(True)
-        except bandcamp.BandcampAPIError as e:
-            if not unicode(e).startswith('404 '):
-                raise e
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = bandcamp.ReleaseScraper.from_string('http://blubb.bla.com/album/blubb')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
