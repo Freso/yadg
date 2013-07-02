@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %}{% load url from future %}
 
 {% block title%}Settings – {% endblock %}
 
@@ -10,7 +10,7 @@
     
     <div class="alert alert-info">In order for this to work, you have to allow cookies from YADG to be saved in your browser. Furthermore you cannot block the referer for this site.</div>
     
-    <form action="{% url settings %}" method="post">
+    <form action="{% url 'settings' %}" method="post">
         {% csrf_token %}
         <fieldset xmlns="http://www.w3.org/1999/xhtml">
             <legend>Settings</legend>

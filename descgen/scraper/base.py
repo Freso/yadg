@@ -1,12 +1,15 @@
-import requests, re, logging
+import requests
+import re
+import logging
 
 
-class BaseAPIError(Exception):
+class ScraperError(Exception):
     pass
 
 
 class ExceptionMixin(object):
-    exception = BaseAPIError
+
+    exception = ScraperError
 
     def get_exception(self):
         return self.exception
@@ -21,47 +24,52 @@ class StatusCodeError(requests.RequestException):
 
 
 class RequestMixin(object):
-    REQUEST_METHOD_POST = 'post'
-    REQUEST_METHOD_GET = 'get'
 
-    url = None
-    params = None
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0.2) Gecko/20100101 Firefox/6.0.2'}
-    request_method = REQUEST_METHOD_GET
-    post_data = None
+    REQUEST_METHOD_POST = "post"
+    REQUEST_METHOD_GET = "get"
+
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:21.0) Gecko/20100101 Firefox/21.0'}
     request_kwargs = {}
     forced_response_encoding = None
 
-    _cached_response = None
+    def __init__(self):
+        super(RequestMixin, self).__init__()
+        self.initialize_new_session()
 
     def _make_request(self, method, url, params, headers, post_data, kwargs):
         """
         The internal method that makes the actual request and returns a response object. This should normally not be used
         directly.
         """
+        if headers is None:
+            headers = self.get_headers()
+        if kwargs is None:
+            kwargs = self.get_request_kwargs()
         if method == self.REQUEST_METHOD_POST:
-            r = requests.post(url=url, data=post_data, params=params, headers=headers, **kwargs)
+            r = self.session.post(url=url, data=post_data, params=params, headers=headers, **kwargs)
         else:
-            r = requests.get(url=url, params=params, headers=headers, **kwargs)
+            r = self.session.get(url=url, params=params, headers=headers, **kwargs)
+        if r.status_code != 200:
+            self.raise_request_exception(r.status_code if r.status_code else 500)
+        forced_encoding = self.get_forced_response_encoding()
+        if forced_encoding:
+            r.encoding = forced_encoding
         return r
+
+    def request_get(self, url, params=None, headers=None, kwargs=None):
+        return self._make_request(method=self.REQUEST_METHOD_GET, url=url, params=params, headers=headers, post_data=None, kwargs=kwargs)
+
+    def request_post(self, url, post_data=None, params=None, headers=None, kwargs=None):
+        return self._make_request(method=self.REQUEST_METHOD_GET, url=url, params=params, headers=headers, post_data=post_data, kwargs=kwargs)
+
+    def initialize_new_session(self):
+        self.session = requests.Session()
 
     def raise_request_exception(self, message):
         raise StatusCodeError(message)
 
-    def get_url(self):
-        return self.url
-
-    def get_params(self):
-        return self.params
-
     def get_headers(self):
         return self.headers
-
-    def get_request_method(self):
-        return self.request_method
-
-    def get_post_data(self):
-        return self.post_data
 
     def get_request_kwargs(self):
         return self.request_kwargs
@@ -72,18 +80,9 @@ class RequestMixin(object):
     def get_response_content(self, response):
         return response.text
 
-    def get_response(self):
-        if self._cached_response is None:
-            self._cached_response = self._make_request(method=self.get_request_method(), url=self.get_url(), params=self.get_params(), headers=self.get_headers(), post_data=self.get_post_data(), kwargs=self.get_request_kwargs())
-            if self._cached_response.status_code != 200:
-                self.raise_request_exception('%d' % (self._cached_response.status_code if self._cached_response.status_code else 500)) #make sure we don't crash
-            forced_encoding = self.get_forced_response_encoding()
-            if forced_encoding:
-                self._cached_response.encoding = forced_encoding
-        return self._cached_response
-
 
 class UtilityMixin(object):
+
     presuffixes = [
         (u'The ', u', The'),
         (u'A ', u', A'),
@@ -120,317 +119,114 @@ class LoggerMixin(object):
         return self._logger
 
     def get_extra_log_kwargs(self):
-        return {'instance':unicode(self)}
+        return {'instance': unicode(self)}
 
     def log(self, level, msg):
         logger = self.get_logger()
         logger.log(level, msg, extra=self.get_extra_log_kwargs())
 
+    def log_debug(self, msg):
+        self.log(self.DEBUG, msg)
 
-class BaseRelease(ExceptionMixin, RequestMixin, UtilityMixin, LoggerMixin):
-    ARTIST_TYPE_MAIN = 'Main'
-    ARTIST_TYPE_FEATURE = 'Feature'
-    ARTIST_TYPE_REMIXER = 'Remixer'
-    ARTIST_NAME_VARIOUS = 'Various'
+    def log_info(self, msg):
+        self.log(self.INFO, msg)
 
-    url_regex = ''
+    def log_warning(self, msg):
+        self.log(self.WARNING, msg)
 
-    _data = None
-    _release_url = None
+    def log_error(self, msg):
+        self.log(self.ERROR, msg)
 
-    priority = 10
+    def log_critical(self, msg):
+        self.log(self.CRITICAL, msg)
 
-    def raise_request_exception(self, message):
-        """
-        Make sure the RequestMixin uses ExceptionMixin
-        """
-        self.raise_exception(message)
 
-    @property
-    def data(self):
-        if self._data is None:
-            self._data = self._extract_infos()
-        return self._data
+class Scraper(object):
 
-    @property
-    def release_url(self):
-        if self._release_url is not None:
-            return self._release_url
-        return self.get_release_url()
+    string_regex = None
 
-    def get_release_url(self):
-        """
-        This method should return the URL of the release as a string or None.
-        """
-        return None
+    def __init__(self):
+        super(Scraper, self).__init__()
+        self.name = None
+        self.original_string = None
 
-    def format_artist(self, artistName, artistType):
-        """
-        This method returns a formatted artist with it's type.
-        """
-        return {'name': artistName, 'type': artistType}
+    def get_result(self):
+        raise NotImplementedError()
 
-    def prepare_response_content(self, content):
-        """
-        This method is called before any other parsing method with the raw content of the response.
-        """
-        pass
+    def set_name(self, name):
+        self.name = name
 
-    def get_release_date(self):
-        """
-        This method should return the release date as a string or None.
-        """
-        return None
+    def get_name(self):
+        return self.name
 
-    def get_release_format(self):
-        """
-        This method should return the format of the release as a string or None.
-        """
-        return None
+    def set_original_string(self, original_url):
+        self.original_string = original_url
 
-    def get_labels(self):
-        """
-        This method should return a list of labels or an empty list.
-        """
-        return []
+    def get_original_string(self):
+        return self.original_string
 
-    def get_catalog_numbers(self):
-        """
-        This method should return a list of catalog numbers or an empty list.
-        """
-        return []
-
-    def get_release_title(self):
-        """
-        This method should return the release title as a string or None.
-        """
-        return None
-
-    def get_release_country(self):
-        """
-        This method should return the release country as a string or None
-        """
-        return None
-
-    def get_release_artists(self):
-        """
-        This method should return a list of the main release artists or an empty list.
-        """
-        return []
-
-    def get_genres(self):
-        """
-        This method should return a list of genres for the release or an emtpy list.
-        """
-        return []
-
-    def get_styles(self):
-        """
-        This method should return a list of styles for the release or an empty list.
-        """
-        return []
-
-    def get_disc_containers(self):
-        """
-        This method should return a dictionary where each entry's key is the disc number and the corresponding value is
-        a kwarg dict that should be passed to get_track_containers
-        """
-        return {}
-
-    def get_disc_title(self, discContainer):
-        """
-        This method should return the title of the given disc as a string or None.
-        """
-        return None
-
-    def get_track_containers(self, discContainer):
-        """
-        This method should return a list where each entry is a kwarg dict that will be passed to the get_track_*
-        methods.
-        """
-        return []
-
-    def get_track_number(self, trackContainer):
-        """
-        This method should return the track number as a string or None.
-        """
-        return None
-
-    def get_track_artists(self, trackContainer):
-        """
-        This method should return a list of track artists of an empty list.
-        """
-        return []
-
-    def get_track_title(self, trackContainer):
-        """
-        This method should return the track title as a string or None.
-        """
-        return None
-
-    def get_track_length(self, trackContainer):
-        """
-        This method should return the track length as a string or None.
-        """
-        return None
-
-    def _extract_infos(self):
-        data = {}
-
-        response = self.get_response()
-
-        self.prepare_response_content(self.get_response_content(response))
-
-        releaseDate = self.get_release_date()
-        if releaseDate:
-            data['released'] = releaseDate
-
-        releaseFormat = self.get_release_format()
-        if releaseFormat:
-            data['format'] = releaseFormat
-
-        labels = self.get_labels()
-        if labels:
-            data['label'] = labels
-
-        catalogNumbers = self.get_catalog_numbers()
-        if catalogNumbers:
-            data['catalog'] = catalogNumbers
-
-        releaseTitle = self.get_release_title()
-        if releaseTitle:
-            data['title'] = releaseTitle
-
-        releaseArtists = self.get_release_artists()
-        if releaseArtists:
-            data['artists'] = releaseArtists
-
-        genres = self.get_genres()
-        if genres:
-            data['genre'] = genres
-
-        styles = self.get_styles()
-        if styles:
-            data['style'] = styles
-
-        releaseCountry = self.get_release_country()
-        if releaseCountry:
-            data['country'] = releaseCountry
-
-        releaseUrl = self.release_url
-        if releaseUrl:
-            data['link'] = releaseUrl
-
-        discContainers = self.get_disc_containers()
-        discs = {}
-        discTitles = {}
-        for discIndex in discContainers:
-            discs[discIndex] = []
-
-            discTitle = self.get_disc_title(discContainers[discIndex])
-            if discTitle:
-                discTitles[discIndex] = discTitle
-
-            trackContainers = self.get_track_containers(discContainers[discIndex])
-
-            for trackContainer in trackContainers:
-                trackNumber = self.get_track_number(trackContainer)
-                trackArtists = self.get_track_artists(trackContainer)
-                trackTitle = self.get_track_title(trackContainer)
-                trackLength = self.get_track_length(trackContainer)
-
-                discs[discIndex].append((trackNumber, trackArtists, trackTitle, trackLength))
-        if discs:
-            data['discs'] = discs
-        if discTitles:
-            data['discTitles'] = discTitles
-
-        return data
+    def get_instance_info(self):
+        return u""
 
     @staticmethod
     def _get_args_from_match(match):
         return match.groups()
 
     @classmethod
-    def release_from_url(cls, url):
-        m = re.match(cls.url_regex,url)
-        if m:
-            release = cls(*cls._get_args_from_match(m))
-            release._release_url = url
-            return release
-        else:
-            return None
-
-
-class BaseSearch(ExceptionMixin, RequestMixin, UtilityMixin, LoggerMixin):
-    _releases = None
-
-    def raise_request_exception(self, message):
-        """
-        Make sure the RequestMixin uses ExceptionMixin
-        """
-        self.raise_exception(message)
-
-    def __init__(self, searchTerm):
-        """
-        This method creates a new instance of a search with the given tern. The term is saved in an instance attribute
-        called 'search_term'.
-        """
-        self.search_term = searchTerm
-
-    @property
-    def releases(self):
-        if self._releases is None:
-            self._releases = self._extract_releases()
-        return self._releases
-
-    def prepare_response_content(self, content):
-        """
-        This method is called before any other parsing method with the raw content of the response.
-        """
-        pass
-
-    def get_release_containers(self):
-        """
-        This method should return a list where each entry is an argument that will be passed to the get_release_*
-        methods.
-        """
-        return []
-
-    def get_release_name(self,releaseContainer):
-        """
-        This method should return the release name as a string or None.
-        """
+    def from_string(cls, string):
+        if cls.string_regex is not None:
+            m = re.match(cls.string_regex, string)
+            if m:
+                scraper = cls(*cls._get_args_from_match(m))
+                scraper.set_original_string(string)
+                return scraper
         return None
 
-    def get_release_info(self,releaseContainer):
-        """
-        This method should return the release info as a string or None.
-        """
+    def __unicode__(self):
+        return u"<%s: %s>" % (self.__class__.__name__, self.get_instance_info())
+
+
+class SearchScraper(Scraper):
+
+    def __init__(self, search_term):
+        super(SearchScraper, self).__init__()
+        self.search_term = search_term
+
+    def get_instance_info(self):
+        return u'search_term="%s"' % self.search_term
+
+
+class Factory(object):
+
+    def get_scraper_by_string(self, string):
         return None
 
-    def get_release_instance(self,releaseContainer):
-        """
-        This method should return the release instance or None. If this method returns None, the release described by
-        the given releaseContainer will not be part of the result list.
-        """
+    def get_search_scraper(self, search_term):
         return None
 
-    def _extract_releases(self):
-        releases = []
+    def has_search(self):
+        return False
 
-        response = self.get_response()
 
-        self.prepare_response_content(self.get_response_content(response))
+class StandardFactory(Factory):
 
-        releaseContainers = self.get_release_containers()
-        for releaseContainer in releaseContainers:
-            releaseName = self.get_release_name(releaseContainer)
-            releaseInfo = self.get_release_info(releaseContainer)
-            releaseInstance = self.get_release_instance(releaseContainer)
+    scraper_classes = []
+    search_scraper = None
 
-            # we only add releases to the result list that we can actually access
-            if releaseInstance is not None:
-                releases.append({'name':releaseName,'info':releaseInfo,'release':releaseInstance})
+    def get_search_scraper(self, search_term):
+        if self.search_scraper is not None:
+            return self.search_scraper(search_term=search_term)
+        return None
 
-        return releases
+    def get_scraper_by_string(self, string):
+        for scraper_class in self.scraper_classes:
+            scraper = scraper_class.from_string(string)
+            if scraper is not None:
+                return scraper
+        return None
+
+    def has_search(self):
+        return self.search_scraper is not None
+
+
+

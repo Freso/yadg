@@ -11,9 +11,11 @@ from django.utils.http import urlencode
 from descgen.forms import InputForm,ResultForm
 from descgen.scraper.factory import SCRAPER_CHOICES
 from descgen.formatter import FORMAT_CHOICES
-from descgen.mixins import CreateTaskMixin,GetDescriptionMixin
+from descgen.mixins import CreateTaskMixin, GetFormatMixin
 
 from djcelery.models import TaskMeta
+
+from ..visitor.api import APIVisitorV1
 
 
 class GETFormResource(FormResource):
@@ -35,6 +37,7 @@ class InputFormResource(GETFormResource):
 
 class FormatFormResource(GETFormResource):
     form = ResultForm
+
 
 class Root(View):
     """
@@ -63,7 +66,7 @@ class Root(View):
                 ]
 
 
-class ScraperList(View,CreateTaskMixin):
+class ScraperList(View, CreateTaskMixin):
     """
     This returns a list of all available scrapers.
     
@@ -81,10 +84,10 @@ class ScraperList(View,CreateTaskMixin):
     
     def get(self, request):
         default_scraper = self.get_valid_scraper(None)
-        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==default_scraper},SCRAPER_CHOICES))
+        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default': x[0]==default_scraper}, SCRAPER_CHOICES))
 
 
-class FormatList(View,GetDescriptionMixin):
+class FormatList(View, GetFormatMixin):
     """
     This returns a list of all available description formats.
     
@@ -102,7 +105,7 @@ class FormatList(View,GetDescriptionMixin):
 
     def get(self, request):
         default_format = self.get_valid_format(None)
-        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default':x[0]==default_format},FORMAT_CHOICES))
+        return Response(content=map(lambda x: {'value': x[0], 'name': x[1], 'default': x[0]==default_format}, FORMAT_CHOICES))
 
 
 class MakeQuery(View, CreateTaskMixin):
@@ -144,7 +147,7 @@ class MakeQuery(View, CreateTaskMixin):
         return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_makequery')+'?'+params})
 
 
-class Result(View, GetDescriptionMixin):
+class Result(View, GetFormatMixin):
     """
     This returns the result of a query.
     
@@ -185,54 +188,22 @@ class Result(View, GetDescriptionMixin):
         except TaskMeta.DoesNotExist:
             return Response(status.HTTP_404_NOT_FOUND)
             
-        format = self.PARAMS['description_format']
+        format = self.get_valid_format(self.PARAMS['description_format'])
         include_raw_data = self.PARAMS['include_raw_data']
         
-        result = {}
+        data = {}
         
         if task.status == 'SUCCESS':
-            result['status'] = 'done'
-            
-            (type,data,additional_data) = task.result
-            if type == 'release':
-                result['type'] = 'release'
+            visitor = APIVisitorV1(description_format=format, include_raw_data=include_raw_data)
 
-                (format,description) = self.get_formatted_description(data, format)
-                
-                result['description'] = description
-                result['description_format'] = format
-                
-                if include_raw_data:
-                    # we have to make sure that there are no non-string keys in the dict
-                    for potential in ('discs', 'discTitles'):
-                        if data.has_key(potential):
-                            keys = data[potential].keys()
-                            max_digits = len(str(len(keys)))
-                            for key in keys:
-                                data[potential]['disc_' + str(key).zfill(max_digits)] = data[potential][key]
-                                del data[potential][key]
-                    result['raw_data'] = data
-            elif type == 'list':
-                result['type'] = 'release_list'
-                
-                release_count = 0
-                
-                for releases in data.values():
-                    for entry in releases:
-                        entry['release_url'] = entry['release'].release_url
-                        entry['query_url'] = reverse('api_v1_makequery') + '?' + urlencode({'input':entry['release'].release_url})
-                        del entry['release']
-                        release_count += 1
-                
-                result['releases'] = data
-                result['release_count'] = release_count
-            elif type == '404':
-                result['type'] = 'release_not_found'
+            (result, additional_data) = task.result
+            data = visitor.visit(result)
+            data['status'] = 'done'
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
-            result['status'] = 'failed'
+            data['status'] = 'failed'
         else:
-            result['status'] = 'waiting'
-        return Response(content=result)
+            data['status'] = 'waiting'
+        return Response(content=data)
             
     def post(self, request, id):
         params = urlencode(self.CONTENT)

@@ -1,37 +1,32 @@
 # coding=utf-8
-import lxml.html,re,lxml.etree
-from base import BaseSearch, BaseRelease, BaseAPIError
+import lxml.html
+import lxml.etree
+import re
+from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, StatusCodeError, StandardFactory
+from .base import SearchScraper as SearchScraperBase
+from ..result import ReleaseResult, ListResult, NotFoundResult
 
 
 READABLE_NAME = 'Discogs'
 SCRAPER_URL = 'http://www.discogs.com/'
 
 
-class DiscogsAPIError(BaseAPIError):
-    pass
-
-
-class Release(BaseRelease):
+class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://www.discogs.com/'
-    url_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
-    exception = DiscogsAPIError
+    string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
+
+    ARTIST_NAME_VARIOUS = "Various"
 
     def __init__(self, id):
+        super(ReleaseScraper, self).__init__()
         self.id = id
 
-    def __unicode__(self):
-        return u'<DiscogsRelease: id="' + str(self.id) + u'">'
-
-    @staticmethod
-    def _get_args_from_match(match):
-        return (int(match.group(1)), )
+    def get_instance_info(self):
+        return u'id="%s"' % self.id
 
     def get_url(self):
-        return self._base_url + 'release/%d' % self.id
-
-    def get_release_url(self):
-        return self.get_url()
+        return self._base_url + 'release/%s' % self.id
 
     def _split_infos(self, info_string):
         components = info_string.split(',')
@@ -47,8 +42,6 @@ class Release(BaseRelease):
     def _prepare_artist_name(self, artist_name):
         artist_name = self._remove_enum_suffix(artist_name)
         artist_name = self.swap_suffix(artist_name)
-        if artist_name == 'Various':
-            artist_name = self.ARTIST_NAME_VARIOUS
         return artist_name
 
     def prepare_response_content(self, content):
@@ -78,49 +71,43 @@ class Release(BaseRelease):
             if content and (content != 'none'):
                 self.additional_infos[label] = content
 
-    def get_release_date(self):
+    def add_release_event(self):
+        release_event = self.result.create_release_event()
+        found = False
         if self.additional_infos.has_key('released'):
-            return self.additional_infos['released']
-        return None
+            release_event.set_date(self.additional_infos['released'])
+            found = True
+        if self.additional_infos.has_key('country'):
+            release_event.set_country(self.additional_infos['country'])
+            found = True
+        if found:
+            self.result.append_release_event(release_event)
 
-    def get_release_format(self):
+    def add_release_format(self):
         if self.additional_infos.has_key('format'):
-            return self.additional_infos['format']
-        return None
+            self.result.set_format(self.additional_infos['format'])
 
-    def get_labels(self):
+    def add_label_ids(self):
         if self.additional_infos.has_key('label'):
             label_string = self.additional_infos['label']
             label_components = self._split_infos(label_string)
 
-            labels = []
             #sometimes we have the format "label - catalog#" for a label
             for label_component in label_components:
+                label_id = self.result.create_label_id()
                 split = label_component.split(u' \u200e\u2013 ')
                 if len(split) == 2: #we have exactely label and catalog#
                     label = self._remove_enum_suffix(split[0])
+                    if split[1] != 'none':
+                        catalog_nr = split[1]
+                        label_id.append_catalogue_nr(catalog_nr)
                 else:
                     #we just have a label or to many components, so don't change anything
                     label = self._remove_enum_suffix(label_component)
-                labels.append(label)
-            return labels
-        return []
+                label_id.set_label(label)
+                self.result.append_label_id(label_id)
 
-    def get_catalog_numbers(self):
-        if self.additional_infos.has_key('label'):
-            label_string = self.additional_infos['label']
-            label_components = self._split_infos(label_string)
-
-            catalog_nr = []
-            #sometimes we have the format "label - catalog#" for a label
-            for label_component in label_components:
-                split = label_component.split(u' \u200e\u2013 ')
-                if len(split) == 2 and split[1] != 'none': #we have exactely label and catalog#
-                    catalog_nr.append(split[1])
-            return catalog_nr
-        return []
-
-    def get_release_title(self):
+    def add_release_title(self):
         title_spans = self.container.cssselect('div.profile h1 span')
         if len(title_spans) == 0:
             self.raise_exception(u'could not find title element')
@@ -131,15 +118,9 @@ class Release(BaseRelease):
         if title_span is not None and len(title_span) == 1:
             title = self.remove_whitespace(title_span[0].text_content())
             if title:
-                return title
-        return None
+                self.result.set_title(title)
 
-    def get_release_country(self):
-        if self.additional_infos.has_key('country'):
-            return self.additional_infos['country']
-        return None
-
-    def get_release_artists(self):
+    def add_release_artists(self):
         #get artist and title
         title_element = self.container.cssselect('div.profile h1')
         if len(title_element) != 1:
@@ -147,34 +128,37 @@ class Release(BaseRelease):
         artist_elements = title_element[0].cssselect('a')
         if len(artist_elements) == 0:
             self.raise_exception(u'could not find artist elements')
-        artists = []
         is_feature = False
         for artist_element in artist_elements:
-            artist = artist_element.text_content()
-            artist = self.remove_whitespace(artist)
-            artist = self._prepare_artist_name(artist)
+            artist = self.result.create_artist()
+            artist_name = artist_element.text_content()
+            artist_name = self.remove_whitespace(artist_name)
+            artist_name = self._prepare_artist_name(artist_name)
+            is_various = artist_name == self.ARTIST_NAME_VARIOUS
+            if not is_various:
+                artist.set_name(artist_name)
+            artist.set_various(is_various)
             if is_feature:
                 # we assume every artist after "feat." is a feature
-                artist_type = self.ARTIST_TYPE_FEATURE
+                artist.append_type(self.result.ArtistTypes.FEATURING)
             else:
-                artist_type = self.ARTIST_TYPE_MAIN
+                artist.append_type(self.result.ArtistTypes.MAIN)
                 if 'feat.' in artist_element.tail:
                     # all artists after this one are features
                     is_feature = True
-            artists.append(self.format_artist(artist, artist_type))
-        return artists
+            self.result.append_release_artist(artist)
 
-    def get_genres(self):
+    def add_genres(self):
         if self.additional_infos.has_key('genre'):
             genre_string = self.additional_infos['genre']
-            return map(lambda x: x.strip(' &'),self._split_infos(genre_string))
-        return []
+            for genre in map(lambda x: x.strip(' &'), self._split_infos(genre_string)):
+                self.result.append_genre(genre)
 
-    def get_styles(self):
+    def add_styles(self):
         if self.additional_infos.has_key('style'):
             style_string = self.additional_infos['style']
-            return map(lambda x: x.strip(' &'),self._split_infos(style_string))
-        return []
+            for style in map(lambda x: x.strip(' &'), self._split_infos(style_string)):
+                self.result.append_style(style)
 
     def get_disc_containers(self):
         disc_containers = {}
@@ -203,11 +187,8 @@ class Release(BaseRelease):
                     cd_number = int(cd_number)
                 if not disc_containers.has_key(cd_number):
                     disc_containers[cd_number] = []
-                disc_containers[cd_number].append({'children':children, 'track_number_string':m.group(2)})
+                disc_containers[cd_number].append({'children': children, 'track_number_string': m.group(2)})
         return disc_containers
-
-    def get_track_containers(self, discContainer):
-        return discContainer
 
     def get_track_number(self, trackContainer):
         number = trackContainer['track_number_string']
@@ -232,10 +213,13 @@ class Release(BaseRelease):
         track_artists_elements = track_artists_column.cssselect('a')
         track_artists = []
         for track_artist_element in track_artists_elements:
-            track_artist = track_artist_element.text_content()
-            track_artist = self.remove_whitespace(track_artist)
-            track_artist = self._prepare_artist_name(track_artist)
-            track_artists.append(self.format_artist(track_artist, self.ARTIST_TYPE_MAIN))
+            track_artist = self.result.create_artist()
+            track_artist_name = track_artist_element.text_content()
+            track_artist_name = self.remove_whitespace(track_artist_name)
+            track_artist_name = self._prepare_artist_name(track_artist_name)
+            track_artist.set_name(track_artist_name)
+            track_artist.append_type(self.result.ArtistTypes.MAIN)
+            track_artists.append(track_artist)
         #there might be featuring artists in the track column
         blockquote = track.cssselect('blockquote')
         if len(blockquote) == 1:
@@ -245,15 +229,18 @@ class Release(BaseRelease):
                 span_text = extra_artist_span.text_content()
                 if re.match(u'(?s).*(Featuring|Remix).*\u2013.*', span_text):
                     if u'Featuring' in span_text:
-                        track_artist_type = self.ARTIST_TYPE_FEATURE
+                        track_artist_type = self.result.ArtistTypes.FEATURING
                     elif u'Remix' in span_text:
-                        track_artist_type = self.ARTIST_TYPE_REMIXER
+                        track_artist_type = self.result.ArtistTypes.REMIXER
                     track_featuring_elements = extra_artist_span.cssselect('a')
                     for track_featuring_element in track_featuring_elements:
+                        track_artist = self.result.create_artist()
                         track_feature = track_featuring_element.text_content()
                         track_feature = self.remove_whitespace(track_feature)
                         track_feature = self._prepare_artist_name(track_feature)
-                        track_artists.append(self.format_artist(track_feature, track_artist_type))
+                        track_artist.set_name(track_feature)
+                        track_artist.append_type(track_artist_type)
+                        track_artists.append(track_artist)
         return track_artists
 
     def get_track_title(self, trackContainer):
@@ -274,20 +261,175 @@ class Release(BaseRelease):
         track_duration = track_duration.text_content()
         track_duration = self.remove_whitespace(track_duration)
         if track_duration:
-            return track_duration
+            i = 0
+            length = 0
+            for component in reversed(track_duration.split(':')):
+                length += int(component) * 60**i
+                i += 1
+            return length
         return None
 
+    def add_discs(self):
+        disc_containers = self.get_disc_containers()
+        for disc_nr in disc_containers:
+            disc = self.result.create_disc()
+            disc.set_number(disc_nr)
 
-class Search(BaseSearch):
+            for track_container in disc_containers[disc_nr]:
+                track = disc.create_track()
+                track_number = self.get_track_number(track_container)
+                if track_number:
+                    track.set_number(track_number)
+                track_title = self.get_track_title(track_container)
+                if track_title:
+                    track.set_title(track_title)
+                track_length = self.get_track_length(track_container)
+                if track_length:
+                    track.set_length(track_length)
+                track_artists = self.get_track_artists(track_container)
+                for track_artist in track_artists:
+                    track.append_artist(track_artist)
+
+                disc.append_track(track)
+            self.result.append_disc(disc)
+
+    def get_result(self):
+        try:
+            response = self.request_get(self.get_url())
+        except StatusCodeError as e:
+            if str(e) == "404":
+                self.result = NotFoundResult()
+                self.result.set_scraper_name(self.get_name())
+                return self.result
+            else:
+                self.raise_exception("request to server unsuccessful, status code: %s" % str(e))
+
+        self.result = ReleaseResult()
+        self.result.set_scraper_name(self.get_name())
+
+        self.prepare_response_content(self.get_response_content(response))
+
+        self.add_release_event()
+
+        self.add_release_format()
+
+        self.add_label_ids()
+
+        self.add_release_title()
+
+        self.add_release_artists()
+
+        self.add_genres()
+
+        self.add_styles()
+
+        self.add_discs()
+
+        release_url = self.get_original_string()
+        if not release_url:
+            release_url = self.get_url()
+        if release_url:
+            self.result.set_url(release_url)
+
+        return self.result
+
+
+class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
+
+    _base_url = 'http://www.discogs.com/'
+    string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?master/(\d+)$'
+
+    def __init__(self, id):
+        super(MasterScraper, self).__init__()
+        self.id = id
+
+    def get_instance_info(self):
+        return u'id="%s"' % self.id
+
+    def get_url(self):
+        return self._base_url + 'master/%s' % self.id
+
+    def prepare_response_content(self, content):
+        #get the raw response content and parse it
+        self.parsed_response = lxml.html.document_fromstring(content)
+
+    def get_artist_string(self):
+        #get artist and title
+        title_element = self.parsed_response.cssselect('div.profile h1')
+        if len(title_element) != 1:
+            self.raise_exception(u'could not find title element')
+        artist_span = title_element[0].cssselect('span[itemprop="byArtist"]')
+        if len(artist_span) != 1:
+            self.raise_exception(u'could not find correct artist span')
+        return self.remove_whitespace(artist_span[0].text_content())
+
+    def get_release_containers(self):
+        return self.parsed_response.cssselect('table.cw_releases tr.release')
+
+    def get_release_name_and_url(self, release_container):
+        release_link = release_container.cssselect('td.hl a')
+        if len(release_link) == 0:
+            self.raise_exception(u'could not extract release link from:' + release_container.text_content())
+        release_link = release_link[0]
+        release_name = release_link.text_content()
+        release_name = self.remove_whitespace(release_name)
+        if not release_name:
+            release_name = None
+        release_url = release_link.attrib['href']
+        # make the release URL a fully qualified one
+        if release_url.startswith('/'):
+            release_url = 'http://www.discogs.com' + release_url
+        m = re.match(ReleaseScraper.string_regex, release_url)
+        if not m:
+            release_url = None
+        return release_name, release_url
+
+    def get_release_info(self, release_container):
+        #get additional info
+        children = release_container.getchildren()[1:]
+        components = []
+        a = children[0].cssselect('a')
+        if a:
+            components.append(a[0].tail.replace(u'\u200e', ''))
+        children = children[1:]
+        for child in children:
+            components.append(child.text_content())
+        components = map(self.remove_whitespace, components)
+        if components:
+            return u' | '.join(components)
+        return None
+
+    def get_result(self):
+        response = self.request_get(url=self.get_url())
+        self.prepare_response_content(self.get_response_content(response))
+
+        result = ListResult()
+        result.set_scraper_name(self.get_name())
+
+        release_artist = self.get_artist_string()
+        release_containers = self.get_release_containers()
+        for release_container in release_containers:
+            release_name, release_url = self.get_release_name_and_url(release_container)
+
+            # we only add releases to the result list that we can actually access
+            if release_url is not None and release_name is not None:
+                release_info = self.get_release_info(release_container)
+
+                list_item = result.create_item()
+                list_item.set_name(release_artist + u' – ' + release_name)
+                list_item.set_info(release_info)
+                list_item.set_query(release_url)
+                list_item.set_url(release_url)
+                result.append_item(list_item)
+        return result
+
+
+class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixin):
 
     url = 'http://www.discogs.com/search'
-    exception = DiscogsAPIError
-
-    def __unicode__(self):
-        return u'<DiscogsSearch: term="' + self.search_term + u'">'
 
     def get_params(self):
-        return {'type':'release', 'q':self.search_term}
+        return {'type': 'release', 'q': self.search_term}
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
@@ -296,36 +438,61 @@ class Search(BaseSearch):
     def get_release_containers(self):
         return self.parsed_response.cssselect('ol.search_results li.body_row div.result_container')
 
-    def get_release_name(self,releaseContainer):
-        release_link = releaseContainer.cssselect('a.search_result_title')
+    def get_release_name_and_url(self, release_container):
+        release_link = release_container.cssselect('a.search_result_title')
         if len(release_link) != 1:
-            self.raise_exception(u'could not extract release link from:' + releaseContainer.text_content())
+            self.raise_exception(u'could not extract release link from:' + release_container.text_content())
         release_link = release_link[0]
         release_name = release_link.text_content()
         release_name = self.remove_whitespace(release_name)
-        if release_name:
-            return release_name
-        return None
+        if not release_name:
+            release_name = None
+        release_url = release_link.attrib['href']
+        # make the release URL a fully qualified one
+        if release_url.startswith('/'):
+            release_url = 'http://www.discogs.com' + release_url
+        m = re.match(ReleaseScraper.string_regex, release_url)
+        if not m:
+            release_url = None
+        return release_name, release_url
 
-    def get_release_info(self,releaseContainer):
+    def get_release_info(self, release_container):
         #get additional info
-        release_info = releaseContainer.cssselect('span.push_right_mini')
+        release_info = release_container.cssselect('span.push_right_mini')
         release_info = filter(lambda x: not x.text_content() in ("Release", "Master Release"), release_info)
         if len(release_info) != 1:
-            self.raise_exception(u'could not extract additional info from: ' + releaseContainer.text_content())
+            self.raise_exception(u'could not extract additional info from: ' + release_container.text_content())
         release_info = release_info[0].text_content()
         release_info = u' | '.join(map(lambda x: self.remove_whitespace(x), release_info.split(u'·')))
         if release_info:
             return release_info
         return None
 
-    def get_release_instance(self,releaseContainer):
-        release_link = releaseContainer.cssselect('a.search_result_title')
-        if len(release_link) != 1:
-            self.raise_exception(u'could not extract release link from:' + releaseContainer.text_content())
-        release_link = release_link[0]
-        href = release_link.attrib['href']
-        # make the release URL a fully qualified one
-        if href.startswith('/'):
-            href = 'http://www.discogs.com' + href
-        return Release.release_from_url(href)
+    def get_result(self):
+        response = self.request_get(url=self.url, params=self.get_params())
+        self.prepare_response_content(self.get_response_content(response))
+
+        result = ListResult()
+        result.set_scraper_name(self.get_name())
+
+        release_containers = self.get_release_containers()
+        for release_container in release_containers:
+            release_name, release_url = self.get_release_name_and_url(release_container)
+
+            # we only add releases to the result list that we can actually access
+            if release_url is not None and release_name is not None:
+                release_info = self.get_release_info(release_container)
+
+                list_item = result.create_item()
+                list_item.set_name(release_name)
+                list_item.set_info(release_info)
+                list_item.set_query(release_url)
+                list_item.set_url(release_url)
+                result.append_item(list_item)
+        return result
+
+
+class ScraperFactory(StandardFactory):
+
+    scraper_classes = (MasterScraper, ReleaseScraper)
+    search_scraper = SearchScraper

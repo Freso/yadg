@@ -10,7 +10,7 @@ def wrapartists(artists, artist_format_string, separator, last_separator):
     i = 0
     
     for artist in artists:
-        output += artist_format_string % artist
+        output += artist_format_string % (artist.get_name() if not artist.is_various() else u'Various Artists')
         
         if i < artist_count - 2:
             output += separator

@@ -1,33 +1,41 @@
-import discogs, musicbrainz, beatport, metalarchives, audiojelly, junodownload, itunes, bandcamp
+import discogs
+import musicbrainz
+import beatport
+import metalarchives
+import audiojelly
+import junodownload
+import itunes
+import bandcamp
 
 _SCRAPERS = {
-    'discogs':discogs,
-    'musicbrainz':musicbrainz,
-    'beatport':beatport,
-    'metalarchives':metalarchives,
-    'audiojelly':audiojelly,
-    'junodownload':junodownload,
-    'itunes':itunes,
-    'bandcamp':bandcamp,
+    'discogs': {'module': discogs, 'priority': 10},
+    'musicbrainz': {'module': musicbrainz, 'priority': 10},
+    'beatport': {'module': beatport, 'priority': 10},
+    'metalarchives': {'module': metalarchives, 'priority': 10},
+    'audiojelly': {'module': audiojelly, 'priority': 10},
+    'junodownload': {'module': junodownload, 'priority': 10},
+    'itunes': {'module': itunes, 'priority': 10},
+    'bandcamp': {'module': bandcamp, 'priority': 15},
 }
 
-_SCRAPER_RELEASES = {}
-_SCRAPER_SEARCHES = {}
+_SCRAPER_FACTORIES = {}
+_SCRAPER_FACTORIES_SORTED = []
 SCRAPER_ITEMS = []
 SCRAPER_CHOICES = []
+SCRAPER = []
 
 for scraper_key in sorted(_SCRAPERS):
-    scraper = _SCRAPERS[scraper_key]
-    has_release = hasattr(scraper, 'Release')
-    has_search = hasattr(scraper, 'Search')
+    scraper = _SCRAPERS[scraper_key]['module']
+    _SCRAPER_FACTORIES[scraper_key] = scraper.ScraperFactory()
+    _SCRAPER_FACTORIES_SORTED.append({'factory': _SCRAPER_FACTORIES[scraper_key], 'name': scraper_key})
+    has_release = True
+    has_search = _SCRAPER_FACTORIES[scraper_key].has_search()
     readable_name = scraper.READABLE_NAME
     url = scraper.SCRAPER_URL
-    if has_release:
-        _SCRAPER_RELEASES[scraper_key] = scraper.Release
     if has_search:
-        _SCRAPER_SEARCHES[scraper_key] = scraper.Search
         # the scraper is searchable, so add it to the list of scraper choices used by the forms
         SCRAPER_CHOICES.append((scraper_key, readable_name))
+        SCRAPER.append(scraper_key)
     scraper_item = {
         'name': readable_name,
         'url': url,
@@ -38,23 +46,9 @@ for scraper_key in sorted(_SCRAPERS):
         scraper_item['notes'] = scraper.NOTES
     SCRAPER_ITEMS.append(scraper_item)
 
-_SCRAPER_RELEASES_SORTED = _SCRAPER_RELEASES.values()
-_SCRAPER_RELEASES_SORTED.sort(lambda x,y: cmp(x.priority, y.priority))
-
-SCRAPER = _SCRAPER_SEARCHES.keys()
+_SCRAPER_FACTORIES_SORTED.sort(lambda x, y: cmp(_SCRAPERS[x['name']]['priority'], _SCRAPERS[y['name']]['priority']))
 
 SCRAPER_DEFAULT = 'discogs'
-
-SCRAPER_EXCEPTIONS = (
-    discogs.DiscogsAPIError,
-    musicbrainz.MusicBrainzAPIError,
-    beatport.BeatportAPIError,
-    metalarchives.MetalarchivesAPIError,
-    audiojelly.AudiojellyAPIError,
-    junodownload.JunodownloadAPIError,
-    itunes.iTunesAPIError,
-    bandcamp.BandcampAPIError,
-)
 
 
 class ScraperFactoryError(Exception):
@@ -63,25 +57,25 @@ class ScraperFactoryError(Exception):
 
 class ScraperFactory(object):
     
-    def get_release_by_url(self,url):
-        release = None
+    def get_scraper_by_string(self, url):
+        scraper = None
         
-        for scraper in _SCRAPER_RELEASES_SORTED:
-            release = scraper.release_from_url(url)
-            if release:
+        for factory in _SCRAPER_FACTORIES_SORTED:
+            scraper = factory['factory'].get_scraper_by_string(url)
+            if scraper:
+                scraper.set_name(factory['name'])
                 break
         
-        return release
+        return scraper
     
-    def get_search(self,search_term,scraper = SCRAPER_DEFAULT):
+    def get_search_scraper(self, search_term, scraper=SCRAPER_DEFAULT):
         if not scraper:
             scraper = SCRAPER_DEFAULT
         if not scraper in SCRAPER:
-            raise ScraperFactoryError, u'no searchable scraper "%s"' % scraper
+            raise ScraperFactoryError(u'no searchable scraper "%s"' % scraper)
         
-        search = _SCRAPER_SEARCHES[scraper](search_term)
-        if not getattr(search,'SCRAPER',False):
-            setattr(search,'SCRAPER',scraper)
+        search = _SCRAPER_FACTORIES[scraper].get_search_scraper(search_term)
+        search.set_name(scraper)
         
         return search
 
