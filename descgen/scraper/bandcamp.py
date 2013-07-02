@@ -2,18 +2,24 @@
 import json
 import datetime
 from .base import Scraper, ExceptionMixin, RequestMixin, StandardFactory
-from ..result import ReleaseResult, NotFoundResult
+from ..result import ReleaseResult, NotFoundResult, ListResult
 
 
 READABLE_NAME = 'Bandcamp'
 SCRAPER_URL = 'http://www.bandcamp.com/'
-NOTES = u'Currently no searching capabilities. Featuring artists on tracks not supported. Only **direct** links to albums are supported (`http://something.bandcamp.com/album/something`).'
+NOTES = u'Links to Bandcamp artists or albums are only picked up automatically if the URL contains the string ' \
+        u'`/album/` or `.bandcamp.com`. In all other cases force the use of the Bandcamp scraper by choosing it from ' \
+        u'the drop down menu. This will result in the input being interpreted as a Bandcamp URL. **Note:** It is not ' \
+        u'possible to search the Bandcamp database this way.'
+
+
+_API_KEY = ''
 
 
 class ReleaseScraper(Scraper, ExceptionMixin, RequestMixin):
 
     base_url = 'http://api.bandcamp.com/api/'
-    api_key = ''
+    api_key = _API_KEY
 
     forced_response_encoding = 'utf8'
 
@@ -144,6 +150,101 @@ class ReleaseScraper(Scraper, ExceptionMixin, RequestMixin):
         return self.result
 
 
+class DiscographyScraper(Scraper, ExceptionMixin, RequestMixin):
+
+    base_url = 'http://api.bandcamp.com/api/'
+    api_key = _API_KEY
+
+    forced_response_encoding = 'utf8'
+
+    string_regex = '^(http(?:s)?://\S+?\.bandcamp\.com(?:/\S*)?)$'
+
+    def __init__(self, search_term):
+        super(DiscographyScraper, self).__init__()
+        self.band_url = search_term
+
+    def get_instance_info(self):
+        return u'band_url=%s' % self.band_url
+
+    def parse_response_content(self, response_content):
+        try:
+            response = json.loads(response_content)
+        except:
+            self.raise_exception(u'invalid server response')
+        return response
+
+    def get_release_containers(self):
+        if 'discography' in self.discography_response:
+            return self.discography_response['discography']
+        else:
+            return []
+
+    def get_release_name(self, release_container):
+        components = []
+        if 'artist' in release_container:
+            components.append(release_container['artist'])
+        if 'title' in release_container:
+            components.append(release_container['title'])
+        release_name = u' \u2013 '.join(components)
+        if release_name:
+            return release_name
+        return None
+
+    def get_release_url(self, release_container):
+        if 'url' in release_container and '/album/' in release_container['url']:
+            return release_container['url']
+        return None
+
+    def get_release_info(self, release_container):
+        if 'release_date' in release_container:
+            try:
+                date = datetime.datetime.fromtimestamp(release_container['release_date'])
+            except ValueError:
+                date = None
+            if date:
+                date_string = date.strftime('%Y-%m-%d')
+                return 'Release date: %s' % date_string
+        return None
+
+    def get_result(self):
+        # we don't care to catch any StatusCode exceptions here, if the status code of the api call is not equal to 200
+        # then something is wrong with the api
+        response = self.request_get(url=self.base_url + 'url/1/info', params={'url': self.band_url, 'key': self.api_key})
+
+        # if we got no album ID, we cannot find the release
+        band_discovery_response = self.parse_response_content(self.get_response_content(response))
+        if not 'band_id' in band_discovery_response:
+            result = NotFoundResult()
+            result.set_scraper_name(self.get_name())
+            return result
+        band_id = band_discovery_response['band_id']
+
+        # again: we don't catch a status code error
+        response = self.request_get(url=self.base_url + 'band/3/discography', params={'band_id': band_id, 'key': self.api_key})
+        self.discography_response = self.parse_response_content(self.get_response_content(response))
+
+        result = ListResult()
+        result.set_scraper_name(self.get_name())
+
+        release_containers = self.get_release_containers()
+        for release_container in release_containers:
+            release_name = self.get_release_name(release_container)
+            release_url = self.get_release_url(release_container)
+
+            # we only add releases to the result list that we can actually access
+            if release_url is not None and release_name is not None:
+                release_info = self.get_release_info(release_container)
+
+                list_item = result.create_item()
+                list_item.set_name(release_name)
+                list_item.set_info(release_info)
+                list_item.set_query(release_url)
+                list_item.set_url(release_url)
+                result.append_item(list_item)
+        return result
+
+
 class ScraperFactory(StandardFactory):
 
-    scraper_classes = [ReleaseScraper]
+    scraper_classes = [ReleaseScraper, DiscographyScraper]
+    search_scraper = DiscographyScraper
