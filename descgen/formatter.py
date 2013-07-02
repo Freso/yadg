@@ -39,17 +39,15 @@ class Formatter(object):
         #so create a plain unicode string from the return value
         return unicode(template.render(c))
 
-    def format(self,data,format = FORMAT_DEFAULT):
-        if not format:
-            format = FORMAT_DEFAULT
+    def description_from_ReleaseResult(self, release_result, format):
         if not format in _FORMATS.keys():
             raise FormatterValueError
         t = django.template.loader.get_template(os.path.join(self._template_dir,_FORMATS[format][0]))
-        return self._render_template(t, data)
-    
-    def get_release_title(self,data):
+        return self._render_template(t, {'result': release_result})
+
+    def title_from_ReleaseResult(self, release_result):
         t = django.template.loader.get_template(os.path.join(self._template_dir,self.release_title_template))
-        return self._render_template(t, data)
+        return self._render_template(t, {'result': release_result})
     
     @staticmethod
     def get_valid_format(format):

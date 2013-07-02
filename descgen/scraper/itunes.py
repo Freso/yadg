@@ -1,55 +1,44 @@
 # coding=utf-8
-import lxml.html, re, json
-from base import BaseRelease, BaseSearch, BaseAPIError
+import lxml.html
+import re
+import json
+from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, LoggerMixin, StatusCodeError, StandardFactory
+from .base import SearchScraper as SearchScraperBase
+from ..result import ReleaseResult, ListResult, NotFoundResult
 
 
 READABLE_NAME = 'iTunes Store'
 SCRAPER_URL = 'http://itunes.apple.com/'
 
 
-class iTunesAPIError(BaseAPIError):
-    pass
-
-
-class Release(BaseRelease):
+class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin, LoggerMixin):
 
     _base_url = 'http://itunes.apple.com/%s/album/'
-    url_regex = '^http(?:s)?://itunes\.apple\.com/(\w{2,4})/album/([^/]*)/([^\?]+)[^/]*$'
-    exception = iTunesAPIError
+    string_regex = '^http(?:s)?://itunes\.apple\.com/(\w{2,4})/album/([^/]*)/([^\?]+)[^/]*$'
 
-    exclude_genres = ['music',]
+    exclude_genres = ['music']
 
     def __init__(self, store, release_name, id):
+        super(ReleaseScraper, self).__init__()
         self.id = id
         self.store = store
         self._release_name = release_name
 
-    def __unicode__(self):
-        return u'<iTunesRelease: id=%s, store=%s>' % (self.id, self.store)
+    def get_instance_info(self):
+        return u'id=%s, store=%s' % (self.id, self.store)
 
     def get_url(self):
-        return self._base_url % self.store + '/' + self.id
-
-    def get_release_url(self):
-        return self._base_url % self.store + self._release_name + '/' + self.id + '?ign-mpt=uo%3D4'
+        return self._base_url % self.store + self._release_name + '/' + self.id
 
     def get_params(self):
-        return {'ign-mpt':'uo%3D4'}
+        return {'ign-mpt': 'uo%3D4'}
 
     def _split_artists(self, artist_string):
         artists = re.split('(?:,\s?)|&', artist_string)
         artists = map(self.remove_whitespace, artists)
         return artists
 
-    def prepare_response_content(self, content):
-        #get the raw response content and parse it
-        self.parsed_response = lxml.html.document_fromstring(content)
-
-        #if the release does not exist, the website wants to connect to iTunes
-        warning_div = self.parsed_response.cssselect('div.loadingbox')
-        if len(warning_div) == 1:
-            self.raise_exception(u'404')
-
+    def _check_if_release_artist_equals_track_artist(self):
         #we have to check if the track artist of each track equals the release artist
         artist_h2 = self.parsed_response.cssselect('div#title h2')
         track_artist_tds = self.parsed_response.cssselect('table.tracklist-table tbody tr.song.music td.artist')
@@ -58,61 +47,69 @@ class Release(BaseRelease):
             release_artist = artist_h2[0].text_content()
             release_artist = self.remove_whitespace(release_artist)
             for track_artist_td in track_artist_tds:
-                self._release_artist_equal_track_artists = release_artist == self.remove_whitespace(track_artist_td.text_content())
+                self._release_artist_equal_track_artists = release_artist == self.remove_whitespace(
+                    track_artist_td.text_content())
                 if not self._release_artist_equal_track_artists:
                     break
 
-    def get_release_date(self):
+    def prepare_response_content(self, content):
+        #get the raw response content and parse it
+        self.parsed_response = lxml.html.document_fromstring(content)
+
+    def add_release_event(self):
         release_date_span = self.parsed_response.cssselect('div#left-stack li.release-date span.label')
         if len(release_date_span) != 1:
             self.log(self.DEBUG, u'could not find release date span')
             release_date_span = self.parsed_response.cssselect('div#left-stack li.expected-release-date span.label')
             if len(release_date_span) != 1:
                 self.log(self.WARNING, u'could not find release date span nor expected release date span')
-                return None
-        release_date = release_date_span[0].tail
-        release_date = self.remove_whitespace(release_date)
-        if release_date:
-            return release_date
-        self.log(self.DEBUG, u'found release date span, but removing whitespace resulted in empty string')
-        return None
+        if len(release_date_span) == 1:
+            release_date = release_date_span[0].tail
+            release_date = self.remove_whitespace(release_date)
+            if release_date:
+                release_event = self.result.create_release_event()
+                release_event.set_date(release_date)
+                self.result.append_release_event(release_event)
+            else:
+                self.log(self.DEBUG, u'found release date span, but removing whitespace resulted in empty string')
 
-    def get_release_title(self):
+    def add_release_title(self):
         title_h1 = self.parsed_response.cssselect('div#title h1')
         if len(title_h1) != 1:
             self.raise_exception(u'could not find release title h1')
         title = title_h1[0].text_content()
         title = self.remove_whitespace(title)
         if title:
-            return title
-        return None
+            self.result.set_title(title)
 
-    def get_release_artists(self):
-        artists = []
+    def add_release_artists(self):
         artist_h2 = self.parsed_response.cssselect('div#title h2')
         if len(artist_h2) != 1:
             self.raise_exception(u'could not find artist h2')
         artist_h2 = artist_h2[0]
         if artist_h2.text_content() == 'Various Artists':
-            artists.append(self.format_artist(self.ARTIST_NAME_VARIOUS, self.ARTIST_TYPE_MAIN))
+            artist = self.result.create_artist()
+            artist.set_various(True)
+            artist.append_type(self.result.ArtistTypes.MAIN)
+            self.result.append_release_artist(artist)
         else:
             artist_anchors = artist_h2.cssselect('a')
             for anchor in artist_anchors:
                 artist_string = anchor.text_content()
                 artist_strings = self._split_artists(artist_string)
-                for artist in artist_strings:
-                    artists.append(self.format_artist(artist, self.ARTIST_TYPE_MAIN))
-        return artists
+                for artist_name in artist_strings:
+                    artist = self.result.create_artist()
+                    artist.set_name(artist_name)
+                    artist.append_type(self.result.ArtistTypes.MAIN)
+                    self.result.append_release_artist(artist)
 
-    def get_genres(self):
-        genres = []
+    def add_genres(self):
         genre_anchors = self.parsed_response.cssselect('div#left-stack li.genre a')
         for genre_anchor in genre_anchors:
             genre = genre_anchor.text_content()
             genre = self.remove_whitespace(genre)
             if not genre.lower() in self.exclude_genres:
-                genres.append(genre)
-        return genres
+                self.result.append_genre(genre)
 
     def get_disc_containers(self):
         discs = {}
@@ -128,13 +125,10 @@ class Release(BaseRelease):
             if not m:
                 continue
             disc_num = int(m.group(1))
-            if not discs.has_key(disc_num):
+            if not disc_num in discs:
                 discs[disc_num] = []
             discs[disc_num].append(tracklist_tr)
         return discs
-
-    def get_track_containers(self, discContainer):
-        return discContainer
 
     def get_track_number(self, trackContainer):
         track_num_span = trackContainer.cssselect('td.index span.index span')
@@ -158,10 +152,16 @@ class Release(BaseRelease):
                 if 'viewCollaboration' in track_artist_a.attrib['href']:
                     # if it is a link to a Collaboration we assume that there are multiple artists that need to be split
                     artist_strings = self._split_artists(artist_string)
-                    for artist in artist_strings:
-                        track_artists.append(self.format_artist(artist, self.ARTIST_TYPE_MAIN))
+                    for artist_name in artist_strings:
+                        artist = self.result.create_artist()
+                        artist.set_name(artist_name)
+                        artist.append_type(self.result.ArtistTypes.MAIN)
+                        track_artists.append(artist)
                 else:
-                    track_artists.append(self.format_artist(artist_string, self.ARTIST_TYPE_MAIN))
+                    artist = self.result.create_artist()
+                    artist.set_name(artist_string)
+                    artist.append_type(self.result.ArtistTypes.MAIN)
+                    track_artists.append(artist)
         return track_artists
 
     def get_track_title(self, trackContainer):
@@ -181,20 +181,88 @@ class Release(BaseRelease):
         track_length = track_length_td[0].text_content()
         track_length = self.remove_whitespace(track_length)
         if track_length:
-            return track_length
+            i = 0
+            length = 0
+            for component in reversed(track_length.split(':')):
+                length += int(component) * 60**i
+                i += 1
+            return length
         return None
 
+    def add_discs(self):
+        disc_containers = self.get_disc_containers()
+        for disc_nr in disc_containers:
+            disc = self.result.create_disc()
+            disc.set_number(disc_nr)
 
-class Search(BaseSearch):
+            for track_container in disc_containers[disc_nr]:
+                track = disc.create_track()
+                track_number = self.get_track_number(track_container)
+                if track_number:
+                    track.set_number(track_number)
+                track_title = self.get_track_title(track_container)
+                if track_title:
+                    track.set_title(track_title)
+                track_length = self.get_track_length(track_container)
+                if track_length:
+                    track.set_length(track_length)
+                track_artists = self.get_track_artists(track_container)
+                for track_artist in track_artists:
+                    track.append_artist(track_artist)
 
-    url='http://itunes.apple.com/search'
-    exception = iTunesAPIError
+                disc.append_track(track)
+            self.result.append_disc(disc)
 
-    def __unicode__(self):
-        return u'<iTunesSearch: term="' + self.search_term + u'">'
+    def get_result(self):
+        try:
+            response = self.request_get(self.get_url())
+        except StatusCodeError as e:
+            if str(e) == "404":
+                self.result = NotFoundResult()
+                self.result.set_scraper_name(self.get_name())
+                return self.result
+            else:
+                self.raise_exception("request to server unsuccessful, status code: %s" % str(e))
+
+        self.prepare_response_content(self.get_response_content(response))
+
+        #if the release does not exist, the website wants to connect to iTunes
+        warning_div = self.parsed_response.cssselect('div.loadingbox')
+        if len(warning_div) == 1:
+            self.result = NotFoundResult()
+            self.result.set_scraper_name(self.get_name())
+            return self.result
+
+        self._check_if_release_artist_equals_track_artist()
+
+        self.result = ReleaseResult()
+        self.result.set_scraper_name(self.get_name())
+
+        self.add_release_event()
+
+        self.add_release_title()
+
+        self.add_release_artists()
+
+        self.add_genres()
+
+        self.add_discs()
+
+        release_url = self.get_original_string()
+        if not release_url:
+            release_url = self.get_url()
+        if release_url:
+            self.result.set_url(release_url)
+
+        return self.result
+
+
+class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin):
+
+    url = 'http://itunes.apple.com/search'
 
     def get_params(self):
-        return {'media':'music', 'entity':'album', 'limit':'25', 'term':self.search_term}
+        return {'media': 'music', 'entity': 'album', 'limit': '25', 'term': self.search_term}
 
     def prepare_response_content(self, content):
         try:
@@ -203,29 +271,63 @@ class Search(BaseSearch):
             self.raise_exception(u'invalid server response')
 
     def get_release_containers(self):
-        if self.parsed_response.has_key('results'):
+        if 'results' in self.parsed_response:
             return self.parsed_response['results']
         return []
 
-    def get_release_name(self,releaseContainer):
+    def get_release_name(self, release_container):
         components = []
         for key in ['artistName', 'collectionName']:
-            if releaseContainer.has_key(key):
-                components.append(releaseContainer[key])
+            if key in release_container:
+                components.append(release_container[key])
         name = u' \u2013 '.join(components)
         return name
 
-    def get_release_info(self,releaseContainer):
+    def get_release_info(self, release_container):
         components = []
-        if releaseContainer.has_key('releaseDate'):
-            components.append(releaseContainer['releaseDate'].split('T')[0])
+        if 'releaseDate' in release_container:
+            components.append(release_container['releaseDate'].split('T')[0])
         for key in ['country', 'primaryGenreName']:
-            if releaseContainer.has_key(key):
-                components.append(releaseContainer[key])
+            if key in release_container:
+                components.append(release_container[key])
         info = u' | '.join(components)
         return info
 
-    def get_release_instance(self,releaseContainer):
-        if releaseContainer.has_key('collectionViewUrl'):
-            return Release.release_from_url(releaseContainer['collectionViewUrl'])
-        return None
+    def get_release_url(self, releaseContainer):
+        release_url = None
+        if 'collectionViewUrl' in releaseContainer:
+            release_url = releaseContainer['collectionViewUrl']
+            m = re.match(ReleaseScraper.string_regex, release_url)
+            if not m:
+                release_url = None
+        return release_url
+
+    def get_result(self):
+        response = self.request_get(url=self.url, params=self.get_params())
+        self.prepare_response_content(self.get_response_content(response))
+
+        result = ListResult()
+        result.set_scraper_name(self.get_name())
+
+        release_containers = self.get_release_containers()
+        for release_container in release_containers:
+            release_name = self.get_release_name(release_container)
+            release_url = self.get_release_url(release_container)
+
+            # we only add releases to the result list that we can actually access
+            if release_url is not None and release_name is not None:
+                release_info = self.get_release_info(release_container)
+
+                list_item = result.create_item()
+                list_item.set_name(release_name)
+                list_item.set_info(release_info)
+                list_item.set_query(release_url)
+                list_item.set_url(release_url)
+                result.append_item(list_item)
+        return result
+
+
+class ScraperFactory(StandardFactory):
+
+    scraper_classes = [ReleaseScraper]
+    search_scraper = SearchScraper
