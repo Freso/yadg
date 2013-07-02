@@ -6,6 +6,7 @@ from django.test import TestCase as TestCaseBase
 from .scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
 from .visitor.misc import DescriptionVisitor
+from .visitor.api import APIVisitorV1
 
 
 class TestCase(TestCaseBase):
@@ -9319,3 +9320,569 @@ Disc 4
 More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
 
         self.assertEqual(expected, visitor.visit(self.result))
+
+
+class ApiVisitorV1Test(TestCase):
+
+    def setUp(self):
+        super(ApiVisitorV1Test, self).setUp()
+
+        self.v = APIVisitorV1(description_format='plain', include_raw_data=True)
+
+    def test_release_result_api_response(self):
+        expected = {"raw_data": {"style": ["Alternative Rock"],
+                                "format": "CD, Album, Limited Edition, Digibook CD, Compilation, Limited Edition",
+                                "country": "Germany", "title": "Aus Der Tiefe", "label": [u"[Trisol] Music Group GmbH"],
+                                "released": "01 Jul 2005", "catalog": [u"TRI 231 CD"], "discs": {
+                    "disc_1": [["1", [], u"Beschw\u00f6rung", "06:31"], ["2", [], u"Willkommen Zur\u00fcck", "02:17"],
+                               ["3", [], "Schwarzes Blut", "03:32"], ["4", [], "Im Dunklen Turm", "01:41"], ["5", [], "Me", "04:38"],
+                               ["6", [], "Schattenschreie", "00:21"], ["7", [], "Hunger", "05:21"], ["8", [], "Fremde Erinnerungen", "01:12"],
+                               ["9", [], "Ballade Von Der Erweckung", "08:53"], ["10", [], "Tiefenrausch", "04:05"],
+                               ["11", [], "Schmetterling, Du Kleines Ding", "00:42"], ["12", [], "Ich Komm Dich Holn", "04:17"],
+                               ["13", [], "Werben", "04:28"], ["14", [], "Aus Der Tiefe", "03:18"], ["15", [], "Spiegelaugen", "03:24"],
+                               ["16", [], "Tiefenrausch (Reprise)", "01:07"], ["17", [], "Panik", "04:12"], ["18", [], "Spiegel", "05:31"]],
+                    "disc_2": [["1", [], "Schwarzes Blut (Haltung Version)", "04:09"], ["2", [], "Werben (Subtil Edit)", "04:17"],
+                               ["3", [], "Me (Single Version)", "03:45"],
+                               ["4", [{"type": "Feature", "name": "Sara Noxx"}], "Tiefenrausch (Feat. Sara Noxx)", "04:05"],
+                               ["5", [], "Hunger (Single Mix)", "04:19"], ["6", [], "Panik (Ganz Rauf-Verison)", "04:33"],
+                               ["7", [], u"Beschw\u00f6rung (Siegeszug Instrumental)", "03:25"],
+                               ["8", [], "Buch Des Vergessens (Unreines Spiegelsonett)", "01:55"],
+                               ["9", [{"type": "Remixer", "name": "Umbra Et Imago"}], "Kokon (Brandneu-Remix Von Umbra Et Imago)", "04:39"],
+                               ["10", [{"type": "Remixer", "name": "Blutengel"}], "Me (Me And You Remix Von Blutengel)", "05:44"],
+                               ["11", [], "Und Wir Tanzten (Ungeschickte Liebesbriefe) (Live)", "05:47"],
+                               ["12", [], "Ich Will Brennen (Live)", "06:09"], ["13", [], "Starfucker: In Der Folterkammer", "02:07"]]},
+                                                    "link": "http://www.discogs.com/ASP-Aus-Der-Tiefe-Der-Schwarze-Schmetterling-IV/release/710517",
+                                                    "artists": [{"type": "Main", "name": "ASP"}], "genre": ["Electronic", "Rock"]},
+                     "description_format": "plain", "type": "release"}
+
+        result = ReleaseResult()
+        result.set_scraper_name(None)
+
+        release_event = result.create_release_event()
+        release_event.set_date('01 Jul 2005')
+        release_event.set_country('Germany')
+        result.append_release_event(release_event)
+
+        result.set_format('CD, Album, Limited Edition, Digibook CD, Compilation, Limited Edition')
+
+        label_id = result.create_label_id()
+        label_id.set_label(u'[Trisol] Music Group GmbH')
+        label_id.append_catalogue_nr(u'TRI 231 CD')
+        result.append_label_id(label_id)
+
+        result.set_title('Aus Der Tiefe')
+
+        artist = result.create_artist()
+        artist.set_name('ASP')
+        artist.set_various(False)
+        artist.append_type(result.ArtistTypes.MAIN)
+        result.append_release_artist(artist)
+
+        result.append_genre('Electronic')
+        result.append_genre('Rock')
+
+        result.append_style('Alternative Rock')
+
+        result.set_url('http://www.discogs.com/ASP-Aus-Der-Tiefe-Der-Schwarze-Schmetterling-IV/release/710517')
+
+        disc = result.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Beschw\xf6rung')
+        track.set_length(391)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'Willkommen Zur\xfcck')
+        track.set_length(137)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Schwarzes Blut')
+        track.set_length(212)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Im Dunklen Turm')
+        track.set_length(101)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Me')
+        track.set_length(278)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Schattenschreie')
+        track.set_length(21)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Hunger')
+        track.set_length(321)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Fremde Erinnerungen')
+        track.set_length(72)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Ballade Von Der Erweckung')
+        track.set_length(533)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Tiefenrausch')
+        track.set_length(245)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Schmetterling, Du Kleines Ding')
+        track.set_length(42)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Ich Komm Dich Holn')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Werben')
+        track.set_length(268)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Aus Der Tiefe')
+        track.set_length(198)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Spiegelaugen')
+        track.set_length(204)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Tiefenrausch (Reprise)')
+        track.set_length(67)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('17')
+        track.set_title('Panik')
+        track.set_length(252)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('18')
+        track.set_title('Spiegel')
+        track.set_length(331)
+        disc.append_track(track)
+
+        result.append_disc(disc)
+
+        disc = result.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Schwarzes Blut (Haltung Version)')
+        track.set_length(249)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Werben (Subtil Edit)')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Me (Single Version)')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Tiefenrausch (Feat. Sara Noxx)')
+        track.set_length(245)
+        track_artist = result.create_artist()
+        track_artist.set_name('Sara Noxx')
+        track_artist.set_various(False)
+        track_artist.append_type(result.ArtistTypes.FEATURING)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Hunger (Single Mix)')
+        track.set_length(259)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Panik (Ganz Rauf-Verison)')
+        track.set_length(273)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'Beschw\xf6rung (Siegeszug Instrumental)')
+        track.set_length(205)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Buch Des Vergessens (Unreines Spiegelsonett)')
+        track.set_length(115)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Kokon (Brandneu-Remix Von Umbra Et Imago)')
+        track.set_length(279)
+        track_artist = result.create_artist()
+        track_artist.set_name('Umbra Et Imago')
+        track_artist.set_various(False)
+        track_artist.append_type(result.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Me (Me And You Remix Von Blutengel)')
+        track.set_length(344)
+        track_artist = result.create_artist()
+        track_artist.set_name('Blutengel')
+        track_artist.set_various(False)
+        track_artist.append_type(result.ArtistTypes.REMIXER)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Und Wir Tanzten (Ungeschickte Liebesbriefe) (Live)')
+        track.set_length(347)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Ich Will Brennen (Live)')
+        track.set_length(369)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Starfucker: In Der Folterkammer')
+        track.set_length(127)
+        disc.append_track(track)
+
+        result.append_disc(disc)
+
+        self.assertDictContainsSubset(expected, self.v.visit(result))
+
+    def test_list_result_api_response(self):
+        result = ListResult()
+        result.set_scraper_name('discogs')
+
+        item = result.create_item()
+        item.set_name('Armagedom / Bombenalarm - Armagedom / Bombenalarm')
+        item.set_info(u'Hate Records | Hate 12 | 7", EP, Ltd, Spl | 2006 | Germany')
+        item.set_query('http://www.discogs.com/Armagedom--Bombenalarm-Armagedom-Bombenalarm/release/986661')
+        item.set_url('http://www.discogs.com/Armagedom--Bombenalarm-Armagedom-Bombenalarm/release/986661')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Temporal Sluts / Humpers, The - A Touching Date')
+        item.set_info(u'Hate Records | Hate 1 | 10", Red | 1995 | Italy')
+        item.set_query('http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/2521150')
+        item.set_url('http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/2521150')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Temporal Sluts / Humpers, The - A Touching Date')
+        item.set_info(u'Hate Records | Hate 1 | 10" | 1995 | Italy')
+        item.set_query('http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/3431254')
+        item.set_url('http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/3431254')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Temporal Sluts / Humpers, The - A Touching Date')
+        item.set_info(u'Hate Records | Hate 1 | 10", RP | 1998 | Italy')
+        item.set_query('http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/3431260')
+        item.set_url('http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/3431260')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Trend, The - Batman Live At Budokan')
+        item.set_info(u'Hate Records | Hate 23 | LP | 2000 | Italy')
+        item.set_query('http://www.discogs.com/Trend-Batman-Live-At-Budokan/release/2551436')
+        item.set_url('http://www.discogs.com/Trend-Batman-Live-At-Budokan/release/2551436')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Trend, The - Batman Live At Budokan And The Complete Trend')
+        item.set_info(u'Hate Records | Hate 27 | CD, Comp | 2000 | Italy')
+        item.set_query('http://www.discogs.com/Trend-Batman-Live-At-Budokan-And-The-Complete-Trend/release/3612061')
+        item.set_url('http://www.discogs.com/Trend-Batman-Live-At-Budokan-And-The-Complete-Trend/release/3612061')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Dark Orchestra, The - Beauty And The Beast')
+        item.set_info(u'Hate System | HATE 06 | CDr, Album | 2001 | Germany')
+        item.set_query('http://www.discogs.com/Dark-Orchestra-Beauty-And-The-Beast/release/226497')
+        item.set_url('http://www.discogs.com/Dark-Orchestra-Beauty-And-The-Beast/release/226497')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name(u'Skitkids - Bes\xf6ket Vid Krubban')
+        item.set_info(u'Hate Records | HATE 18 | 12", Whi | 2008 | Germany')
+        item.set_query(u'http://www.discogs.com/Skitkids-Bes\xf6ket-Vid-Krubban/release/3641975')
+        item.set_url(u'http://www.discogs.com/Skitkids-Bes\xf6ket-Vid-Krubban/release/3641975')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name(u'Skitkids - Bes\xf6ket Vid Krubban')
+        item.set_info(u'Hate Records | HATE 18 | 12", Gat | 2008 | Germany')
+        item.set_query(u'http://www.discogs.com/Skitkids-Bes\xf6ket-Vid-Krubban/release/1743168')
+        item.set_url(u'http://www.discogs.com/Skitkids-Bes\xf6ket-Vid-Krubban/release/1743168')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Intellectuals, The - Black! Domina! Now!')
+        item.set_info(u'Hate Records | Hate 28 | LP, Album, Ltd | 2004 | Italy')
+        item.set_query('http://www.discogs.com/Intellectuals-Black-Domina-Now/release/2738867')
+        item.set_url('http://www.discogs.com/Intellectuals-Black-Domina-Now/release/2738867')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Bombenalarm / Dean Dirg - Bombenalarm / Dean Dirg')
+        item.set_info(u'Hate Records | HATE 08 | 7" | 2006 | Germany')
+        item.set_query('http://www.discogs.com/Bombenalarm-Dean-Dirg-Bombenalarm-Dean-Dirg/release/1744380')
+        item.set_url('http://www.discogs.com/Bombenalarm-Dean-Dirg-Bombenalarm-Dean-Dirg/release/1744380')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name("Two Bo's Maniacs - Bo Saves!")
+        item.set_info(u'Hate Records | Hate 13 | 10" | 1999 | Italy')
+        item.set_query('http://www.discogs.com/Two-Bos-Maniacs-Bo-Saves/release/2738835')
+        item.set_url('http://www.discogs.com/Two-Bos-Maniacs-Bo-Saves/release/2738835')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Dirtbombs, The - Brucia I Cavi')
+        item.set_info(u'Hate Records | Hate 20 | 7", EP | 2000 | Italy')
+        item.set_query('http://www.discogs.com/Dirtbombs-Brucia-I-Cavi/release/3521579')
+        item.set_url('http://www.discogs.com/Dirtbombs-Brucia-I-Cavi/release/3521579')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Dirtbombs, The - Brucia I Cavi')
+        item.set_info(u'Hate Records | Hate 20 | 7", EP, Bro | 2000 | Italy')
+        item.set_query('http://www.discogs.com/Dirtbombs-Brucia-I-Cavi/release/3521591')
+        item.set_url('http://www.discogs.com/Dirtbombs-Brucia-I-Cavi/release/3521591')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Cactus (11) - Cactus')
+        item.set_info(u'Hate Records | Hate 31 | LP, Ltd, Album | 2006 | Italy')
+        item.set_query('http://www.discogs.com/Cactus-Cactus/release/3578968')
+        item.set_url('http://www.discogs.com/Cactus-Cactus/release/3578968')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Gags, The - Criss Cross (1979-1981)')
+        item.set_info(u'Hate Records | Hate 29 | LP, Comp, Ltd | 2004 | Italy')
+        item.set_query('http://www.discogs.com/Gags-Criss-Cross-1979-1981/release/2749672')
+        item.set_url('http://www.discogs.com/Gags-Criss-Cross-1979-1981/release/2749672')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Fucked Up - Dangerous Fumes')
+        item.set_info(u'Hate Records | Hate 10 | 7", Single | 2006 | Germany')
+        item.set_query('http://www.discogs.com/Fucked-Up-Dangerous-Fumes/release/911494')
+        item.set_url('http://www.discogs.com/Fucked-Up-Dangerous-Fumes/release/911494')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Runes Order - Dawn Of New Past')
+        item.set_info(u'Hate Productions | HATE 08 | Cass, Album, 1st + Box, Ltd, C90 | 1994 | Italy')
+        item.set_query('http://www.discogs.com/Runes-Order-Dawn-Of-New-Past/release/868917')
+        item.set_url('http://www.discogs.com/Runes-Order-Dawn-Of-New-Past/release/868917')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Homoplastik - Death In The Car')
+        item.set_info(u'Hate Records | Hate 16 | 7" | 1999 | Italy')
+        item.set_query('http://www.discogs.com/Homoplastik-Death-In-The-Car/release/1058890')
+        item.set_url('http://www.discogs.com/Homoplastik-Death-In-The-Car/release/1058890')
+        result.append_item(item)
+
+        item = result.create_item()
+        item.set_name('Evil (2) - ...Evil Storming Onwards To The Battlefield...')
+        item.set_info(u'Pure Evil Productions | HATE 04 | Cass, S/Sided | 1997 | Brazil')
+        item.set_query('http://www.discogs.com/Evil-Evil-Storming-Onwards-To-The-Battlefield/release/385183')
+        item.set_url('http://www.discogs.com/Evil-Evil-Storming-Onwards-To-The-Battlefield/release/385183')
+        result.append_item(item)
+
+        expected = {
+            "release_count": 20,
+            "releases": {
+                "discogs": [
+                    {
+                        "info": u"Hate Records | Hate 12 | 7\", EP, Ltd, Spl | 2006 | Germany",
+                        "name": "Armagedom / Bombenalarm - Armagedom / Bombenalarm",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FArmagedom--Bombenalarm-Armagedom-Bombenalarm%2Frelease%2F986661",
+                        "release_url": "http://www.discogs.com/Armagedom--Bombenalarm-Armagedom-Bombenalarm/release/986661"
+                    },
+                    {
+                        "info": "Hate Records | Hate 1 | 10\", Red | 1995 | Italy",
+                        "name": "Temporal Sluts / Humpers, The - A Touching Date",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FTemporal-Sluts-Humpers-A-Touching-Date%2Frelease%2F2521150",
+                        "release_url": "http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/2521150"
+                    },
+                    {
+                        "info": "Hate Records | Hate 1 | 10\" | 1995 | Italy",
+                        "name": "Temporal Sluts / Humpers, The - A Touching Date",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FTemporal-Sluts-Humpers-A-Touching-Date%2Frelease%2F3431254",
+                        "release_url": "http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/3431254"
+                    },
+                    {
+                        "info": "Hate Records | Hate 1 | 10\", RP | 1998 | Italy",
+                        "name": "Temporal Sluts / Humpers, The - A Touching Date",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FTemporal-Sluts-Humpers-A-Touching-Date%2Frelease%2F3431260",
+                        "release_url": "http://www.discogs.com/Temporal-Sluts-Humpers-A-Touching-Date/release/3431260"
+                    },
+                    {
+                        "info": "Hate Records | Hate 23 | LP | 2000 | Italy",
+                        "name": "Trend, The - Batman Live At Budokan",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FTrend-Batman-Live-At-Budokan%2Frelease%2F2551436",
+                        "release_url": "http://www.discogs.com/Trend-Batman-Live-At-Budokan/release/2551436"
+                    },
+                    {
+                        "info": "Hate Records | Hate 27 | CD, Comp | 2000 | Italy",
+                        "name": "Trend, The - Batman Live At Budokan And The Complete Trend",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FTrend-Batman-Live-At-Budokan-And-The-Complete-Trend%2Frelease%2F3612061",
+                        "release_url": "http://www.discogs.com/Trend-Batman-Live-At-Budokan-And-The-Complete-Trend/release/3612061"
+                    },
+                    {
+                        "info": "Hate System | HATE 06 | CDr, Album | 2001 | Germany",
+                        "name": "Dark Orchestra, The - Beauty And The Beast",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FDark-Orchestra-Beauty-And-The-Beast%2Frelease%2F226497",
+                        "release_url": "http://www.discogs.com/Dark-Orchestra-Beauty-And-The-Beast/release/226497"
+                    },
+                    {
+                        "info": "Hate Records | HATE 18 | 12\", Whi | 2008 | Germany",
+                        "name": u"Skitkids - Bes\u00f6ket Vid Krubban",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FSkitkids-Bes%C3%B6ket-Vid-Krubban%2Frelease%2F3641975",
+                        "release_url": u"http://www.discogs.com/Skitkids-Bes\u00f6ket-Vid-Krubban/release/3641975"
+                    },
+                    {
+                        "info": "Hate Records | HATE 18 | 12\", Gat | 2008 | Germany",
+                        "name": u"Skitkids - Bes\u00f6ket Vid Krubban",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FSkitkids-Bes%C3%B6ket-Vid-Krubban%2Frelease%2F1743168",
+                        "release_url": u"http://www.discogs.com/Skitkids-Bes\u00f6ket-Vid-Krubban/release/1743168"
+                    },
+                    {
+                        "info": "Hate Records | Hate 28 | LP, Album, Ltd | 2004 | Italy",
+                        "name": "Intellectuals, The - Black! Domina! Now!",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FIntellectuals-Black-Domina-Now%2Frelease%2F2738867",
+                        "release_url": "http://www.discogs.com/Intellectuals-Black-Domina-Now/release/2738867"
+                    },
+                    {
+                        "info": "Hate Records | HATE 08 | 7\" | 2006 | Germany",
+                        "name": "Bombenalarm / Dean Dirg - Bombenalarm / Dean Dirg",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FBombenalarm-Dean-Dirg-Bombenalarm-Dean-Dirg%2Frelease%2F1744380",
+                        "release_url": "http://www.discogs.com/Bombenalarm-Dean-Dirg-Bombenalarm-Dean-Dirg/release/1744380"
+                    },
+                    {
+                        "info": "Hate Records | Hate 13 | 10\" | 1999 | Italy",
+                        "name": "Two Bo's Maniacs - Bo Saves!",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FTwo-Bos-Maniacs-Bo-Saves%2Frelease%2F2738835",
+                        "release_url": "http://www.discogs.com/Two-Bos-Maniacs-Bo-Saves/release/2738835"
+                    },
+                    {
+                        "info": "Hate Records | Hate 20 | 7\", EP | 2000 | Italy",
+                        "name": "Dirtbombs, The - Brucia I Cavi",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FDirtbombs-Brucia-I-Cavi%2Frelease%2F3521579",
+                        "release_url": "http://www.discogs.com/Dirtbombs-Brucia-I-Cavi/release/3521579"
+                    },
+                    {
+                        "info": "Hate Records | Hate 20 | 7\", EP, Bro | 2000 | Italy",
+                        "name": "Dirtbombs, The - Brucia I Cavi",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FDirtbombs-Brucia-I-Cavi%2Frelease%2F3521591",
+                        "release_url": "http://www.discogs.com/Dirtbombs-Brucia-I-Cavi/release/3521591"
+                    },
+                    {
+                        "info": "Hate Records | Hate 31 | LP, Ltd, Album | 2006 | Italy",
+                        "name": "Cactus (11) - Cactus",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FCactus-Cactus%2Frelease%2F3578968",
+                        "release_url": "http://www.discogs.com/Cactus-Cactus/release/3578968"
+                    },
+                    {
+                        "info": "Hate Records | Hate 29 | LP, Comp, Ltd | 2004 | Italy",
+                        "name": "Gags, The - Criss Cross (1979-1981)",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FGags-Criss-Cross-1979-1981%2Frelease%2F2749672",
+                        "release_url": "http://www.discogs.com/Gags-Criss-Cross-1979-1981/release/2749672"
+                    },
+                    {
+                        "info": "Hate Records | Hate 10 | 7\", Single | 2006 | Germany",
+                        "name": "Fucked Up - Dangerous Fumes",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FFucked-Up-Dangerous-Fumes%2Frelease%2F911494",
+                        "release_url": "http://www.discogs.com/Fucked-Up-Dangerous-Fumes/release/911494"
+                    },
+                    {
+                        "info": "Hate Productions | HATE 08 | Cass, Album, 1st + Box, Ltd, C90 | 1994 | Italy",
+                        "name": "Runes Order - Dawn Of New Past",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FRunes-Order-Dawn-Of-New-Past%2Frelease%2F868917",
+                        "release_url": "http://www.discogs.com/Runes-Order-Dawn-Of-New-Past/release/868917"
+                    },
+                    {
+                        "info": "Hate Records | Hate 16 | 7\" | 1999 | Italy",
+                        "name": "Homoplastik - Death In The Car",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FHomoplastik-Death-In-The-Car%2Frelease%2F1058890",
+                        "release_url": "http://www.discogs.com/Homoplastik-Death-In-The-Car/release/1058890"
+                    },
+                    {
+                        "info": "Pure Evil Productions | HATE 04 | Cass, S/Sided | 1997 | Brazil",
+                        "name": "Evil (2) - ...Evil Storming Onwards To The Battlefield...",
+                        "query_url": "/api/v1/query/?input=http%3A%2F%2Fwww.discogs.com%2FEvil-Evil-Storming-Onwards-To-The-Battlefield%2Frelease%2F385183",
+                        "release_url": "http://www.discogs.com/Evil-Evil-Storming-Onwards-To-The-Battlefield/release/385183"
+                    }
+                ]
+            },
+            "type": "release_list"
+        }
+
+        self.assertEqual(expected, self.v.visit(result))
+
+    def test_empty_list_result_api_response(self):
+        result = ListResult()
+        result.set_scraper_name('Something')
+
+        expected = {
+            "release_count": 0,
+            "releases": {},
+            "type": "release_list"
+        }
+
+        self.assertEqual(expected, self.v.visit(result))
