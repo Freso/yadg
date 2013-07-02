@@ -65,10 +65,17 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             #make sure only valid keys are present
             label = re.sub('\W','',label)
             label = label.lower()
+            # handle formats with line breaks in them by replacing the linebreak with a comma
+            if label == 'format':
+                # ugly hack: convert the element to a string, replace all '<br>'s and parse the resulting string as HTML again
+                additional_info = lxml.html.fragment_fromstring(re.sub('(?m)\s*<br(\s*/)?>(\s*<br(\s*/)?>)*', u', ', lxml.etree.tostring(additional_info)))
             #get content and remove whitespace
             content = additional_info.text_content()
             content = self.remove_whitespace(content)
             if content and (content != 'none'):
+                # we might have left a lone comma at the end if we replaced some linebreaks
+                if content.endswith(','):
+                    content = content[:-1]
                 self.additional_infos[label] = content
 
     def add_release_event(self):
