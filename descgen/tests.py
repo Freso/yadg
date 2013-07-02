@@ -3,7 +3,7 @@
 import difflib
 
 from django.test import TestCase as TestCaseBase
-from scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
+from .scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
 from .visitor.misc import DescriptionVisitor
 
