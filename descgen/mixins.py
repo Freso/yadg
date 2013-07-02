@@ -1,6 +1,6 @@
 from .scraper.factory import ScraperFactory, SCRAPER_DEFAULT
 from .formatter import Formatter, FORMAT_DEFAULT
-from .tasks import get_results
+from .tasks import get_result
 
 from djcelery.models import TaskMeta
 
@@ -19,7 +19,7 @@ class CreateTaskMixin(object):
         if not scraper:
             scraper = self.factory.get_search_scraper(input, scraper_name)
 
-        task = get_results.delay(scraper, kwargs)
+        task = get_result.delay(scraper, kwargs)
         #make sure a TaskMeta object for the created task exists
         TaskMeta.objects.get_or_create(task_id=task.task_id)
         
