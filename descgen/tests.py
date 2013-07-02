@@ -2960,6 +2960,30 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_release_group(self):
+        expected = ListResult()
+        expected.set_scraper_name(None)
+
+        item = expected.create_item()
+        item.set_name(u'ASP, Chamber \u2013 Humility')
+        item.set_info(u'CD | 8 | 2006-04-21 | DE | Trisol | TRI 273 CD | 4260063942730')
+        item.set_query('http://musicbrainz.org/release/58bad121-bfab-4dda-89f8-4b1bc092de44')
+        item.set_url('http://musicbrainz.org/release/58bad121-bfab-4dda-89f8-4b1bc092de44')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'ASP, Chamber \u2013 Humility: Die verschollenen Archive 2')
+        item.set_info(u'CD | 7 | 2012-03-09 | DE | Trisol | 4260063944505')
+        item.set_query('http://musicbrainz.org/release/c2834b8b-77c4-4505-9b55-a31208eb98c3')
+        item.set_url('http://musicbrainz.org/release/c2834b8b-77c4-4505-9b55-a31208eb98c3')
+        expected.append_item(item)
+
+        s = musicbrainz.ReleaseGroupScraper.from_string('http://musicbrainz.org/release-group/9c8ec90f-dcef-3fc7-904d-27f535454e44')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
