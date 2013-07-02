@@ -1522,6 +1522,64 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_master_release(self):
+        expected = ListResult()
+        expected.set_scraper_name(None)
+
+        item = expected.create_item()
+        item.set_name(u'Mystic Matt & Anthill Mob \u2013 Burning')
+        item.set_info(u'(10", Pic, Ltd) | Love Peace And Unity Recordings | LOVE-03 | UK | 1997')
+        item.set_query('http://www.discogs.com/Mystic-Matt-Anthill-Mob-Burning/release/146468')
+        item.set_url('http://www.discogs.com/Mystic-Matt-Anthill-Mob-Burning/release/146468')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'Mystic Matt & Anthill Mob \u2013 Burning')
+        item.set_info(u'(10", Pic, Ltd, S/Sided) | Love Peace And Unity Recordings | LOVE-03 | UK | 1997')
+        item.set_query('http://www.discogs.com/Mystic-Matt-Anthill-Mob-Burning/release/1503116')
+        item.set_url('http://www.discogs.com/Mystic-Matt-Anthill-Mob-Burning/release/1503116')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u"Mystic Matt & Anthill Mob \u2013 'Burnin (Let The Music)'")
+        item.set_info(u'(12") | Classic Confetti | CC 02 (2) | UK | 2001')
+        item.set_query('http://www.discogs.com/Anthill-Mob-Burnin-Let-The-Music/release/284437')
+        item.set_url('http://www.discogs.com/Anthill-Mob-Burnin-Let-The-Music/release/284437')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'Mystic Matt & Anthill Mob \u2013 Burnin')
+        item.set_info(u'(12") | Classic Confetti | CC 02 | UK | 2001')
+        item.set_query('http://www.discogs.com/Anthill-Mob-Burnin/release/149302')
+        item.set_url('http://www.discogs.com/Anthill-Mob-Burnin/release/149302')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'Mystic Matt & Anthill Mob \u2013 Burnin')
+        item.set_info(u'(12", Promo) | Classic Confetti | CC 02 | UK | 2001')
+        item.set_query('http://www.discogs.com/Anthill-Mob-Burnin/release/2093234')
+        item.set_url('http://www.discogs.com/Anthill-Mob-Burnin/release/2093234')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'Mystic Matt & Anthill Mob \u2013 Burnin')
+        item.set_info(u'(12") | Classic Confetti | CC02(3F/02) | UK & Europe | 2002')
+        item.set_query('http://www.discogs.com/Antill-Mob-Burnin/release/739159')
+        item.set_url('http://www.discogs.com/Antill-Mob-Burnin/release/739159')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'Mystic Matt & Anthill Mob \u2013 Burning')
+        item.set_info(u'(12", Ltd, Pic) | Love Peace And Unity Recordings | LOVE-06 | UK | 2006')
+        item.set_query('http://www.discogs.com/Mystic-Matt--Anthill-Mob-Burning/release/670448')
+        item.set_url('http://www.discogs.com/Mystic-Matt--Anthill-Mob-Burning/release/670448')
+        expected.append_item(item)
+
+        s = discogs.MasterScraper.from_string('http://www.discogs.com/Mystic-Matt-Anthill-Mob-Burning/master/181860')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
