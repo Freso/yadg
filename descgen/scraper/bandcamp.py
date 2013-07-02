@@ -211,7 +211,7 @@ class DiscographyScraper(Scraper, ExceptionMixin, RequestMixin):
         # then something is wrong with the api
         response = self.request_get(url=self.base_url + 'url/1/info', params={'url': self.band_url, 'key': self.api_key})
 
-        # if we got no album ID, we cannot find the release
+        # if we got no band ID, we cannot find the discography
         band_discovery_response = self.parse_response_content(self.get_response_content(response))
         if not 'band_id' in band_discovery_response:
             result = NotFoundResult()
