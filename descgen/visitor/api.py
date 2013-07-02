@@ -138,7 +138,7 @@ class APIVisitorV1(Visitor):
                     else:
                         track_length = None
 
-                    discs[disc_number].append((track_number, track_artists, track_title, track_length))
+                    discs[disc_number].append([track_number, track_artists, track_title, track_length])
             if discs:
                 raw_data['discs'] = discs
             if disc_titles:
