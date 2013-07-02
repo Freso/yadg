@@ -1,11 +1,11 @@
-{% extends "base_with_form.html" %}
+{% extends "base_with_form.html" %}{% load url from future %}
 
 {% block title %}Search result – {% endblock %}
 
 {% block subcontent %}{% if result.get_items %}<div class="well">
     <ul id="release_list">
     {% for item in result.get_items %}
-    <li><a href="{% url index %}?input={{ item.get_query|urlencode:"" }}">{{ item.get_name }}</a><br /><span class="label">{{ item.get_info }}</span></li>
+    <li><a href="{% url 'index' %}?input={{ item.get_query|urlencode:"" }}">{{ item.get_name }}</a><br /><span class="label">{{ item.get_info }}</span></li>
     {% endfor %}
     </ul></div>
     {% else %}

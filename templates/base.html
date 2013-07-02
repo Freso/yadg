@@ -1,4 +1,4 @@
-{% load scrapernames %}{% scraper_names as SCRAPER_NAMES %}<!DOCTYPE html>
+{% load url from future %}{% load scrapernames %}{% scraper_names as SCRAPER_NAMES %}<!DOCTYPE html>
 <html lang="en">
   <head>
     <title>{% block title %}{% endblock %}YADG</title>
@@ -53,14 +53,14 @@
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="{% url index %}" title="Yet Another Description Generator">YADG</a>
+          <a class="brand" href="{% url 'index' %}" title="Yet Another Description Generator">YADG</a>
           <ul class="nav">
-            <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url index %}">Home</a></li>
-            <li{% block scrapers_li_tags %}{% endblock %}><a href="{% url scrapers_overview %}">Available Scrapers</a></li>
-            <li><a href="{% url api_root %}">API</a></li>
+            <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url 'index' %}">Home</a></li>
+            <li{% block scrapers_li_tags %}{% endblock %}><a href="{% url 'scrapers_overview' %}">Available Scrapers</a></li>
+            <li><a href="{% url 'api_root' %}">API</a></li>
           </ul>
           <ul class="nav pull-right">
-              <li{% block settings_li_tags %}{% endblock %}><a href="{% url settings %}">Settings</a></li>
+              <li{% block settings_li_tags %}{% endblock %}><a href="{% url 'settings' %}">Settings</a></li>
           </ul>
         </div>
       </div>

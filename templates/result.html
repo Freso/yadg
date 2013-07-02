@@ -1,8 +1,8 @@
-{% extends "base_with_form.html" %}
+{% extends "base_with_form.html" %}{% load url from future %}
 
 {% block title%}{{ release_title }} – {% endblock %}
 
 {% block subcontent %}<div class="well"><textarea id="description_area">{{ description }}</textarea>
-<a href="{% url download_result result_id format release_title %}" id="download_link" class="btn">Download as .txt</a> {% include "format_form.html" %}</div>
+<a href="{% url 'download_result' result_id format release_title %}" id="download_link" class="btn">Download as .txt</a> {% include "format_form.html" %}</div>
 
 {% include "perma_link.html" %}{% endblock %}
