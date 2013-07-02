@@ -147,7 +147,7 @@ class MakeQuery(View, CreateTaskMixin):
         return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_makequery')+'?'+params})
 
 
-class Result(View):
+class Result(View, GetFormatMixin):
     """
     This returns the result of a query.
     
@@ -188,7 +188,7 @@ class Result(View):
         except TaskMeta.DoesNotExist:
             return Response(status.HTTP_404_NOT_FOUND)
             
-        format = self.PARAMS['description_format']
+        format = self.get_valid_format(self.PARAMS['description_format'])
         include_raw_data = self.PARAMS['include_raw_data']
         
         data = {}
