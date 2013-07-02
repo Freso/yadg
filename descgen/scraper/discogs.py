@@ -391,7 +391,7 @@ class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         a = children[0].cssselect('a')
         if a:
             components.append(a[0].tail.replace(u'\u200e', ''))
-        children = children[2:]
+        children = children[1:]
         for child in children:
             components.append(child.text_content())
         components = map(self.remove_whitespace, components)
@@ -404,6 +404,7 @@ class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         self.prepare_response_content(self.get_response_content(response))
 
         result = ListResult()
+        result.set_scraper_name(self.get_name())
 
         release_artist = self.get_artist_string()
         release_containers = self.get_release_containers()
