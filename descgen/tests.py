@@ -139,7 +139,7 @@ class DiscogsTest(TestCase):
         release_event.set_country('Germany')
         expected.append_release_event(release_event)
 
-        expected.set_format(u'4 \xd7 CD, Compilation, Limited Edition, Digipak Box Set, Limited Edition, Hand-Numbered')
+        expected.set_format(u'4 \xd7 CD, Compilation, Limited Edition, Digipak, Box Set, Limited Edition, Hand-Numbered')
 
         label_id = expected.create_label_id()
         label_id.set_label(u'[Trisol] Music Group GmbH')
@@ -583,7 +583,7 @@ class DiscogsTest(TestCase):
         release_event.set_country('Germany')
         expected.append_release_event(release_event)
 
-        expected.set_format('CD, Album, Limited Edition, Digibook CD, Compilation, Limited Edition')
+        expected.set_format('CD, Album, Limited Edition, Digibook, CD, Compilation, Limited Edition')
 
         label_id = expected.create_label_id()
         label_id.set_label(u'[Trisol] Music Group GmbH')
