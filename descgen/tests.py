@@ -10,6 +10,8 @@ from .visitor.misc import DescriptionVisitor
 
 class TestCase(TestCaseBase):
 
+    maxDiff = None
+
     def setUp(self):
         self.addTypeEqualityFunc(ReleaseResult, 'assertResultEqual')
         self.addTypeEqualityFunc(ListResult, 'assertResultEqual')
@@ -29,7 +31,6 @@ class TestCase(TestCaseBase):
 
 
 class DiscogsTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -1532,7 +1533,6 @@ class DiscogsTest(TestCase):
 
 
 class MusicbrainzTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -2971,7 +2971,6 @@ class MusicbrainzTest(TestCase):
 
 
 class BeatportTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -3294,7 +3293,6 @@ class BeatportTest(TestCase):
 
 
 class MetalarchivesTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -3577,7 +3575,6 @@ class MetalarchivesTest(TestCase):
 
 
 class AudiojellyTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -3970,7 +3967,6 @@ class AudiojellyTest(TestCase):
 
 
 class JunodownloadTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -4767,7 +4763,6 @@ class JunodownloadTest(TestCase):
 
 
 class ITunesTest(TestCase):
-    maxDiff = None
 
     def test_simple_album(self):
         expected = ReleaseResult()
@@ -7315,7 +7310,6 @@ class ITunesTest(TestCase):
 
 
 class BandcampTest(TestCase):
-    maxDiff = None
 
     def test_album_with_band_name(self):
         expected = ReleaseResult()
@@ -8174,8 +8168,6 @@ class BandcampTest(TestCase):
 
 
 class DescriptionVisitorTest(TestCase):
-
-    maxDiff = None
 
     def setUp(self):
         super(DescriptionVisitorTest, self).setUp()
