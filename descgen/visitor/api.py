@@ -121,7 +121,8 @@ class APIVisitorV1(Visitor):
 
             discs = {}
             disc_titles = {}
-            max_digits = len(str(max(map(lambda disc: disc.get_number(), result.get_discs()))))
+            if result.get_discs():
+                max_digits = len(str(max(map(lambda disc: disc.get_number(), result.get_discs()))))
             for disc in result.get_discs():
                 disc_number = disc.get_number()
                 disc_number = 'disc_' + str(disc_number).zfill(max_digits)
