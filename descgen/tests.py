@@ -1581,6 +1581,59 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_album_with_face_in_track_numbers(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('1984')
+        release_event.set_country('Sweden')
+        expected.append_release_event(release_event)
+
+        expected.set_format('Vinyl, 7"')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Mamma')
+        label_id.append_catalogue_nr(u'MA-501')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Another Story')
+
+        artist = expected.create_artist()
+        artist.set_name('General Belgrano')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Rock')
+
+        expected.append_style('New Wave')
+
+        expected.set_url('http://www.discogs.com/General-Belgrano-Another-Story/release/2213179')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('Face I')
+        track.set_title('Another Story')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('Face II')
+        track.set_title("War Isn't Gold")
+        track.set_length(None)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/General-Belgrano-Another-Story/release/2213179')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)

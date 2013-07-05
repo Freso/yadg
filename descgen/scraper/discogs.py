@@ -182,7 +182,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     continue
                 children = row.getchildren()
                 #determine cd and track number
-                m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*))(?:\.)?$',children[0].text_content())
+                m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*)|face [ivxc]+)(?:\.)?$',children[0].text_content())
                 if not m:
                     #ignore tracks with strange track number
                     continue
