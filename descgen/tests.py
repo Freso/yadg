@@ -3095,6 +3095,102 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_vinyl_not_cd_in_sub_heading(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2004-02-24')
+        release_event.set_country('United States')
+        expected.append_release_event(release_event)
+
+        expected.set_format('12" Vinyl, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Sundazed Music')
+        label_id.append_catalogue_nr('LP 5103')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Four Sail')
+
+        artist = expected.create_artist()
+        artist.set_name('Love')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/bdb4ba37-bb4b-3d2a-bd58-c109dc4d72f0')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('August')
+        track.set_length(300)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title("Your Friend and Mine - Neil's Song")
+        track.set_length(220)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title("I'm With You")
+        track.set_length(165)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Good Times')
+        track.set_length(210)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Singing Cowboy')
+        track.set_length(270)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Dream')
+        track.set_length(169)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Robert Montgomery')
+        track.set_length(214)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Nothing')
+        track.set_length(284)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Talking in My Sleep')
+        track.set_length(170)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Always See Your Face')
+        track.set_length(210)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/bdb4ba37-bb4b-3d2a-bd58-c109dc4d72f0')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
 
     def test_404(self):
         expected = NotFoundResult()
