@@ -83,12 +83,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 if len(date_span) == 1:
                     date = self.remove_whitespace(date_span[0].text_content())
                     release_event.set_date(date)
-                country_span = li.cssselect('span[rel="mo:publishing_location"]')
-                if len(country_span) == 1:
-                    country_abbr = country_span[0].cssselect('abbr')
-                    if len(country_abbr) == 1 and 'title' in country_abbr[0].attrib:
-                        country = self.remove_whitespace(country_abbr[0].attrib['title'])
-                        release_event.set_country(country)
+                country_abbr = li.cssselect('bdi abbr')
+                if len(country_abbr) == 1 and 'title' in country_abbr[0].attrib:
+                    country = self.remove_whitespace(country_abbr[0].attrib['title'])
+                    release_event.set_country(country)
                 if date or country:
                     self.result.append_release_event(release_event)
 
