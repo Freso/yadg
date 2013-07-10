@@ -118,7 +118,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return None
 
     def get_track_length(self, track_container):
-        if 'length' in track_container:
+        if 'length' in track_container and self.remove_whitespace(track_container['length']):
             track_duration = track_container['length']
             i = 0
             length = 0
