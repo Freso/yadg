@@ -94,7 +94,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             for track_artist_candidate in track_container['artists']:
                 if track_artist_candidate['name']:
                     artist = self.result.create_artist()
-                    artist.set_name(track_artist_candidate['name'])
+                    if track_artist_candidate['name'] == 'Various Artists':
+                        artist.set_various(True)
+                    else:
+                        artist.set_name(track_artist_candidate['name'])
                     track_artist_type = track_artist_candidate['type'].lower()
                     if track_artist_type == 'artist':
                         artist.append_type(self.result.ArtistTypes.MAIN)
