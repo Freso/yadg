@@ -3192,6 +3192,129 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_medium_in_sub_heading(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        expected.set_format('Album')
+
+        expected.set_title('Welcome to the Dopehouse')
+
+        artist = expected.create_artist()
+        artist.set_name('The Dayton Family')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/0e3b3c85-61b6-4a07-852b-26f7e8dd0ade')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Intro')
+        track.set_length(93)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Big Mac 11')
+        track.set_length(276)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Do You Remember?')
+        track.set_length(200)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Welcome to Flint')
+        track.set_length(228)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Feds')
+        track.set_length(237)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Gangstarism (feat. Goldfish)')
+        track.set_length(251)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Young Thugs (feat. Ghetto E & Lori)')
+        track.set_length(241)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Drugstore')
+        track.set_length(207)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Set Up')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('We Keep It Ghetto')
+        track.set_length(200)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Dope House')
+        track.set_length(231)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Shadows (feat. Kalonda & Ryan)')
+        track.set_length(242)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Outlaws')
+        track.set_length(226)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Weed Song')
+        track.set_length(228)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title('Simple Wish')
+        track.set_length(206)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Outro')
+        track.set_length(96)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/0e3b3c85-61b6-4a07-852b-26f7e8dd0ade')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
