@@ -142,6 +142,9 @@ class AlbumArt(CommonEqualityAndReprMixin):
         self.type = None
         self.width = None
         self.height = None
+        self.thumbnail_url = None
+        self.thumbnail_width = None
+        self.thumbnail_height = None
         self.hint = None
 
     def set_url(self, url):
@@ -155,6 +158,15 @@ class AlbumArt(CommonEqualityAndReprMixin):
 
     def set_height(self, height):
         self.height = height
+
+    def set_thumbnail_url(self, thumbnail_url):
+        self.thumbnail_url = thumbnail_url
+
+    def set_thumbnail_width(self, thumbnail_width):
+        self.thumbnail_width = thumbnail_width
+
+    def set_thumbnail_height(self, thumbnail_height):
+        self.thumbnail_height = thumbnail_height
 
     def set_hint(self, hint):
         self.hint = hint
@@ -170,6 +182,15 @@ class AlbumArt(CommonEqualityAndReprMixin):
 
     def get_height(self):
         return self.height
+
+    def get_thumbnail_url(self):
+        return self.thumbnail_url
+
+    def get_thumbnail_width(self):
+        return self.thumbnail_width
+
+    def get_thumbnail_height(self):
+        return self.thumbnail_height
 
     def get_hint(self):
         return self.hint
