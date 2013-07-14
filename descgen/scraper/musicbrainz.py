@@ -287,12 +287,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
         #make sure the track length is valid
         if track_length and not '?' in track_length:
-            i = 0
-            length = 0
-            for component in reversed(track_length.split(':')):
-                length += int(component) * 60**i
-                i += 1
-            return length
+            return self.seconds_from_string(track_length)
         return None
 
     def add_discs(self):

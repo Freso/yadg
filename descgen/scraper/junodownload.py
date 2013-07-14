@@ -152,12 +152,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             length = length_div[0].text_content()
             length = self.remove_whitespace(length)
             if length:
-                i = 0
-                length_s = 0
-                for component in reversed(length.split(':')):
-                    length_s += int(component) * 60**i
-                    i += 1
-                return length_s
+                return self.seconds_from_string(length)
         return None
 
     def add_discs(self):

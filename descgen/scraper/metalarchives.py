@@ -150,12 +150,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         (track_number_td, track_title_td, track_length_td, lyrics_td) = track_container
         track_length = self.remove_whitespace(track_length_td.text_content())
         if track_length:
-            i = 0
-            length = 0
-            for component in reversed(track_length.split(':')):
-                length += int(component) * 60**i
-                i += 1
-            return length
+            return self.seconds_from_string(track_length)
         return None
 
     def add_discs(self):

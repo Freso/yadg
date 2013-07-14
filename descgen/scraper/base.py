@@ -102,6 +102,17 @@ class UtilityMixin(object):
     def remove_whitespace(self, string):
         return ' '.join(string.split())
 
+    def seconds_from_string(self, length_string):
+        i = 0
+        length = 0
+        for component in reversed(length_string.split(':')):
+            try:
+                length += int(component) * 60 ** i
+            except ValueError:
+                return None
+            i += 1
+        return length
+
 
 class LoggerMixin(object):
 
