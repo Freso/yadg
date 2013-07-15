@@ -3315,6 +3315,104 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_digital_media_in_sub_heading(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2013-04-08')
+        release_event.set_country('Sweden')
+        expected.append_release_event(release_event)
+
+        expected.set_format('Digital Media, Album')
+
+        expected.set_title(u'J\xe4rnb\xe4rarland')
+
+        artist = expected.create_artist()
+        artist.set_name('Stiko Per Larsson')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/d37fc56e-4b9b-4c4c-9e9e-5d6d5a66944c')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title(u'Zombien f\xf6ds')
+        track.set_length(167)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title(u'J\xe4rnb\xe4rarland')
+        track.set_length(219)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Veteraner')
+        track.set_length(197)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Resande Man')
+        track.set_length(192)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title(u'Du h\xf6r inte hemma h\xe4r')
+        track.set_length(185)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Irrbloss')
+        track.set_length(187)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title(u'J\xe4mtlands president')
+        track.set_length(218)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Gilla falla')
+        track.set_length(257)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title(u'Inga v\xe4gar')
+        track.set_length(259)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Krus & detaljer')
+        track.set_length(241)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('En kosmonauts testamente')
+        track.set_length(375)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/d37fc56e-4b9b-4c4c-9e9e-5d6d5a66944c')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)

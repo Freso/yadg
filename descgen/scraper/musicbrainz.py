@@ -191,7 +191,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     caption_a = disc_row.cssselect('a[rel="mo:record"]')
                     if len(caption_a) == 1:
                         caption_a = caption_a[0]
-                        m = re.search('(?i)(?:cd|vinyl|medium) (\d+)', caption_a.text_content())
+                        m = re.search('(?i)(?:cd|vinyl|(?:digital )?medi(?:um|a)) (\d+)', caption_a.text_content())
                         if not m:
                             self.raise_exception(u'could not determine disc number')
                         else:
@@ -287,12 +287,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
         #make sure the track length is valid
         if track_length and not '?' in track_length:
-            i = 0
-            length = 0
-            for component in reversed(track_length.split(':')):
-                length += int(component) * 60**i
-                i += 1
-            return length
+            return self.seconds_from_string(track_length)
         return None
 
     def add_discs(self):
