@@ -83,10 +83,11 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 if len(date_span) == 1:
                     date = self.remove_whitespace(date_span[0].text_content())
                     release_event.set_date(date)
-                country_abbr = li.cssselect('bdi abbr')
-                if len(country_abbr) == 1 and 'title' in country_abbr[0].attrib:
-                    country = self.remove_whitespace(country_abbr[0].attrib['title'])
-                    release_event.set_country(country)
+                country_bdi = li.cssselect('a bdi')
+                if len(country_bdi) == 1:
+                    country = self.remove_whitespace(country_bdi[0].text_content())
+                    if country:
+                        release_event.set_country(country)
                 if date or country:
                     self.result.append_release_event(release_event)
 
@@ -191,7 +192,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     caption_a = disc_row.cssselect('a[rel="mo:record"]')
                     if len(caption_a) == 1:
                         caption_a = caption_a[0]
-                        m = re.search('(?i)(?:cd|vinyl|(?:digital )?medi(?:um|a)) (\d+)', caption_a.text_content())
+                        m = re.search('(?i)(?:cd|vinyl|(?:digital )?medi(?:um|a)|other) (\d+)', caption_a.text_content())
                         if not m:
                             self.raise_exception(u'could not determine disc number')
                         else:

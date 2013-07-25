@@ -3413,6 +3413,138 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_other_in_sub_heading(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('1999')
+        release_event.set_country('United States')
+        expected.append_release_event(release_event)
+
+        expected.set_format('Other, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Epic')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Retro Futuristo')
+
+        artist = expected.create_artist()
+        artist.set_name('Jack Herrera')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/020fc291-af3e-45d7-a2f3-212d42fc260b')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('City Lights')
+        track.set_length(313)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('What U Feel')
+        track.set_length(295)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Diamond in the Rough')
+        track.set_length(297)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('High Off You')
+        track.set_length(299)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Say You Gotta Man')
+        track.set_length(262)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Jack Shuffle (feat. Will.I.Am)')
+        track.set_length(240)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Up Above My Head')
+        track.set_length(320)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Jack Herrera for President')
+        track.set_length(272)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Free to Believe')
+        track.set_length(329)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('For You')
+        track.set_length(378)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Silver & Gold (feat. Black Thought)')
+        track.set_length(316)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Revolution (interlude)')
+        track.set_length(78)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Revolution')
+        track.set_length(315)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('14')
+        track.set_title('Be Free')
+        track.set_length(341)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('15')
+        track.set_title(u'D\xe9ja Vu')
+        track.set_length(218)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('16')
+        track.set_title('Jewel')
+        track.set_length(339)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/020fc291-af3e-45d7-a2f3-212d42fc260b')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
