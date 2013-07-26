@@ -38,7 +38,7 @@ class ReleaseScraper(Scraper, ExceptionMixin, RequestMixin):
         try:
             response = json.loads(response_content)
         except:
-            self.raise_exception(u'invalid server response')
+            self.raise_exception(u'invalid server response: %r' % response_content)
         return response
 
     def add_release_event(self):
