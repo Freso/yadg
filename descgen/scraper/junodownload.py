@@ -32,6 +32,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return self._base_url + 'products/%s/%s/' % (self._release_name, self.id)
 
     def prepare_response_content(self, content):
+        # there is at least one release with an unescaped "<" in the track title
+        # try to mitigate the problem, although that might break more than it fixes
+        content = re.sub('(?s)(<div[^>]*?class="product_tracklist_heading_records_title"[^>]*?>)(.*?)(?=</div>)',
+                         lambda x: x.group(1)+x.group(2).replace('<', '&lt;').replace('>', '&gt;'), content)
         #get the raw response content and parse it
         self.parsed_response = lxml.html.document_fromstring(content)
 
