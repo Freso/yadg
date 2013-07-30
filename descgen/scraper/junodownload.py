@@ -14,7 +14,7 @@ NOTES = 'Track artists on VA releases are not supported.'
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://www.junodownload.com/'
-    string_regex = '^http://(?:www\.)?junodownload\.com/products/([^/]*)/([^/]*)/?$'
+    string_regex = '^http(?:s)?://(?:(?:www|secure)\.)?junodownload\.com/products/([^/]*)/([^/]*)/?$'
     request_kwargs = {'allow_redirects': False}
 
     _various_artists_aliases = ['various']
