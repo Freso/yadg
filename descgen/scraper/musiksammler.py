@@ -41,7 +41,9 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 children = info_row.getchildren()
                 if len(children) == 2:
                     th, td = children
-                    self._info_dict[self.remove_whitespace(th.text_content()).lower()] = td
+                    content = td.text_content().lower()
+                    if not ('unbekannt' in content or 'k.a.' in content):
+                        self._info_dict[self.remove_whitespace(th.text_content()).lower()] = td
         return self._info_dict
 
     def prepare_response_content(self, content):
