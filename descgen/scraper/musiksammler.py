@@ -11,7 +11,7 @@ from ..result import ReleaseResult, ListResult, NotFoundResult
 READABLE_NAME = 'Musik-Sammler'
 SCRAPER_URL = 'http://www.musik-sammler.de/'
 NOTES = '*  Search terms are only matched against **album titles**\n' \
-        '*  Release country names in description are in German'
+        '*  Release country names are in German'
 
 
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
