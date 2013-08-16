@@ -3,7 +3,7 @@
 import difflib
 
 from django.test import TestCase as TestCaseBase
-from .scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp
+from .scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp, musiksammler
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
 from .visitor.misc import DescriptionVisitor
 from .visitor.api import APIVisitorV1
@@ -10162,6 +10162,653 @@ class BandcampTest(TestCase):
         expected.set_scraper_name(None)
 
         s = bandcamp.ReleaseScraper.from_string('http://blubb.bla.com/album/blubb')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+
+class MusikSammlerTest(TestCase):
+
+    def test_simple_album(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('1994')
+        release_event.set_country('Niederlande')
+        expected.append_release_event(release_event)
+
+        expected.set_format(u'CD, Re-Release, Remastered')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('EMI Records Ltd.')
+        label_id.append_catalogue_nr('7243 8 29752 2 9')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Dark Side Of The Moon')
+
+        artist = expected.create_artist()
+        artist.set_name('Pink Floyd')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Rock')
+        expected.append_genre('Progressive Rock')
+        expected.append_genre('Psychedelic Rock')
+
+        expected.set_url('http://www.musik-sammler.de/media/830798/')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('(a) Speak To Me (b) Breathe')
+        track.set_length(237)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('On The Run')
+        track.set_length(215)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Time')
+        track.set_length(424)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('The Great Gig In The Sky')
+        track.set_length(287)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Money')
+        track.set_length(382)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Us And Them')
+        track.set_length(470)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Any Colour You Like')
+        track.set_length(205)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Brain Damage')
+        track.set_length(230)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Eclipse')
+        track.set_length(121)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musiksammler.ReleaseScraper.from_string('http://www.musik-sammler.de/media/830798/')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_multiple_discs(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2011')
+        release_event.set_country('Japan')
+        expected.append_release_event(release_event)
+
+        expected.set_format(u'2-CD, Pappschuber, Re-Release, Remastered, Digisleeve')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('EMI Japan')
+        label_id.append_catalogue_nr('TOCP 71163 64')
+        expected.append_label_id(label_id)
+
+        expected.set_title('The Dark Side Of The Moon')
+
+        artist = expected.create_artist()
+        artist.set_name('Pink Floyd')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Rock')
+        expected.append_genre('Psychedelic Rock')
+
+        expected.set_url('http://www.musik-sammler.de/media/883773')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Speak To Me')
+        track.set_length(67)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Breathe (In The Air)')
+        track.set_length(169)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('On The Run')
+        track.set_length(225)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Time')
+        track.set_length(413)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('The Great Gig In The Sky')
+        track.set_length(284)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Money')
+        track.set_length(383)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Us And Them')
+        track.set_length(469)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Any Colour You Like')
+        track.set_length(206)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Brain Damage')
+        track.set_length(226)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Eclipse')
+        track.set_length(132)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Speak To Me')
+        track.set_length(165)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Breathe (In The Air)')
+        track.set_length(170)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('On The Run')
+        track.set_length(308)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Time')
+        track.set_length(391)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('The Great Gig In The Sky')
+        track.set_length(410)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Money')
+        track.set_length(521)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Us And Them')
+        track.set_length(489)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Any Colour You Like')
+        track.set_length(490)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Brain Damage')
+        track.set_length(223)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Eclipse')
+        track.set_length(139)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musiksammler.ReleaseScraper.from_string('http://www.musik-sammler.de/media/883773')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_track_artist(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2002')
+        release_event.set_country(u'\xd6sterreich')
+        expected.append_release_event(release_event)
+
+        expected.set_format(u'Split-CD, Cardsleeve')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('Din Records')
+        label_id.append_catalogue_nr('din cds 2 / EFA 51665-2')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Icol Diston')
+
+        artist = expected.create_artist()
+        artist.set_name('Arovane')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Dynamo')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Techno')
+        expected.append_genre('Electronic')
+        expected.append_genre('Ambient')
+        expected.append_genre('Electro')
+        expected.append_genre('Freeform')
+
+        expected.set_url('http://www.musik-sammler.de/media/512755')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('I.O.')
+        track.set_length(374)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Parf')
+        track.set_length(374)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Torn')
+        track.set_length(417)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Andar')
+        track.set_length(464)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Icol Diston')
+        track.set_length(19)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Yua:E')
+        track.set_length(491)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Icol Vern')
+        track.set_length(303)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Nacrath')
+        track.set_length(298)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Acval')
+        track.set_length(306)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Arovane')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title(u'Au\xdfen Vor Amx')
+        track.set_length(560)
+        track_artist = expected.create_artist()
+        track_artist.set_name('Dynamo')
+        track_artist.set_various(False)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('No. 8 Amx')
+        track.set_length(825)
+        track_artist = expected.create_artist()
+        track_artist.set_name(None)
+        track_artist.set_various(True)
+        track_artist.append_type(expected.ArtistTypes.MAIN)
+        track.append_artist(track_artist)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musiksammler.ReleaseScraper.from_string('http://www.musik-sammler.de/media/512755')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_various_artists(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date(None)
+        release_event.set_country('Deutschland')
+        expected.append_release_event(release_event)
+
+        expected.set_format(u'2-CD, Erstauflage')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('BCM Records GmbH')
+        label_id.append_catalogue_nr('55359')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Grooves Loops & Patterns Vol.1 + Vol.2')
+
+        artist = expected.create_artist()
+        artist.set_name(None)
+        artist.set_various(True)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Techno')
+        expected.append_genre('Electronic')
+        expected.append_genre('Breakbeat')
+        expected.append_genre('Electro')
+
+        expected.set_url('http://www.musik-sammler.de/media/313881')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Latin Disco [130 Bpm]')
+        track.set_length(174)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Straight Disco [131 Bpm]')
+        track.set_length(187)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Medium Disco [116 Bpm]')
+        track.set_length(195)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Slow Disco [87 Bpm]')
+        track.set_length(215)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('UK Happy Disco I [118 Bpm]')
+        track.set_length(238)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('UK Happy Disco II [116 Bpm]')
+        track.set_length(242)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('UK Happy Disco III [121 Bpm]')
+        track.set_length(250)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Sexy Disco [107 Bpm]')
+        track.set_length(288)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Ethno Disco [98 Bpm]')
+        track.set_length(275)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Us Disco [120 Bpm]')
+        track.set_length(160)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('Cuba Disco [122 Bpm]')
+        track.set_length(169)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Dance Floor Disco I [125 Bpm]')
+        track.set_length(242)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Dance Floor Disco II [122,5 Bpm]')
+        track.set_length(240)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        disc = expected.create_disc()
+        disc.set_number(2)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Straight Rock [120 Bpm]')
+        track.set_length(175)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Medium Rock [132 Bpm]')
+        track.set_length(158)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('Fast Rock [160 Bpm]')
+        track.set_length(162)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('Rock Ballad [71 Bpm]')
+        track.set_length(238)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('Medium Rock Balad [106 Bpm]')
+        track.set_length(195)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('Funk Rock [108 Bpm]')
+        track.set_length(191)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('Latin Rock [122 Bpm]')
+        track.set_length(175)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('Hard Rock Shuffle [132 Bpm]')
+        track.set_length(158)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('Medium Rock Shuffle [99 Bpm]')
+        track.set_length(170)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('10')
+        track.set_title('Rhythm & Blues [118 Bpm]')
+        track.set_length(159)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('11')
+        track.set_title('5/4 Freak Rock [165 Bpm]')
+        track.set_length(140)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('12')
+        track.set_title('Rockabilly [123 Bpm]')
+        track.set_length(154)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('13')
+        track.set_title('Country Rock [92 Bpm]')
+        track.set_length(204)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musiksammler.ReleaseScraper.from_string('http://www.musik-sammler.de/media/313881')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_404(self):
+        expected = NotFoundResult()
+        expected.set_scraper_name(None)
+
+        s = musiksammler.ReleaseScraper.from_string('http://www.musik-sammler.de/media/99999999999999')
         r = s.get_result()
 
         self.assertEqual(expected, r)
