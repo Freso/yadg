@@ -131,16 +131,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     def get_disc_containers(self):
         disc_containers = {}
         tracklists = self.parsed_response.cssselect('div#tlist > table')
+        disc_number = 1
         for tracklist in tracklists:
-            heading = tracklist.getprevious()
-            if heading is not None:
-                m = re.match('(?i).*?cd\s*?(\d+)?\s*$', heading.text_content())
-                if m:
-                    if m.group(1):
-                        disc_number = int(m.group(1))
-                    else:
-                        disc_number = 1
-                    disc_containers[disc_number] = tracklist
+            disc_containers[disc_number] = tracklist
+            disc_number += 1
         return disc_containers
 
     def get_track_containers(self, disc_container):
