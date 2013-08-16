@@ -132,7 +132,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         for tracklist in tracklists:
             heading = tracklist.getprevious()
             if heading is not None:
-                m = re.match('(?i).*?cd\s*?(\d+)?', heading.text_content())
+                m = re.match('(?i).*?cd\s*?(\d+)?\s*$', heading.text_content())
                 if m:
                     if m.group(1):
                         disc_number = int(m.group(1))
