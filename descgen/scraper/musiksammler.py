@@ -286,8 +286,8 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         album_title_th = release_container[1]
         artist_th = release_container[2]
         artist_name = self.remove_whitespace(artist_th.text_content())
+        artist_name = re.sub('(?i)(' + '|'.join(map(lambda x: x.replace('.', '\.'), ReleaseScraper._VARIOUS_ARTISTS_NAMES)) + ')', 'Various Artists', artist_name)
         album_title = self.remove_whitespace(album_title_th.text_content())
-        re.sub('(?i)(' + '|'.join(map(lambda x: x.replace('.', '\.'), ReleaseScraper._VARIOUS_ARTISTS_NAMES)) + ')', 'Various Artists', artist_name)
         for c in (artist_name, album_title):
             if not c.lower() in self.UNKNOWN_SYNONYMS:
                 components.append(self.swap_suffix(c))
