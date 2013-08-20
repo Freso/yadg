@@ -19,7 +19,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     _base_url = 'http://www.musik-sammler.de/'
     string_regex = '^http://(?:www\.)?musik-sammler\.de/media/(\d*?)/?$'
 
-    _VARIOUS_ARTISTS_NAME = 'diverse interpreten'
+    _VARIOUS_ARTISTS_NAMES = ('diverse interpreten', 'v.a.', 'various artists/sampler')
 
     def __init__(self, id):
         super(ReleaseScraper, self).__init__()
@@ -109,7 +109,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             artist_names = map(self.remove_whitespace, artist_span.text_content().split(' / '))
             for artist_name in artist_names:
                 artist = self.result.create_artist()
-                if artist_name.lower() == self._VARIOUS_ARTISTS_NAME:
+                if artist_name.lower() in self._VARIOUS_ARTISTS_NAMES:
                     artist.set_various(True)
                 else:
                     artist.set_name(artist_name)
@@ -188,7 +188,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             for artist_a in artist_as:
                 track_artist = self.result.create_artist()
                 artist_name = self.remove_whitespace(artist_a.text_content())
-                if artist_name.lower() == self._VARIOUS_ARTISTS_NAME:
+                if artist_name.lower() in self._VARIOUS_ARTISTS_NAMES:
                     track_artist.set_various(True)
                 else:
                     track_artist.set_name(artist_name)
@@ -287,7 +287,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         artist_th = release_container[2]
         artist_name = self.remove_whitespace(artist_th.text_content())
         album_title = self.remove_whitespace(album_title_th.text_content())
-        re.sub('(?i)' + ReleaseScraper._VARIOUS_ARTISTS_NAME, 'Various Artists', artist_name)
+        re.sub('(?i)(' + '|'.join(map(lambda x: x.replace('.', '\.'), ReleaseScraper._VARIOUS_ARTISTS_NAMES)) + ')', 'Various Artists', artist_name)
         for c in (artist_name, album_title):
             if not c.lower() in self.UNKNOWN_SYNONYMS:
                 components.append(self.swap_suffix(c))
