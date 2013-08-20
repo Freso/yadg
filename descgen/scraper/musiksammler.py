@@ -11,7 +11,8 @@ from ..result import ReleaseResult, ListResult, NotFoundResult
 READABLE_NAME = 'Musik-Sammler'
 SCRAPER_URL = 'http://www.musik-sammler.de/'
 NOTES = '*  Search terms are only matched against **album titles**\n' \
-        '*  Release country names are in German'
+        '*  Release country names are in German\n' \
+        '*  Splitting of combined artist names will not always be correct'
 
 
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
@@ -21,6 +22,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _VARIOUS_ARTISTS_NAMES = ('diverse interpreten', 'v.a.', 'various artists/sampler')
     _UNKNOWN_SYNONYMS = ('unbekannt', 'k.a.', 'nicht vorhanden')
+    _ADDITIONAL_SUFFIXES = [(u'Die ', u', Die'), (u'Der ', u', Der'), (u'Das ', u', Das')]
 
     def __init__(self, id):
         super(ReleaseScraper, self).__init__()
@@ -34,6 +36,9 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     def get_url(self):
         return self._base_url + 'media/%s' % self.id
 
+    def get_presuffixes(self):
+        return self.presuffixes + self._ADDITIONAL_SUFFIXES
+
     def _get_info_dict(self):
         if self._info_dict is None:
             self._info_dict = {}
@@ -46,6 +51,24 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     if not content in self._UNKNOWN_SYNONYMS:
                         self._info_dict[self.remove_whitespace(th.text_content()).lower()] = td
         return self._info_dict
+
+    def split_artists(self, artist_string):
+        artist_string = re.sub('(?i)(' + '|'.join(map(lambda x: x.replace('.', '\.'), self._VARIOUS_ARTISTS_NAMES)) + ')', 'Various Artists', artist_string)
+        tokens = re.split('(?i)\s*(/|feat\.)\s*', artist_string)
+        artists = []
+        is_feature = False
+        for token in tokens:
+            if token == '/':
+                continue
+            elif token.lower() == 'feat.':
+                is_feature = True
+            elif not token:
+                continue
+            elif is_feature:
+                artists.append({'name': token, 'is_feature': True})
+            elif not is_feature:
+                artists.append({'name': token, 'is_feature': False})
+        return artists
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
@@ -107,16 +130,21 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         if len(artists_spans) == 0:
             self.raise_exception(u'could not find artist h2')
         for artist_span in artists_spans:
-            artist_names = map(self.remove_whitespace, artist_span.text_content().split(' / '))
-            for artist_name in artist_names:
+            parsed_artists = self.split_artists(self.remove_whitespace(artist_span.text_content()))
+            for parsed_artist in parsed_artists:
                 artist = self.result.create_artist()
-                if artist_name.lower() in self._VARIOUS_ARTISTS_NAMES:
+                if parsed_artist['name'] == "Various Artists":
                     artist.set_various(True)
                 else:
-                    artist.set_name(artist_name)
-                artist.append_type(self.result.ArtistTypes.MAIN)
-                # only add 'Various Artists' if it is the only artist
-                if (artist.is_various() and len(artist_names) == 1 and len(artists_spans) == 1) or not artist.is_various():
+                    artist.set_name(self.swap_suffix(parsed_artist['name']))
+                if parsed_artist['is_feature']:
+                    artist.append_type(self.result.ArtistTypes.FEATURING)
+                else:
+                    artist.append_type(self.result.ArtistTypes.MAIN)
+                # only add 'Various Artists' if it is the only main artist
+                if (artist.is_various() and self.result.ArtistTypes.MAIN in artist.get_types() and
+                            len(filter(lambda x: not x['is_feature'], parsed_artists)) == 1 and
+                            len(artists_spans) == 1) or not artist.is_various():
                     self.result.append_release_artist(artist)
 
     def add_genres(self):
@@ -187,16 +215,22 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             artist_as = track_artists_td.cssselect('a')
             artist_as = filter(lambda x: '/artist/' in x.attrib['href'], artist_as)
             for artist_a in artist_as:
-                track_artist = self.result.create_artist()
-                artist_name = self.remove_whitespace(artist_a.text_content())
-                if artist_name.lower() in self._VARIOUS_ARTISTS_NAMES:
-                    track_artist.set_various(True)
-                else:
-                    track_artist.set_name(artist_name)
-                track_artist.append_type(self.result.ArtistTypes.MAIN)
-                # only add various artist if it is the only track artist
-                if (track_artist.is_various() and len(artist_as) == 1) or not track_artist.is_various():
-                    track_artists.append(track_artist)
+                parsed_artists = self.split_artists(self.remove_whitespace(artist_a.text_content()))
+                for parsed_artist in parsed_artists:
+                    track_artist = self.result.create_artist()
+                    if parsed_artist['name'] == "Various Artists":
+                        track_artist.set_various(True)
+                    else:
+                        track_artist.set_name(self.swap_suffix(parsed_artist['name']))
+                    if parsed_artist['is_feature']:
+                        track_artist.append_type(self.result.ArtistTypes.FEATURING)
+                    else:
+                        track_artist.append_type(self.result.ArtistTypes.MAIN)
+                    # only add various artist if it is the only main track artist
+                    if (track_artist.is_various() and len(artist_as) == 1 and
+                                len(filter(lambda x: not x['is_feature'], parsed_artists)) == 1) \
+                        or not track_artist.is_various():
+                        track_artists.append(track_artist)
         return track_artists
 
     def add_discs(self):
@@ -270,7 +304,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         return {'do': 'search', 'title': self.search_term}
 
     def get_presuffixes(self):
-        return self.presuffixes + [(u'Die ', u', Die'), (u'Der ', u', Der'), (u'Das ', u', Das')]
+        return self.presuffixes + ReleaseScraper._ADDITIONAL_SUFFIXES
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
