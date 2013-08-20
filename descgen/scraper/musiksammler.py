@@ -283,11 +283,14 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
 
     def get_release_name(self, release_container):
         components = []
-        album_title_th = release_container[1]
         artist_th = release_container[2]
         artist_name = self.remove_whitespace(artist_th.text_content())
         artist_name = re.sub('(?i)(' + '|'.join(map(lambda x: x.replace('.', '\.'), ReleaseScraper._VARIOUS_ARTISTS_NAMES)) + ')', 'Various Artists', artist_name)
-        album_title = self.remove_whitespace(album_title_th.text_content())
+        album_title_th = release_container[1]
+        album_title_a = album_title_th.cssselect('a')
+        if len(album_title_a) != 1:
+            self.raise_exception(u'could not find release link anchor')
+        album_title = self.remove_whitespace(album_title_a[0].text_content())
         for c in (artist_name, album_title):
             if not c.lower() in self.UNKNOWN_SYNONYMS:
                 components.append(self.swap_suffix(c))
