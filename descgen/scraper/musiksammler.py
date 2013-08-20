@@ -345,3 +345,9 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
                 list_item.set_url(release_url)
                 result.append_item(list_item)
         return result
+
+
+class ScraperFactory(StandardFactory):
+
+    scraper_classes = [ReleaseScraper]
+    search_scraper = SearchScraper
