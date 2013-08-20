@@ -20,6 +20,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     string_regex = '^http://(?:www\.)?musik-sammler\.de/media/(\d*?)/?$'
 
     _VARIOUS_ARTISTS_NAMES = ('diverse interpreten', 'v.a.', 'various artists/sampler')
+    _UNKNOWN_SYNONYMS = ('unbekannt', 'k.a.', 'nicht vorhanden')
 
     def __init__(self, id):
         super(ReleaseScraper, self).__init__()
@@ -41,8 +42,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 children = info_row.getchildren()
                 if len(children) == 2:
                     th, td = children
-                    content = td.text_content().lower()
-                    if not ('unbekannt' in content or 'k.a.' in content):
+                    content = self.remove_whitespace(td.text_content()).lower()
+                    if not content in self._UNKNOWN_SYNONYMS:
                         self._info_dict[self.remove_whitespace(th.text_content()).lower()] = td
         return self._info_dict
 
@@ -265,8 +266,6 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
 
     url = 'http://www.musik-sammler.de'
 
-    UNKNOWN_SYNONYMS = ('unbekannt', 'k.a.', 'nicht vorhanden')
-
     def get_params(self):
         return {'do': 'search', 'title': self.search_term}
 
@@ -292,7 +291,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
             self.raise_exception(u'could not find release link anchor')
         album_title = self.remove_whitespace(album_title_a[0].text_content())
         for c in (artist_name, album_title):
-            if not c.lower() in self.UNKNOWN_SYNONYMS:
+            if not c.lower() in ReleaseScraper._UNKNOWN_SYNONYMS:
                 components.append(self.swap_suffix(c))
         if components:
             return u' \u2013 '.join(components)
@@ -306,7 +305,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         catalogue_nr = release_container[7]
         for c in (format, catalogue_nr, year, country):
             c = self.remove_whitespace(c.text_content())
-            if not c.lower() in self.UNKNOWN_SYNONYMS:
+            if not c.lower() in ReleaseScraper._UNKNOWN_SYNONYMS:
                 components.append(c)
         if components:
             return u' | '.join(components)
