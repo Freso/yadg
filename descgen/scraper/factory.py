@@ -6,6 +6,7 @@ import audiojelly
 import junodownload
 import itunes
 import bandcamp
+import musiksammler
 
 _SCRAPERS = {
     'discogs': {'module': discogs, 'priority': 10},
@@ -16,6 +17,7 @@ _SCRAPERS = {
     'junodownload': {'module': junodownload, 'priority': 10},
     'itunes': {'module': itunes, 'priority': 10},
     'bandcamp': {'module': bandcamp, 'priority': 15},
+    'musiksammler': {'module': musiksammler, 'priority': 10},
 }
 
 _SCRAPER_FACTORIES = {}
