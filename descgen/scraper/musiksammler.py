@@ -261,3 +261,85 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return self.result
 
 
+class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixin):
+
+    url = 'http://www.musik-sammler.de'
+
+    UNKNOWN_SYNONYMS = ('unbekannt', 'k.a.', 'nicht vorhanden')
+
+    def get_params(self):
+        return {'do': 'search', 'title': self.search_term}
+
+    def get_presuffixes(self):
+        return self.presuffixes + [(u'Die ', u', Die'), (u'Der ', u', Der'), (u'Das ', u', Das')]
+
+    def prepare_response_content(self, content):
+        #get the raw response content and parse it
+        self.parsed_response = lxml.html.document_fromstring(content)
+
+    def get_release_containers(self):
+        table_rows = self.parsed_response.cssselect('table#searchArtistList tbody tr')[:25]
+        return map(lambda x: x.getchildren(), table_rows)
+
+    def get_release_name(self, release_container):
+        components = []
+        album_title_th = release_container[1]
+        artist_th = release_container[2]
+        artist_name = self.remove_whitespace(artist_th.text_content())
+        album_title = self.remove_whitespace(album_title_th.text_content())
+        re.sub('(?i)' + ReleaseScraper._VARIOUS_ARTISTS_NAME, 'Various Artists', artist_name)
+        for c in (artist_name, album_title):
+            if not c.lower() in self.UNKNOWN_SYNONYMS:
+                components.append(self.swap_suffix(c))
+        if components:
+            return u' \u2013 '.join(components)
+        self.raise_exception(u'could not determine release name')
+
+    def get_release_info(self, release_container):
+        components = []
+        format = release_container[3]
+        year = release_container[4]
+        country = release_container[5]
+        catalogue_nr = release_container[7]
+        for c in (format, catalogue_nr, year, country):
+            c = self.remove_whitespace(c.text_content())
+            if not c.lower() in self.UNKNOWN_SYNONYMS:
+                components.append(c)
+        if components:
+            return u' | '.join(components)
+        return None
+
+    def get_release_url(self, release_container):
+        album_title_th = release_container[1]
+        release_anchor = album_title_th.cssselect('a')
+        if len(release_anchor) != 1:
+            self.raise_exception(u'could not find release link anchor')
+        release_link = self.url + release_anchor[0].attrib['href']
+        m = re.match(ReleaseScraper.string_regex, release_link)
+        if not m:
+            release_link = None
+        return release_link
+
+    def get_result(self):
+        response = self.request_get(url=self.url, params=self.get_params())
+        self.prepare_response_content(self.get_response_content(response))
+
+        result = ListResult()
+        result.set_scraper_name(self.get_name())
+
+        release_containers = self.get_release_containers()
+        for release_container in release_containers:
+            release_name = self.get_release_name(release_container)
+            release_url = self.get_release_url(release_container)
+
+            # we only add releases to the result list that we can actually access
+            if release_url is not None and release_name is not None:
+                release_info = self.get_release_info(release_container)
+
+                list_item = result.create_item()
+                list_item.set_name(release_name)
+                list_item.set_info(release_info)
+                list_item.set_query(release_url)
+                list_item.set_url(release_url)
+                result.append_item(list_item)
+        return result
