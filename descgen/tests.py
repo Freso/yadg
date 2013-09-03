@@ -3901,6 +3901,96 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_cdr_in_sub_heading(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('2013-06-27')
+        release_event.set_country('United States')
+        expected.append_release_event(release_event)
+
+        expected.set_format('CD-R, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('[no label]')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Pike 20')
+
+        artist = expected.create_artist()
+        artist.set_name('Buckethead')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://musicbrainz.org/release/dd3f9b98-364c-4da0-b4d7-c79f1c20f1e6')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('[untitled]')
+        track.set_length(486)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('[untitled]')
+        track.set_length(147)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('3')
+        track.set_title('[untitled]')
+        track.set_length(191)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('4')
+        track.set_title('[untitled]')
+        track.set_length(166)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('5')
+        track.set_title('[untitled]')
+        track.set_length(185)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('6')
+        track.set_title('[untitled]')
+        track.set_length(413)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('7')
+        track.set_title('[untitled]')
+        track.set_length(133)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('8')
+        track.set_title('[untitled]')
+        track.set_length(113)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('9')
+        track.set_title('[untitled]')
+        track.set_length(91)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/dd3f9b98-364c-4da0-b4d7-c79f1c20f1e6')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
