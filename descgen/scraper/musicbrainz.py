@@ -192,7 +192,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     caption_a = disc_row.cssselect('a[rel="mo:record"]')
                     if len(caption_a) == 1:
                         caption_a = caption_a[0]
-                        m = re.search('(?i)(?:cd|dvd|vinyl|(?:digital )?medi(?:um|a)|other) (\d+)', caption_a.text_content())
+                        m = re.search('(?i)(?:cd(?:-r)?|dvd|vinyl|(?:digital )?medi(?:um|a)|other) (\d+)', caption_a.text_content())
                         if not m:
                             self.raise_exception(u'could not determine disc number')
                         else:

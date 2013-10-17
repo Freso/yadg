@@ -1,0 +1,5 @@
+
+*.pyc
+/whatdesc.komodoproject
+/.komodotools
+/.idea

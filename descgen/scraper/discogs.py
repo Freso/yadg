@@ -49,7 +49,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         doc = lxml.html.document_fromstring(content)
 
         #get the div that contains all the information we want
-        container = doc.cssselect('div#page > div.lr > div.left')
+        container = doc.cssselect('div#page_content')
         if len(container) != 1:
             self.raise_exception(u'could not find anchor point')
         self.container = container[0]
