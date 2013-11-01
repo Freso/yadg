@@ -10,6 +10,7 @@ _FORMATS = {
     'wafflesfm-tracks-only':('wafflesfm-tracks-only.txt', 'waffles.fm (tracks only)'),
     'plain':('plain.txt','plain'),
     'bbcode-generic':('bbcode-generic.txt','BBCode (generic)'),
+    'studioxcd':('studioxcd.txt', 'studiox.cd')
 }
 
 FORMAT_CHOICES = map(lambda x: (x,_FORMATS[x][1]),_FORMATS)
