@@ -1,0 +1,8 @@
+{% load dotify %}{% load artistsbytype %}{% load wrapartists %}[size=5][b]{% with main_artists=result.get_release_artists|artistsbytype:result.ArtistTypes.MAIN %}{% if main_artists|length_is:"1" and main_artists.0.is_various %}Various Artists{% else %}{% wrapartists main_artists "[artist]%s[/artist]" ", " " & " %}{% endif %}{% endwith %}{% with featured_artists=result.get_release_artists|artistsbytype:result.ArtistTypes.FEATURING %}{% if featured_artists %} feat. {% wrapartists featured_artists "[artist]%s[/artist]" ", " " & " %}{% endif %}{% endwith %} – {{ result.get_title }}[/b][/size]
+{% if result.get_label_ids %}[b]Label/Cat#:[/b] {% for label_id in result.get_label_ids %}[url={{ gazelle_url }}/torrents.php?recordlabel={{ label_id.get_label|urlencode }}]{{ label_id.get_label }}[/url]{% if label_id.get_catalogue_nrs %} – {{ label_id.get_catalogue_nrs|join:" or " }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if result.get_release_events %}{% with release_event=result.get_release_events|first %}{% if release_event.get_country %}[b]Country:[/b] {{ release_event.get_country }}
+{% endif %}{% if release_event.get_date %}[b]Year:[/b] {{ release_event.get_date }}
+{% endif %}{% endwith %}{% endif %}{% if result.get_genres %}[b]Genre:[/b] {% for g in result.get_genres %}[url={{ gazelle_url }}/torrents.php?taglist={{ g|dotify|urlencode }}]{{ g }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if result.get_styles %}[b]Style:[/b] {% for s in result.get_styles %}[url={{ gazelle_url }}/torrents.php?taglist={{ s|dotify|urlencode }}]{{ s }}[/url]{% if not forloop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if result.get_format %}[b]Format:[/b] {{ result.get_format }}
+{% endif %}
