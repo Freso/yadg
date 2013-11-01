@@ -438,7 +438,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):
-        return self.parsed_response.cssselect('ol.search_results li.body_row div.result_container')
+        return self.parsed_response.cssselect('ol.search_results li.body_row div.card_body')
 
     def get_release_name_and_url(self, release_container):
         release_link = release_container.cssselect('a.search_result_title')
@@ -460,8 +460,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
 
     def get_release_info(self, release_container):
         #get additional info
-        release_info = release_container.cssselect('span.push_right_mini')
-        release_info = filter(lambda x: not x.text_content() in ("Release", "Master Release"), release_info)
+        release_info = release_container.cssselect('p.card_info')
         if len(release_info) != 1:
             self.raise_exception(u'could not extract additional info from: ' + release_container.text_content())
         release_info = release_info[0].text_content()
