@@ -12631,6 +12631,67 @@ Disc 4
 More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
 
         self.assertEqual(expected, visitor.visit(self.result))
+        
+    def test_studioxcd(self):
+        visitor = DescriptionVisitor(description_format='studioxcd')
+
+        expected = u"""[size=5][b][artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Main Artist[/artist] feat. [artist]Featuring Artist[/artist] \u2013 Once in a Lifetime[/b][/size]
+[b]Label/Cat#:[/b] [url=https://studiox.cd/torrents.php?recordlabel=Trisol]Trisol[/url] \u2013 TRI 303 CD or Eine andere CatNr, [url=https://studiox.cd/torrents.php?recordlabel=Ein%20anderes%20Label]Ein anderes Label[/url] \u2013 Nr.1 or Nr.2 or Nr.3, [url=https://studiox.cd/torrents.php?recordlabel=Ein%20letztes%20Label]Ein letztes Label[/url] \u2013 Und eine letzte Nummer
+[b]Country:[/b] Germany
+[b]Year:[/b] 2007-05-25
+[b]Genre:[/b] [url=https://studiox.cd/torrents.php?taglist=Electronic]Electronic[/url], [url=https://studiox.cd/torrents.php?taglist=Rock]Rock[/url]
+[b]Style:[/b] [url=https://studiox.cd/torrents.php?taglist=Goth.Rock]Goth Rock[/url], [url=https://studiox.cd/torrents.php?taglist=Synth-pop]Synth-pop[/url]
+[b]Format:[/b] 4×CD, Album + Live
+
+[size=4][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 1 [i](05:51)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – A Dead Man’s Song (feat. [artist]Noch ein Artist[/artist]) [i](05:12)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Versuchung [i](05:45)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Torn [i](05:04)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Demon Love [i](04:32)[/i]
+[b]6.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Paperhearted Ghost [i](04:43)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – A Tale of Real Love [i](05:16)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hunger [i](04:49)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Truth About Snow-White [i](04:00)[/i]
+[b]10.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Wore Shadows [i](04:36)[/i]
+[b]11.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Und wir tanzten (Ungeschickte Liebesbriefe) [i](05:17)[/i]
+[b]12.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 2 (reprise) [i](02:44)[/i]
+
+[size=4][b]Disc 2[/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Küss mich [i](06:24)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Silence - Release [i](03:45)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Solitude [i](03:40)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Die Ballade von der Erweckung [i](08:47)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Another Conversation [i](03:21)[/i]
+[b]6.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sing Child [i](07:29)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Ich will brennen [i](05:00)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Toscana [i](06:14)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Ride On [i](03:42)[/i]
+[b]10.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hometown [i](03:01)[/i]
+[b]11.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Werben [i](04:53)[/i]
+[b]12.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Once in a Lifetime, Part 3 (Finale) [i](10:08)[/i]
+
+[size=4][b]Disc 3: [i]Hier noch ein Titel[/i][/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hässlich [i](02:25)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Backstage (All Areas) [i](09:33)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Paracetamolträume [i](08:37)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Auszug aus „Tremendista“ (feat. [artist]Ralph Müller[/artist]) [i](24:33)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Campari O [i](02:39)[/i]
+
+[size=4][b]Disc 4[/b][/size]
+[b]1.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sicamore Trees (ASP soundcheck out-take) [i](01:34)[/i]
+[b]2.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Demon Love [i](04:35)[/i]
+[b]3.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – The Truth About Snow-White [i](04:35)[/i]
+[b]4.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Wore Shadows [i](05:19)[/i]
+[b]5.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Sing Child [i](07:49)[/i]
+[b]6.[/b] [artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Track Artist[/artist] – Hometown [i](03:41)[/i]
+[b]7.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Hunger [i](04:34)[/i]
+[b]8.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – Silence - Release [i](03:28)[/i]
+[b]9.[/b] [artist]ASP[/artist] & [artist]Chamber[/artist] – She Moved Through the Fair (ASP soundcheck out-take) [i](02:00)[/i]
+
+More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb"""
+
+        self.assertEqual(expected, visitor.visit(self.result))
 
 
 class ApiVisitorV1Test(TestCase):
