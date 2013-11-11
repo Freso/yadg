@@ -1,0 +1,15 @@
+{% extends "result.html" %}{% load url from future %}
+
+{% block additionalJS %}
+        $("textarea#template_area").keyup(function() {
+            var template = $("textarea#template_area").val();
+
+            sandbox.eval(eval_string, success_callback, {template: template, data: data}, failure_callback);
+        });
+{% endblock %}
+
+{% block title%}Sandbox – {% endblock %}
+
+{% block subcontent %}<div class="well"><textarea id="description_area">Please enter you description template</textarea></div>
+<div class="well"><textarea id="template_area">Please enter you description template</textarea></div>
+{% endblock %}

@@ -1,5 +1,35 @@
 {% extends "base_with_form.html" %}{% load url from future %}
 
+{% block additionalHeaders %}{{ block.super }}
+    <link rel="jsandbox" href="{{ STATIC_URL }}js/jsandbox-worker.js" />
+
+    <script src="{{ STATIC_URL }}js/jsandbox.min.js"></script>
+    <script src="{{ STATIC_URL }}js/swig.min.js"></script>
+
+    <script type="text/javascript">
+    $(document).ready(function() {
+        var sandbox = new JSandbox(),
+            templates = {
+                "blubb" : "before\n{% templatetag openblock %} block content {% templatetag closeblock %}{% templatetag openblock %} endblock {% templatetag closeblock %}\nafter"
+            },
+            template = "{{ dot_template|escapejs }}",
+            data = {{ json_data|safe }},
+            eval_string = "myswig.render(input.template, { locals: input.data, filename: 'test' + (i++) + '.tpl' })",
+            success_callback = function (description) {
+                $("textarea#description_area").text(description);
+            },
+            failure_callback = function(message) {
+                $("textarea#description_area").text((message) ? "Error: " + message : "Error: Could not parse your template.");
+            };
+
+        sandbox.load("{{ STATIC_URL }}js/swig.min.js", function () { // onload
+            this.exec({data: "var myswig = new swig.Swig({ loader: swig.loaders.memory(input.templates) }), i=0;", input: {templates: templates}});
+        });
+        {% block additionalJS %}{% endblock %}
+     });
+    </script>
+{% endblock %}
+
 {% block title%}{{ release_title }} – {% endblock %}
 
 {% block subcontent %}<div class="well"><textarea id="description_area">{{ description }}</textarea>

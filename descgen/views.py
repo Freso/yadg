@@ -3,6 +3,7 @@ from descgen.mixins import CreateTaskMixin, GetFormatMixin
 from descgen.scraper.factory import SCRAPER_ITEMS
 from .visitor.misc import DescriptionVisitor
 from .visitor.template import TemplateVisitor
+from .visitor.api import APIVisitorV1
 
 from django.shortcuts import render, redirect
 from django.http import Http404,HttpResponse
@@ -67,6 +68,26 @@ class DownloadResultView(View, GetFormatMixin):
             raise Http404
         response = HttpResponse(result,mimetype='text/plain; charset=utf-8')
         return response
+
+
+class SandboxView(TemplateView):
+    template_name = 'sandbox.html'
+
+    def get_context_data(self, id):
+        try:
+            task = TaskMeta.objects.get(task_id=id)
+        except TaskMeta.DoesNotExist:
+            raise Http404
+        if task.status != 'SUCCESS':
+            raise Http404
+        visitor = APIVisitorV1(description_format="whatcd", include_raw_data=True)
+        result = visitor.visit(task.result[0])
+        if result['type'] != 'release':
+            raise Http404
+        import json
+        data = {}
+        data['json_data'] = json.dumps(result['raw_data'])
+        return data
     
 
 class SettingsView(FormView,GetFormatMixin,CreateTaskMixin):

@@ -42,4 +42,10 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
 
         format_form = FormatForm(initial={'description_format': format})
 
-        return render(self.request, 'result.html',{'description': description, 'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form})
+        import json
+        from .api import APIVisitorV1
+        v = APIVisitorV1(description_format="whatcd", include_raw_data=True);
+        data = v.visit(result);
+
+        return render(self.request, 'result.html',{'description': description, 'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form,
+                                                   'json_data': json.dumps(data["raw_data"]), 'dot_template':'''{{ for (i in it.artists) { }}{{! it.artists[i].name }}{{? i < it.artists.length-1 }}, {{?}}{{ } }} - {{! it.title }}'''})
