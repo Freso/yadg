@@ -1,6 +1,7 @@
 # coding=utf-8
 import lxml.html
 import re
+import json
 from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, StatusCodeError, StandardFactory
 from .base import SearchScraper as SearchScraperBase
 from ..result import ReleaseResult, ListResult, NotFoundResult
@@ -37,6 +38,24 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 return dd
         return None
 
+    def _get_js_data(self):
+        script_tag = filter(lambda x: 'MB.Release.init' in x.text_content(), self.parsed_response.cssselect('script'))
+        if len(script_tag) != 1:
+            self.raise_exception(u'could not find javascript release information')
+        m = re.search('MB\.Release\.init\((.*)\)', script_tag[0].text_content())
+        if not m:
+            self.raise_exception(u'could not extract json object')
+        try:
+            self.javascript_object = json.loads(m.group(1))
+        except Exception as e:
+            self.raise_exception(u'could not decode json object, error: ' + unicode(e))
+        allArtistCredits = [item for sublist in map(lambda medium: map(lambda track: track['artistCredit'], medium['tracks']), self.javascript_object) for item in sublist]
+        self.show_artists = False
+        for artistCredit in allArtistCredits[1:]:
+            if artistCredit != allArtistCredits[0]:
+                self.show_artists = True
+                break
+
     def prepare_response_content(self, content):
         #get the raw response content and parse it
         self.parsed_response = lxml.html.document_fromstring(content)
@@ -67,6 +86,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             self._tracklist_caption = tracklist_h2[0]
         else:
             self._tracklist_caption = None
+
+        self._get_js_data()
 
     def add_release_event(self):
         if 'Release events' in self._sidebar_captions:
@@ -180,115 +201,53 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             self.result.append_release_artist(artist)
 
     def get_disc_containers(self):
-        if self._tracklist_caption is not None:
-            tracklist_table = self._tracklist_caption.getnext()
-            disc_rows = tracklist_table.cssselect('tbody > tr')
-            if len(disc_rows) == 0:
-                self.raise_exception(u'could not find any disc tracklisting')
-            discs_containers = {1: {'tracks': [], 'caption': ''}}
-            disc_number = 1
-            for disc_row in disc_rows:
-                if 'subh' in disc_row.attrib['class'].split():
-                    caption_a = disc_row.cssselect('a[rel="mo:record"]')
-                    if len(caption_a) == 1:
-                        caption_a = caption_a[0]
-                        m = re.search('(?i)(?:cd(?:-r)?|dvd|vinyl|(?:digital )?medi(?:um|a)|other) (\d+)', caption_a.text_content())
-                        if not m:
-                            self.raise_exception(u'could not determine disc number')
-                        else:
-                            disc_number = int(m.group(1))
-                            discs_containers[disc_number] = {'tracks': [], 'caption': caption_a.text_content()}
-                else:
-                    discs_containers[disc_number]['tracks'].append(disc_row)
-            return discs_containers
-        return {}
+        return dict(zip([i for i in range(1, len(self.javascript_object)+1)], self.javascript_object))
 
     def get_disc_title(self, disc_container):
-        caption = disc_container['caption']
-        caption = u':'.join(caption.split(u':')[1:])
-        caption = self.remove_whitespace(caption)
-        if caption:
-            return caption
+        if 'name' in disc_container and disc_container['name']:
+            return disc_container['name']
         return None
 
     def get_track_containers(self, disc_container):
-        track_rows = disc_container['tracks']
-        return map(lambda x: x.cssselect('td'), track_rows)
+        if 'tracks' in disc_container and disc_container['tracks']:
+            return disc_container['tracks']
+        else:
+            return []
 
     def get_track_number(self, track_container):
-        if len(track_container) in (4, 5):
-            track_number_td = track_container[0]
-        else:
-            self.raise_exception(u'track row has not the right amount of columns')
-
-        track_number_span = track_number_td.cssselect('span[property="mo:track_number"]')
-        if len(track_number_span) != 1:
-            self.raise_exception(u'could not get tracknumber')
-        track_number_span = track_number_span[0]
-        track_number = self.remove_whitespace(track_number_span.text_content())
-
-        #remove leading zeros from track number
-        if track_number.lstrip('0'):
-            track_number = track_number.lstrip('0')
-        else:
-            track_number = '0'
-        return track_number
+        if not 'number' in track_container or not track_container['number']:
+            self.raise_exception(u'could not find track number')
+        return track_container['number']
 
     def get_track_artists(self, track_container):
-        if len(track_container) == 4:
-            artist_td = None
-        elif len(track_container) == 5:
-            artist_td = track_container[2]
-        else:
-            self.raise_exception(u'track row has not the right amount of columns')
         track_artists = []
-        if artist_td is not None:
-            track_artist_links = artist_td.cssselect('a')
-            if len(track_artist_links) == 0:
-                self.raise_exception(u'could not get track artists')
-            is_feature = False
-            for track_artist_a in track_artist_links:
-                track_artist = self.remove_whitespace(track_artist_a.text_content())
-                artist = self.result.create_artist()
-                if track_artist == 'Various Artists':
-                    artist.set_various(True)
-                else:
-                    artist.set_name(track_artist)
-                if is_feature:
-                    artist.append_type(self.result.ArtistTypes.FEATURING)
-                else:
-                    artist.append_type(self.result.ArtistTypes.MAIN)
-                track_artists.append(artist)
-                if (track_artist_a.tail and u'feat.' in track_artist_a.tail) or (track_artist_a.getparent().tail and u'feat.' in track_artist_a.getparent().tail):
-                    is_feature = True
+        is_feature = False
+        if self.show_artists and 'artistCredit' in track_container and track_container['artistCredit']:
+            for artistCredit in track_container['artistCredit']:
+                if 'name' in artistCredit:
+                    track_artist = self.remove_whitespace(artistCredit['name'])
+                    artist = self.result.create_artist()
+                    if track_artist == 'Various Artists':
+                        artist.set_various(True)
+                    else:
+                        artist.set_name(track_artist)
+                    if is_feature:
+                        artist.append_type(self.result.ArtistTypes.FEATURING)
+                    else:
+                        artist.append_type(self.result.ArtistTypes.MAIN)
+                    track_artists.append(artist)
+                    if u'feat.' in artistCredit['join_phrase']:
+                        is_feature = True
         return track_artists
 
     def get_track_title(self, track_container):
-        if len(track_container) in (4, 5):
-            title_td = track_container[1]
-        else:
-            self.raise_exception(u'track row has not the right amount of columns')
-        title_a = title_td.cssselect('a[rel="mo:publication_of"]')
-        if len(title_a) != 1:
-            self.raise_exception(u'could not get track title')
-        title_a = title_a[0]
-        track_title = self.remove_whitespace(title_a.text_content())
-        return track_title
+        if not 'name' in track_container or not track_container['name']:
+            self.raise_exception(u'could not find track title')
+        return track_container['name']
 
     def get_track_length(self, track_container):
-        if len(track_container) in (4, 5):
-            length_td = track_container[-1]
-        else:
-            self.raise_exception(u'track row has not the right amount of columns')
-        length_span = length_td.cssselect('span[property="mo:duration"]')
-        if len(length_span) != 1:
-            self.raise_exception(u'could not get track length')
-        length_span = length_span[0]
-        track_length = self.remove_whitespace(length_span.text_content())
-
-        #make sure the track length is valid
-        if track_length and not '?' in track_length:
-            return self.seconds_from_string(track_length)
+        if 'length' in track_container and track_container['length']:
+            return int(round(track_container['length'] / float(1000)))
         return None
 
     def add_discs(self):
@@ -518,19 +477,23 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         return name, release_url
 
     def get_release_info(self, release_container):
-        track_count_col = release_container[3]
-        country_col = release_container[4]
+        format_col = release_container[3]
+        track_count_col = release_container[4]
+        date_col = release_container[5]
+        country_col = release_container[6]
+        #get format
+        format = self.remove_whitespace(format_col.text_content())
         #get track count
         track_count = self.remove_whitespace(track_count_col.text_content())
+        if track_count:
+            track_count += u' tracks'
+        #get date
+        date = self.remove_whitespace(date_col.text_content())
         #get country
         country = self.remove_whitespace(country_col.text_content())
-        info = u''
         if country:
-            info += u'Country: ' + country
-            if track_count:
-                info += u' | '
-        if track_count:
-            info += track_count + u' Tracks'
+            country = u'Country: ' + country
+        info = u' | '.join(filter(lambda x: x, [format, track_count, date, country]))
         if info:
             return info
         return None
