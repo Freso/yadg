@@ -477,19 +477,23 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         return name, release_url
 
     def get_release_info(self, release_container):
-        track_count_col = release_container[3]
-        country_col = release_container[4]
+        format_col = release_container[3]
+        track_count_col = release_container[4]
+        date_col = release_container[5]
+        country_col = release_container[6]
+        #get format
+        format = self.remove_whitespace(format_col.text_content())
         #get track count
         track_count = self.remove_whitespace(track_count_col.text_content())
+        if track_count:
+            track_count += u' tracks'
+        #get date
+        date = self.remove_whitespace(date_col.text_content())
         #get country
         country = self.remove_whitespace(country_col.text_content())
-        info = u''
         if country:
-            info += u'Country: ' + country
-            if track_count:
-                info += u' | '
-        if track_count:
-            info += track_count + u' Tracks'
+            country = u'Country: ' + country
+        info = u' | '.join(filter(lambda x: x, [format, track_count, date, country]))
         if info:
             return info
         return None
