@@ -11,7 +11,7 @@ import musiksammler
 _SCRAPERS = {
     'discogs': {'module': discogs, 'priority': 10},
     'musicbrainz': {'module': musicbrainz, 'priority': 10},
-    'beatport': {'module': beatport, 'priority': 10},
+    #'beatport': {'module': beatport, 'priority': 10},
     'metalarchives': {'module': metalarchives, 'priority': 10},
     'audiojelly': {'module': audiojelly, 'priority': 10},
     'junodownload': {'module': junodownload, 'priority': 10},
