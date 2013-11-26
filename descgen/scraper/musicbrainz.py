@@ -46,7 +46,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         if not m:
             self.raise_exception(u'could not extract json object')
         try:
-            self.javascript_object = json.loads(m.group(1))
+            self.javascript_object = json.loads(m.group(1))['mediums']
         except Exception as e:
             self.raise_exception(u'could not decode json object, error: ' + unicode(e))
         allArtistCredits = [item for sublist in map(lambda medium: map(lambda track: track['artistCredit'], medium['tracks']), self.javascript_object) for item in sublist]
