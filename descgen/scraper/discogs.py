@@ -438,7 +438,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         self.parsed_response = lxml.html.document_fromstring(content)
 
     def get_release_containers(self):
-        return self.parsed_response.cssselect('ol.search_results li.body_row div.card_body')
+        return self.parsed_response.cssselect('div#search_results div[data-object-type="release"] div.card_body')
 
     def get_release_name_and_url(self, release_container):
         release_link = release_container.cssselect('a.search_result_title')
