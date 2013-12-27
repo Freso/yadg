@@ -49,7 +49,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             self.javascript_object = json.loads(m.group(1))['mediums']
         except Exception as e:
             self.raise_exception(u'could not decode json object, error: ' + unicode(e))
-        allArtistCredits = [item for sublist in map(lambda medium: map(lambda track: track['artistCredit'], medium['tracks']), self.javascript_object) for item in sublist]
+        allArtistCredits = [item for sublist in map(lambda medium: map(lambda track: track['artist_credit'], medium['tracks']), self.javascript_object) for item in sublist]
         self.show_artists = False
         for artistCredit in allArtistCredits[1:]:
             if artistCredit != allArtistCredits[0]:
@@ -222,8 +222,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     def get_track_artists(self, track_container):
         track_artists = []
         is_feature = False
-        if self.show_artists and 'artistCredit' in track_container and track_container['artistCredit']:
-            for artistCredit in track_container['artistCredit']:
+        if self.show_artists and 'artist_credit' in track_container and track_container['artist_credit']:
+            for artistCredit in track_container['artist_credit']:
                 if 'name' in artistCredit:
                     track_artist = self.remove_whitespace(artistCredit['name'])
                     artist = self.result.create_artist()
