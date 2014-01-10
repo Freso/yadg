@@ -9885,7 +9885,7 @@ class BandcampTest(TestCase):
         release_event.set_country(None)
         expected.append_release_event(release_event)
 
-        expected.set_format('WEB release')
+        expected.set_format('Free WEB release')
 
         expected.set_title(u'Love Everyday EP')
 
