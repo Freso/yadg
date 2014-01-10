@@ -178,7 +178,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 self.raise_exception(u'could not find track information')
             for row in rows:
                 #ignore rows that don't have the right amount of columns
-                if len(row.getchildren()) != 5:
+                if len(row.getchildren()) != 4:
                     continue
                 children = row.getchildren()
                 #determine cd and track number

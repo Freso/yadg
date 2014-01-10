@@ -5087,7 +5087,7 @@ class MetalarchivesTest(TestCase):
 
         track = disc.create_track()
         track.set_number('2')
-        track.set_title('End of all Hope')
+        track.set_title('End of All Hope')
         track.set_length(235)
         disc.append_track(track)
 
@@ -5983,7 +5983,7 @@ class JunodownloadTest(TestCase):
         label_id.append_catalogue_nr('425011 7613280')
         expected.append_label_id(label_id)
 
-        expected.set_title('A Love Story 89-10 (unmixed tracks)')
+        expected.set_title('A Love Story 89-10 (unmixed Tracks)')
 
         artist = expected.create_artist()
         artist.set_name('Westbam')
@@ -6020,7 +6020,7 @@ class JunodownloadTest(TestCase):
 
         track = disc.create_track()
         track.set_number('4')
-        track.set_title("Westbam - Don't Look Back In Anger (short mix)")
+        track.set_title("Westbam - Don't Look Back In Anger (Short mix)")
         track.set_length(201)
         disc.append_track(track)
 
@@ -6050,13 +6050,13 @@ class JunodownloadTest(TestCase):
 
         track = disc.create_track()
         track.set_number('9')
-        track.set_title('Dr Motte & Westbam presents - Sunshine')
+        track.set_title('Dr Motte & Westbam Presents - Sunshine')
         track.set_length(244)
         disc.append_track(track)
 
         track = disc.create_track()
         track.set_number('10')
-        track.set_title('Dr Motte & Westbam presents - One World One Future')
+        track.set_title('Dr Motte & Westbam Presents - One World One Future')
         track.set_length(222)
         disc.append_track(track)
 
@@ -6068,13 +6068,13 @@ class JunodownloadTest(TestCase):
 
         track = disc.create_track()
         track.set_number('12')
-        track.set_title('Dr Motte & Westbam presents - Loveparade 2000')
+        track.set_title('Dr Motte & Westbam Presents - Loveparade 2000')
         track.set_length(208)
         disc.append_track(track)
 
         track = disc.create_track()
         track.set_number('13')
-        track.set_title('Dr Motte & Westbam presents - Music Is The Key')
+        track.set_title('Dr Motte & Westbam Presents - Music Is The Key')
         track.set_length(499)
         disc.append_track(track)
 
@@ -6152,7 +6152,7 @@ class JunodownloadTest(TestCase):
 
         track = disc.create_track()
         track.set_number('26')
-        track.set_title('Tom Wax & Strobe - Cantate (Lalai Lala) (radio mix)')
+        track.set_title('Tom Wax & Strobe - Cantate (Lalai Lala) (Radio mix)')
         track.set_length(202)
         disc.append_track(track)
 
@@ -6206,7 +6206,7 @@ class JunodownloadTest(TestCase):
 
         track = disc.create_track()
         track.set_number('35')
-        track.set_title('Members Of Mayday - Make My Day (short mix)')
+        track.set_title('Members Of Mayday - Make My Day (Short mix)')
         track.set_length(208)
         disc.append_track(track)
 
@@ -6332,7 +6332,7 @@ class JunodownloadTest(TestCase):
 
         track = disc.create_track()
         track.set_number('56')
-        track.set_title('Westbam & Nena - Oldschool Baby (piano mix)')
+        track.set_title('Westbam & Nena - Oldschool Baby (Piano mix)')
         track.set_length(358)
         disc.append_track(track)
 
@@ -9885,7 +9885,7 @@ class BandcampTest(TestCase):
         release_event.set_country(None)
         expected.append_release_event(release_event)
 
-        expected.set_format('WEB release')
+        expected.set_format('Free WEB release')
 
         expected.set_title(u'Love Everyday EP')
 
