@@ -442,10 +442,11 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
 
     def get_release_name_and_url(self, release_container):
         release_link = release_container.cssselect('a.search_result_title')
-        if len(release_link) != 1:
+        title_h4 = release_container.cssselect('h4')
+        if len(release_link) != 1 or len(title_h4) != 1:
             self.raise_exception(u'could not extract release link from:' + release_container.text_content())
         release_link = release_link[0]
-        release_name = release_link.text_content()
+        release_name = title_h4[0].text_content()
         release_name = self.remove_whitespace(release_name)
         if not release_name:
             release_name = None
