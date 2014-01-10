@@ -5087,7 +5087,7 @@ class MetalarchivesTest(TestCase):
 
         track = disc.create_track()
         track.set_number('2')
-        track.set_title('End of all Hope')
+        track.set_title('End of All Hope')
         track.set_length(235)
         disc.append_track(track)
 
