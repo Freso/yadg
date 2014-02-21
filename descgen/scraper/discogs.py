@@ -253,7 +253,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     def get_track_title(self, trackContainer):
         children = trackContainer['children']
         track = children[2]
-        track_title = track.cssselect('span.track_title')
+        track_title = track.cssselect('span.tracklist_track_title')
         if len(track_title) != 1:
             self.raise_exception(u'could not determine track title')
         track_title = track_title[0].text_content()
@@ -392,7 +392,9 @@ class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         components = []
         a = children[0].cssselect('a')
         if a:
-            components.append(a[0].tail.replace(u'\u200e', ''))
+            br = a[0].getnext()
+            if br is not None:
+                components.append(br.tail)
         children = children[1:]
         for child in children:
             components.append(child.text_content())
