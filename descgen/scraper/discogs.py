@@ -466,8 +466,8 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         release_info = release_container.cssselect('p.card_info')
         if len(release_info) != 1:
             self.raise_exception(u'could not extract additional info from: ' + release_container.text_content())
-        release_info = release_info[0].text_content()
-        release_info = u' | '.join(map(lambda x: self.remove_whitespace(x), release_info.split(u'·')))
+        release_info_children = release_info[0].getchildren()
+        release_info = u' | '.join(filter(lambda x: x, map(lambda x: self.remove_whitespace(x.text_content()), release_info_children)))
         if release_info:
             return release_info
         return None
