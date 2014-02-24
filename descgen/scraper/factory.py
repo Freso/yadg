@@ -1,8 +1,8 @@
 import discogs
 import musicbrainz
-import beatport
+#import beatport
 import metalarchives
-import audiojelly
+#import audiojelly
 import junodownload
 import itunes
 import bandcamp
