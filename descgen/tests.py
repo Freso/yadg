@@ -11052,7 +11052,7 @@ class MusikSammlerTest(TestCase):
         release_event.set_country('Deutschland')
         expected.append_release_event(release_event)
 
-        expected.set_format(u'Heft-CD, Digipack')
+        expected.set_format(u'Heft-CD, Digipak')
 
         label_id = expected.create_label_id()
         label_id.set_label('Batbeliever Releases')
@@ -11533,14 +11533,9 @@ class MusikSammlerTest(TestCase):
         track.set_title("I'll Whip Ya Head Boy")
         track.set_length(None)
         track_artist = expected.create_artist()
-        track_artist.set_name('50 Cent')
+        track_artist.set_name('50 Cent & Young Buck')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
-        track.append_artist(track_artist)
-        track_artist = expected.create_artist()
-        track_artist.set_name('Young Buck')
-        track_artist.set_various(False)
-        track_artist.append_type(expected.ArtistTypes.FEATURING)
         track.append_artist(track_artist)
         disc.append_track(track)
 
@@ -12346,11 +12341,11 @@ More information: [url]http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-12
         visitor = DescriptionVisitor(description_format='whatcd')
 
         expected = u"""[size=5][b][artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Main Artist[/artist] feat. [artist]Featuring Artist[/artist] \u2013 Once in a Lifetime[/b][/size]
-[b]Label/Cat#:[/b] [url=https://ssl.what.cd/torrents.php?recordlabel=Trisol]Trisol[/url] \u2013 TRI 303 CD or Eine andere CatNr, [url=https://ssl.what.cd/torrents.php?recordlabel=Ein%20anderes%20Label]Ein anderes Label[/url] \u2013 Nr.1 or Nr.2 or Nr.3, [url=https://ssl.what.cd/torrents.php?recordlabel=Ein%20letztes%20Label]Ein letztes Label[/url] \u2013 Und eine letzte Nummer
+[b]Label/Cat#:[/b] [url=https://what.cd/torrents.php?recordlabel=Trisol]Trisol[/url] \u2013 TRI 303 CD or Eine andere CatNr, [url=https://what.cd/torrents.php?recordlabel=Ein%20anderes%20Label]Ein anderes Label[/url] \u2013 Nr.1 or Nr.2 or Nr.3, [url=https://what.cd/torrents.php?recordlabel=Ein%20letztes%20Label]Ein letztes Label[/url] \u2013 Und eine letzte Nummer
 [b]Country:[/b] Germany
 [b]Year:[/b] 2007-05-25
-[b]Genre:[/b] [url=https://ssl.what.cd/torrents.php?taglist=Electronic]Electronic[/url], [url=https://ssl.what.cd/torrents.php?taglist=Rock]Rock[/url]
-[b]Style:[/b] [url=https://ssl.what.cd/torrents.php?taglist=Goth.Rock]Goth Rock[/url], [url=https://ssl.what.cd/torrents.php?taglist=Synth-pop]Synth-pop[/url]
+[b]Genre:[/b] [url=https://what.cd/torrents.php?taglist=Electronic]Electronic[/url], [url=https://what.cd/torrents.php?taglist=Rock]Rock[/url]
+[b]Style:[/b] [url=https://what.cd/torrents.php?taglist=Goth.Rock]Goth Rock[/url], [url=https://what.cd/torrents.php?taglist=Synth-pop]Synth-pop[/url]
 [b]Format:[/b] 4×CD, Album + Live
 
 [size=4][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
