@@ -11052,7 +11052,7 @@ class MusikSammlerTest(TestCase):
         release_event.set_country('Deutschland')
         expected.append_release_event(release_event)
 
-        expected.set_format(u'Heft-CD, Digipack')
+        expected.set_format(u'Heft-CD, Digipak')
 
         label_id = expected.create_label_id()
         label_id.set_label('Batbeliever Releases')
@@ -11533,14 +11533,9 @@ class MusikSammlerTest(TestCase):
         track.set_title("I'll Whip Ya Head Boy")
         track.set_length(None)
         track_artist = expected.create_artist()
-        track_artist.set_name('50 Cent')
+        track_artist.set_name('50 Cent & Young Buck')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
-        track.append_artist(track_artist)
-        track_artist = expected.create_artist()
-        track_artist.set_name('Young Buck')
-        track_artist.set_various(False)
-        track_artist.append_type(expected.ArtistTypes.FEATURING)
         track.append_artist(track_artist)
         disc.append_track(track)
 
