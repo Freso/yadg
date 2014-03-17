@@ -443,12 +443,17 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         return self.parsed_response.cssselect('div#search_results div[data-object-type="release"] div.card_body')
 
     def get_release_name_and_url(self, release_container):
-        release_link = release_container.cssselect('a.search_result_title')
         title_h4 = release_container.cssselect('h4')
-        if len(release_link) != 1 or len(title_h4) != 1:
+        if len(title_h4) != 1:
+            self.raise_exception(u'could not extract title h4 from:' + release_container.text_content())
+        title_h4 = title_h4[0]
+        name_span = release_container.cssselect('span[itemprop="name"]')
+        if len(name_span) == 0:
+            self.raise_exception(u'could not find name span in:' + release_container.text_content())
+        release_link = name_span[-1].getnext()
+        if release_link is None:
             self.raise_exception(u'could not extract release link from:' + release_container.text_content())
-        release_link = release_link[0]
-        release_name = title_h4[0].text_content()
+        release_name = title_h4.text_content()
         release_name = self.remove_whitespace(release_name)
         if not release_name:
             release_name = None
