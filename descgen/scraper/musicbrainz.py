@@ -100,10 +100,11 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 date = None
                 country = None
                 release_event = self.result.create_release_event()
-                date_span = li.cssselect('span[typeof="mo:ReleaseEvent"]')
-                if len(date_span) == 1:
-                    date = self.remove_whitespace(date_span[0].text_content())
-                    release_event.set_date(date)
+                br = li.cssselect('br')
+                if len(br) == 1:
+                    date = self.remove_whitespace(br[0].tail if br[0].tail is not None else '')
+                    if date:
+                        release_event.set_date(date)
                 country_bdi = li.cssselect('a bdi')
                 if len(country_bdi) == 1:
                     country = self.remove_whitespace(country_bdi[0].text_content())
@@ -155,23 +156,22 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             label_li = label_ul.cssselect('li')
 
             for li in label_li:
-                label_a = li.cssselect('a[rel="mo:label"]')
+                label_a = li.cssselect('a')
                 if len(label_a) == 1:
                     label_a = label_a[0]
                 else:
                     #if we cannot find the label we assume something is wrong
                     self.raise_exception('could not find label link in label li')
 
-                catalog_spans = li.cssselect('span[property="mo:catalogue_number"]')
-
                 label_name = self.remove_whitespace(label_a.text_content())
                 label_id = self.result.create_label_id()
                 label_id.set_label(label_name)
 
-                for catalog_span in catalog_spans:
-                    catalog_span_content = self.remove_whitespace(catalog_span.text_content())
-                    if catalog_span_content:
-                        label_id.append_catalogue_nr(catalog_span_content)
+                br = li.cssselect('br')
+                if len(br) == 1:
+                    catalog_number = self.remove_whitespace(br[0].tail if br[0].tail is not None else '')
+                    if catalog_number:
+                        label_id.append_catalogue_nr(catalog_number)
 
                 self.result.append_label_id(label_id)
 
@@ -186,7 +186,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def add_release_artists(self):
         artist_links = self._release_header_div.cssselect('p.subheader a')
-        artist_links = filter(lambda x: 'resource' in x.attrib and 'mbz:artist' in x.attrib['resource'], artist_links)
+        artist_links = filter(lambda x: 'href' in x.attrib and '/artist/' in x.attrib['href'], artist_links)
         if len(artist_links) == 0:
             self.raise_exception(u'could not find artist a')
 
@@ -338,7 +338,7 @@ class ReleaseGroupScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def _get_release_group_artists(self):
         artist_links = self.parsed_response.cssselect('div#content div.rgheader p.subheader a')
-        artist_links = filter(lambda x: 'resource' in x.attrib and 'mbz:artist' in x.attrib['resource'], artist_links)
+        artist_links = filter(lambda x: 'href' in x.attrib and '/artist/' in x.attrib['href'], artist_links)
         if len(artist_links) == 0:
             self.raise_exception(u'could not find artist a')
 
