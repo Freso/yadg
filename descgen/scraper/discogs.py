@@ -173,13 +173,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         if not tracklist_tables:
             self.raise_exception(u'could not find tracklisting')
         for table in tracklist_tables:
-            rows = table.cssselect('tr')
+            rows = table.cssselect('tr.track')
             if not rows:
                 self.raise_exception(u'could not find track information')
             for row in rows:
-                #ignore rows that don't have the right amount of columns
-                if len(row.getchildren()) != 4:
-                    continue
                 children = row.getchildren()
                 #determine cd and track number
                 m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*)|face [ivxc]+)(?:\.)?$',children[0].text_content())
@@ -213,20 +210,23 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return None
 
     def get_track_artists(self, trackContainer):
-        children = trackContainer['children']
-        track_artists_column = children[1]
-        track = children[2]
-        #get track artist
-        track_artists_elements = track_artists_column.cssselect('a')
         track_artists = []
-        for track_artist_element in track_artists_elements:
-            track_artist = self.result.create_artist()
-            track_artist_name = track_artist_element.text_content()
-            track_artist_name = self.remove_whitespace(track_artist_name)
-            track_artist_name = self._prepare_artist_name(track_artist_name)
-            track_artist.set_name(track_artist_name)
-            track_artist.append_type(self.result.ArtistTypes.MAIN)
-            track_artists.append(track_artist)
+        children = trackContainer['children']
+        if len(children) == 4:
+            track = children[2]
+            track_artists_column = children[1]
+            #get track artist
+            track_artists_elements = track_artists_column.cssselect('a')
+            for track_artist_element in track_artists_elements:
+                track_artist = self.result.create_artist()
+                track_artist_name = track_artist_element.text_content()
+                track_artist_name = self.remove_whitespace(track_artist_name)
+                track_artist_name = self._prepare_artist_name(track_artist_name)
+                track_artist.set_name(track_artist_name)
+                track_artist.append_type(self.result.ArtistTypes.MAIN)
+                track_artists.append(track_artist)
+        else:
+            track = children[1]
         #there might be featuring artists in the track column
         blockquote = track.cssselect('blockquote')
         if len(blockquote) == 1:
@@ -252,7 +252,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def get_track_title(self, trackContainer):
         children = trackContainer['children']
-        track = children[2]
+        if len(children) == 4:
+            track = children[2]
+        else:
+            track = children[1]
         track_title = track.cssselect('span.tracklist_track_title')
         if len(track_title) != 1:
             self.raise_exception(u'could not determine track title')
@@ -264,7 +267,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def get_track_length(self, trackContainer):
         children = trackContainer['children']
-        track_duration = children[3]
+        if len(children) == 4:
+            track_duration = children[3]
+        else:
+            track_duration = children[2]
         track_duration = track_duration.text_content()
         track_duration = self.remove_whitespace(track_duration)
         if track_duration:
