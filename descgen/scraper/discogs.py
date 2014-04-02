@@ -372,7 +372,7 @@ class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return self.remove_whitespace(artist_span[0].text_content())
 
     def get_release_containers(self):
-        return self.parsed_response.cssselect('table#versions tr.release')
+        return self.parsed_response.cssselect('table#versions tr[data-object-type="release"]')
 
     def get_release_name_and_url(self, release_container):
         release_link = release_container.cssselect('td.title > a')
@@ -394,14 +394,14 @@ class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def get_release_info(self, release_container):
         #get additional info
-        children = release_container.getchildren()
         components = []
-        span = children[3].cssselect('span.format')
+        span = release_container.cssselect('td.title > span.format')
         if span:
             format = self.remove_whitespace(span[0].text_content())
             if format:
                 components.append(format)
-        children = children[4:8]
+        children = []
+        [children.extend(release_container.cssselect('td.%s' % x)) for x in ('label','catno','country','year')]
         for child in children:
             components.append(child.text_content())
         components = map(self.remove_whitespace, components)
