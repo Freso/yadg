@@ -1634,6 +1634,150 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_album_with_roman_track_numbers(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('22 Apr 2014')
+        release_event.set_country('US')
+        expected.append_release_event(release_event)
+
+        expected.set_format('CD, Album, Deluxe Edition, Target Edition')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Goodbye Records')
+        label_id.append_catalogue_nr(u'GLS-0161-02')
+        expected.append_label_id(label_id)
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Glassnote')
+        label_id.append_catalogue_nr(u'GLS-0161-02')
+        expected.append_label_id(label_id)
+
+        expected.set_title('The Bones Of What You Believe')
+
+        artist = expected.create_artist()
+        artist.set_name('Chvrches')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Pop')
+
+        expected.append_style('Indie Pop')
+        expected.append_style('Synth-pop')
+
+        expected.set_url('http://www.discogs.com/Chvrches-The-Bones-Of-What-You-Believe/release/5622231')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('I')
+        track.set_title('The Mother We Share')
+        track.set_length(192)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('II')
+        track.set_title('We Sink')
+        track.set_length(214)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('III')
+        track.set_title('Gun')
+        track.set_length(234)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('IV')
+        track.set_title('Tether')
+        track.set_length(286)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('V')
+        track.set_title('Lies')
+        track.set_length(221)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('VI')
+        track.set_title('Under The Tide')
+        track.set_length(272)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('VII')
+        track.set_title('Recover')
+        track.set_length(226)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('VIII')
+        track.set_title('Night Sky')
+        track.set_length(231)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('IX')
+        track.set_title('Science/Visions')
+        track.set_length(238)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('X')
+        track.set_title('Lungs')
+        track.set_length(183)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('XI')
+        track.set_title('By The Throat')
+        track.set_length(249)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('XII')
+        track.set_title('You Caught The Light')
+        track.set_length(337)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('XIII')
+        track.set_title('Recover (Alucard Session)')
+        track.set_length(252)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('XIV')
+        track.set_title('The Mother We Share (Alucard Session)')
+        track.set_length(198)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('XV')
+        track.set_title('Gun (Alucard Session)')
+        track.set_length(265)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('XVI')
+        track.set_title('Tightrope')
+        track.set_length(209)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Chvrches-The-Bones-Of-What-You-Believe/release/5622231')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
