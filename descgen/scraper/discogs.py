@@ -18,6 +18,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     ARTIST_NAME_VARIOUS = "Various"
 
+    _featuring_artist_regex = u'(?i)feat(uring)?\.?'
+
     def __init__(self, id):
         super(ReleaseScraper, self).__init__()
         self.id = id
@@ -150,7 +152,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 artist.append_type(self.result.ArtistTypes.FEATURING)
             else:
                 artist.append_type(self.result.ArtistTypes.MAIN)
-                if 'feat.' in artist_element.tail:
+                if re.search(self._featuring_artist_regex, artist_element.tail):
                     # all artists after this one are features
                     is_feature = True
             self.result.append_release_artist(artist)
@@ -211,11 +213,13 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def get_track_artists(self, trackContainer):
         track_artists = []
+        track_artist_feature_names = {}
         children = trackContainer['children']
         if len(children) == 4:
             track = children[2]
             track_artists_column = children[1]
             #get track artist
+            is_feature = False
             track_artists_elements = track_artists_column.cssselect('a')
             for track_artist_element in track_artists_elements:
                 track_artist = self.result.create_artist()
@@ -223,7 +227,16 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 track_artist_name = self.remove_whitespace(track_artist_name)
                 track_artist_name = self._prepare_artist_name(track_artist_name)
                 track_artist.set_name(track_artist_name)
-                track_artist.append_type(self.result.ArtistTypes.MAIN)
+                if is_feature:
+                    # we assume every artist after "feat." is a feature
+                    track_artist.append_type(self.result.ArtistTypes.FEATURING)
+                    # the same featuring artists might appear in the track artist column and the blockquote int the track column
+                    track_artist_feature_names[track_artist_name] = True
+                else:
+                    track_artist.append_type(self.result.ArtistTypes.MAIN)
+                    if re.search(self._featuring_artist_regex, track_artist_element.tail):
+                        # all artists after this one are features
+                        is_feature = True
                 track_artists.append(track_artist)
         else:
             track = children[1]
@@ -241,13 +254,15 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                         track_artist_type = self.result.ArtistTypes.REMIXER
                     track_featuring_elements = extra_artist_span.cssselect('a')
                     for track_featuring_element in track_featuring_elements:
-                        track_artist = self.result.create_artist()
                         track_feature = track_featuring_element.text_content()
                         track_feature = self.remove_whitespace(track_feature)
                         track_feature = self._prepare_artist_name(track_feature)
-                        track_artist.set_name(track_feature)
-                        track_artist.append_type(track_artist_type)
-                        track_artists.append(track_artist)
+                        # only add the featuring artist if we don't already added it from the track artist column
+                        if not track_feature in track_artist_feature_names:
+                            track_artist = self.result.create_artist()
+                            track_artist.set_name(track_feature)
+                            track_artist.append_type(track_artist_type)
+                            track_artists.append(track_artist)
         return track_artists
 
     def get_track_title(self, trackContainer):
