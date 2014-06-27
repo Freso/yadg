@@ -234,7 +234,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     track_artist_feature_names[track_artist_name] = True
                 else:
                     track_artist.append_type(self.result.ArtistTypes.MAIN)
-                    if re.search(self._featuring_artist_regex, track_artist_element.tail):
+                    if track_artist_element.tail and re.search(self._featuring_artist_regex, track_artist_element.tail):
                         # all artists after this one are features
                         is_feature = True
                 track_artists.append(track_artist)
