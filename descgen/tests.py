@@ -3,6 +3,7 @@
 import difflib
 
 from django.test import TestCase as TestCaseBase
+from django.utils import unittest
 from .scraper import audiojelly, beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp, musiksammler
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
 from .visitor.misc import DescriptionVisitor
@@ -5579,6 +5580,7 @@ class MusicbrainzTest(TestCase):
         self.assertEqual(expected, r)
 
 
+@unittest.skip("skipping Beatport tests")
 class BeatportTest(TestCase):
 
     def test_simple_album(self):
@@ -6908,6 +6910,7 @@ class MetalarchivesTest(TestCase):
         self.assertEqual(expected, r)
 
 
+@unittest.skip("skipping Audiojelly tests")
 class AudiojellyTest(TestCase):
 
     def test_simple_album(self):
