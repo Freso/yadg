@@ -100,9 +100,9 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 date = None
                 country = None
                 release_event = self.result.create_release_event()
-                br = li.cssselect('br')
-                if len(br) == 1:
-                    date = self.remove_whitespace(br[0].tail if br[0].tail is not None else '')
+                release_date_span = li.cssselect('.release-date')
+                if len(release_date_span) == 1:
+                    date = self.remove_whitespace(release_date_span[0].text_content())
                     if date:
                         release_event.set_date(date)
                 country_bdi = li.cssselect('a bdi')
@@ -167,9 +167,9 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 label_id = self.result.create_label_id()
                 label_id.set_label(label_name)
 
-                br = li.cssselect('br')
-                if len(br) == 1:
-                    catalog_number = self.remove_whitespace(br[0].tail if br[0].tail is not None else '')
+                cat_nr_span = li.cssselect('.catalog-number')
+                if len(cat_nr_span) == 1:
+                    catalog_number = self.remove_whitespace(cat_nr_span[0].text_content())
                     if catalog_number:
                         label_id.append_catalogue_nr(catalog_number)
 
