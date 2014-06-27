@@ -11744,6 +11744,13 @@ class BandcampTest(TestCase):
         item.set_url(u'http://amandapalmer.bandcamp.com/album/map-of-tasmania-the-remix-project?pk=459')
         expected.append_item(item)
 
+        item = expected.create_item()
+        item.set_name(u'Neil Gaiman and Amanda Palmer \u2013 An Evening With Neil Gaiman and Amanda Palmer')
+        item.set_info('Release date: 2013-11-19')
+        item.set_query(u'http://amandapalmer.bandcamp.com/album/an-evening-with-neil-gaiman-and-amanda-palmer?pk=459')
+        item.set_url(u'http://amandapalmer.bandcamp.com/album/an-evening-with-neil-gaiman-and-amanda-palmer?pk=459')
+        expected.append_item(item)
+
         s = bandcamp.DiscographyScraper.from_string('http://amandapalmer.bandcamp.com')
         r = s.get_result()
 
