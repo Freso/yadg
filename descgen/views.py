@@ -1,9 +1,8 @@
 from descgen.forms import InputForm, SettingsForm
 from descgen.mixins import CreateTaskMixin, GetFormatMixin
 from descgen.scraper.factory import SCRAPER_ITEMS
-from .visitor.misc import DescriptionVisitor
+from .visitor.misc import DescriptionVisitor, JSONSerializeVisitor
 from .visitor.template import TemplateVisitor
-from .visitor.api import APIVisitorV1
 
 from django.shortcuts import render, redirect
 from django.http import Http404,HttpResponse
@@ -80,13 +79,13 @@ class SandboxView(TemplateView):
             raise Http404
         if task.status != 'SUCCESS':
             raise Http404
-        visitor = APIVisitorV1(description_format="whatcd", include_raw_data=True)
+        visitor = JSONSerializeVisitor()
         result = visitor.visit(task.result[0])
-        if result['type'] != 'release':
+        if result['type'] != 'ReleaseResult':
             raise Http404
         import json
         data = {}
-        data['json_data'] = json.dumps(result['raw_data'])
+        data['json_data'] = json.dumps(result)
         return data
     
 
