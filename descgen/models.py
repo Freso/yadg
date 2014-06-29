@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, post_delete
 from django.core.validators import RegexValidator
+from django.db.models.query import Q
 
 
 class Template(models.Model):
@@ -22,7 +23,7 @@ class Template(models.Model):
         return u'%s-%s' % (self.owner.username, self.name)
 
     def get_unique_name(self):
-        return u'%s_%s' % (self.owner.username, self.name)
+        return '%s_%s' % (self.owner.username, self.name)
 
     def clean(self):
         pass
@@ -62,6 +63,11 @@ class Template(models.Model):
             raise ValidationError('One of the dependencies has a dependency on this template.')
         # if child in parent.descendants_set():
         #     raise ValidationError('The object is a descendant.')
+
+    @staticmethod
+    def templates_for_user(user):
+        subscribed_to = user.subscribed_to.values('user_id').distinct()
+        return Template.objects.filter(Q(owner__in=subscribed_to, is_public__exact=True) | Q(owner__exact=user.pk) | Q(is_default__exact=True))
 
     class Meta:
         unique_together = ('owner', 'name')
