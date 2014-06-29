@@ -38,7 +38,7 @@ var yadg_filters = {
 
     isdigit : function (input) {
         var regex = /\D/;
-        return regex.test(input);
+        return !regex.test(input);
     },
 
     wrap : function (input, artist_format_string, separator, last_separator) {
@@ -46,13 +46,15 @@ var yadg_filters = {
             artist_count = input.length;
 
         for (var i = 0; i < artist_count; i++) {
-            artist = input[i];
+            var artist = input[i],
+                artist_name = "";
 
             if (artist.is_various) {
-                out += "Various Artists";
+                artist_name = "Various Artists";
             } else {
-                out += artist_format_string.replace('%s', artist.name);
+                artist_name = artist.name;
             }
+            out += artist_format_string.replace('%s', artist_name);
 
             if (i < artist_count-2) {
                 out += separator;
