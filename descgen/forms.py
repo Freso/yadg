@@ -3,7 +3,6 @@ from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 from .models import Template
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.query import Q
 
 
 class InputForm(forms.Form):
@@ -38,8 +37,7 @@ class TemplateForm(forms.ModelForm):
             except ObjectDoesNotExist:
                 t = Template.objects.all()
             else:
-                us = u.subscribed_to.values('user_id').distinct()
-                t = Template.objects.filter(Q(owner__in=us, is_public__exact=True) | Q(owner__exact=u.pk))
+                t = Template.templates_for_user(u)
 
             self.fields['dependencies'].queryset = t
 
@@ -60,8 +58,7 @@ class TemplateForm(forms.ModelForm):
         # make sure dependencies are either public templates of users subscribed to or own templates
         u = self.cleaned_data.get('owner')
         if u:
-            us = u.subscribed_to.values('user_id').distinct()
-            t = Template.objects.filter(Q(owner__in=us, is_public__exact=True) | Q(owner__exact=u.pk))
+            t = Template.templates_for_user(u)
 
             if any([(not x in t) for x in dependencies]):
                 raise ValidationError('A template may only depend on own templates or public templates of users you are subscribed to.')
