@@ -2,16 +2,21 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, post_delete
+from django.core.validators import RegexValidator
 
 
 class Template(models.Model):
 
     owner = models.ForeignKey(User)
-    name = models.CharField(max_length=30, )
-    template = models.TextField(max_length=8192)
-    is_public = models.BooleanField(default=False)
-    is_default = models.BooleanField(default=False)
-    dependencies = models.ManyToManyField('self', symmetrical=False, related_name='depending_set', blank=True)
+    name = models.CharField(max_length=30, validators=[RegexValidator(regex='^[A-Za-z0-9\(\)\[\]\-_ ]+$'),],
+                            help_text='The name of the template. Only letters, numbers, hyphens and parenthesis are allowed.')
+    template = models.TextField(max_length=8192, help_text='Enter the template code here.')
+    is_public = models.BooleanField(default=False,
+                                    help_text='Make this template public. Public templates can be used by all users that are subscribed to you.')
+    is_default = models.BooleanField(default=False,
+                                     help_text='Make this template a default. Default templates can be used by all registered users and users that are not logged in.')
+    dependencies = models.ManyToManyField('self', symmetrical=False, related_name='depending_set', blank=True,
+                                          help_text='Choose which templates this template depends on. Chosen templates can be included or extended in your template code.')
 
     def __unicode__(self):
         return u'%s-%s' % (self.owner.username, self.name)
