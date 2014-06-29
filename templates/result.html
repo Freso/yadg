@@ -5,6 +5,7 @@
 
     <script src="{{ STATIC_URL }}js/jsandbox.min.js"></script>
     <script src="{{ STATIC_URL }}js/swig.min.js"></script>
+    <script src="{{ STATIC_URL }}js/swig.custom.js"></script>
 
     <script type="text/javascript">
     $(document).ready(function() {
@@ -25,8 +26,10 @@
             };
 
         sandbox.load("{{ STATIC_URL }}js/swig.min.js", function () { // onload
-            this.exec({data: "var myswig = new swig.Swig({ loader: swig.loaders.memory(input.templates) }), i=0;", input: {templates: templates}});
-            this.eval(eval_string, success_callback, {template: template, data: data}, failure_callback);
+            sandbox.load("{{ STATIC_URL }}js/swig.custom.js", function () {
+                this.exec({data: "var myswig = new swig.Swig({ loader: swig.loaders.memory(input.templates), autoescape: false }), i=0; yadg_filters.register_filters(myswig);", input: {templates: templates}});
+                this.eval(eval_string, success_callback, {template: template, data: data}, failure_callback);
+            });
         });
         {% block additionalJS %}{% endblock %}
      });
