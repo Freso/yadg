@@ -68,7 +68,7 @@ class Template(models.Model):
 
     @staticmethod
     def templates_for_user(user, with_utility=True):
-        if user.is_authenticated:
+        if user.is_authenticated():
             subscribed_to = user.subscribed_to.values('user_id').distinct()
             t = Template.objects.filter(Q(owner__in=subscribed_to, is_public__exact=True) | Q(owner__exact=user.pk) | Q(is_default__exact=True))
         else:
