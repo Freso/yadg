@@ -3,6 +3,7 @@ from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 from .models import Template
 from django.core.exceptions import ObjectDoesNotExist
+from codemirror import CodeMirrorTextarea
 
 
 class InputForm(forms.Form):
@@ -28,6 +29,9 @@ class TemplateForm(forms.ModelForm):
 
     class Meta:
         model = Template
+        widgets = {
+            'template': CodeMirrorTextarea(mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', keymap='yadg')
+        }
 
     def __init__(self, *args, **kwargs):
         super(TemplateForm, self).__init__(*args, **kwargs)
