@@ -59,6 +59,14 @@ class TemplateForm(forms.ModelForm):
         if is_public and any([not x.is_public for x in dependencies]):
             raise ValidationError('A template may only be public if all of its dependencies are public.')
 
+        # make sure a default template only has dependencies that are also default
+        is_default = self.cleaned_data.get('is_default')
+        if is_default and any([not x.is_default for x in dependencies]):
+            raise ValidationError('A template may only be a default template if all of its dependencies are default templates.')
+
+        if self.instance and not is_default and any([x.is_default for x in self.instance.depending_set.all()]):
+            raise ValidationError('One ore more template depending on this template is a default template. Therefore removing the default status of this template is not allowed.')
+
         # make sure dependencies are either public templates of users subscribed to or own templates
         u = self.cleaned_data.get('owner')
         if u:
