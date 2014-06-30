@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db.models.signals import m2m_changed, post_delete
+from django.db.models.signals import m2m_changed, post_delete, post_save
 from django.core.validators import RegexValidator
 from django.db.models.query import Q
 
@@ -168,8 +168,20 @@ def template_deleted(sender, **kwargs):
         closure.delete()
 
 
+def template_saved(sender, **kwargs):
+    instance = kwargs['instance']
+    if not (instance.is_default or instance.is_public):
+        # the template might have been public before, so remove all dependencies that are not from templates
+        # owned by this user
+        dependant_templates = instance.depending_set.filter(~Q(owner_id__exact=instance.owner.pk))
+        for template in dependant_templates:
+            # remove the modified instance from each template that does not belong to the owner
+            template.dependencies.remove(instance)
+
+
 m2m_changed.connect(dependency_changed, sender=Template.dependencies.through)
 post_delete.connect(template_deleted, sender=Template)
+post_save.connect(template_saved, sender=Template)
 
 
 class Subscription(models.Model):
