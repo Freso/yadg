@@ -12,7 +12,9 @@ class InputForm(forms.Form):
 
 
 class FormatForm(forms.Form):
-    description_format = forms.ChoiceField(label='Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT, widget=forms.Select(attrs={'class':'auto_width'}))
+    def __init__(self, user, *args, **kwargs):
+        super(FormatForm, self).__init__(*args, **kwargs)
+        self.fields['template'] = forms.ChoiceField(label='Format:', choices=map(lambda x: (x.pk, x.name), Template.templates_for_user(user, with_utility=False)), widget=forms.Select(attrs={'class':'auto_width'}))
 
 
 class ResultForm(forms.Form):

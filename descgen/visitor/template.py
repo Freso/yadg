@@ -5,6 +5,7 @@ from .base import Visitor
 from ..forms import InputForm, FormatForm
 from ..formatter import Formatter
 from ..mixins import GetFormatMixin, CreateTaskMixin
+from ..models import Template
 
 from django.shortcuts import render
 
@@ -30,22 +31,38 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         return render(self.request, 'result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
 
     def visit_ReleaseResult(self, result):
-        form = FormatForm(self.request.GET)
+        form = FormatForm(self.request.user, self.request.GET)
         if form.is_valid():
-            format = form.cleaned_data['description_format']
+            format = form.cleaned_data['template']
+            try:
+                format = Template.objects.get(pk=format)
+            except Template.DoesNotExist:
+                temp = Template.templates_for_user(self.request.user, with_utility=False)
+                if temp:
+                    format = temp[0]
+                else:
+                    format = None
         else:
-            format = None
+            temp = Template.templates_for_user(self.request.user, with_utility=False)
+            if temp:
+                format = temp[0]
+            else:
+                format = None
 
-        format = self.get_valid_format(format)
+        #format = self.get_valid_format(format)
         release_title = self.formatter.title_from_ReleaseResult(release_result=result)
-        description = self.formatter.description_from_ReleaseResult(release_result=result, format=format)
 
-        format_form = FormatForm(initial={'description_format': format})
+        format_form = form # FormatForm(initial={'description_format': format})
+
+        dependencies = {}
+        if format:
+            for dep in format.cached_dependencies_set():
+                dependencies[dep.get_unique_name()] = dep.template
 
         import json
-        from .api import APIVisitorV1
-        v = APIVisitorV1(description_format="whatcd", include_raw_data=True);
-        data = v.visit(result);
+        from .misc import JSONSerializeVisitor
+        v = JSONSerializeVisitor()
+        data = v.visit(result)
 
-        return render(self.request, 'result.html',{'description': description, 'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form,
-                                                   'json_data': json.dumps(data["raw_data"]), 'dot_template':'''{{ for (i in it.artists) { }}{{! it.artists[i].name }}{{? i < it.artists.length-1 }}, {{?}}{{ } }} - {{! it.title }}'''})
+        return render(self.request, 'result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form,
+                                                   'json_data': json.dumps(data), 'template':format.template if format else '', 'dependencies':dependencies})
