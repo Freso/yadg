@@ -16,6 +16,8 @@ class Template(models.Model):
                                     help_text='Make this template public. Public templates can be used by all users that are subscribed to you.')
     is_default = models.BooleanField(default=False,
                                      help_text='Make this template a default. Default templates can be used by all registered users and users that are not logged in.')
+    is_utility = models.BooleanField(default=False,
+                                     help_text="Mark this template as a utility. Utility templates are only used as the basis for other templates and won't be shown to users directly.")
     dependencies = models.ManyToManyField('self', symmetrical=False, related_name='depending_set', blank=True,
                                           help_text='Choose which templates this template depends on. Chosen templates can be included or extended in your template code.')
 
@@ -65,12 +67,15 @@ class Template(models.Model):
         #     raise ValidationError('The object is a descendant.')
 
     @staticmethod
-    def templates_for_user(user):
+    def templates_for_user(user, with_utility=True):
         if user.is_authenticated:
             subscribed_to = user.subscribed_to.values('user_id').distinct()
-            return Template.objects.filter(Q(owner__in=subscribed_to, is_public__exact=True) | Q(owner__exact=user.pk) | Q(is_default__exact=True))
+            t = Template.objects.filter(Q(owner__in=subscribed_to, is_public__exact=True) | Q(owner__exact=user.pk) | Q(is_default__exact=True))
         else:
-            return Template.objects.filter(is_default__exact=True)
+            t = Template.objects.filter(is_default__exact=True)
+        if not with_utility:
+            t = t.filter(is_utility__exact=False)
+        return t
 
     class Meta:
         unique_together = ('owner', 'name')
