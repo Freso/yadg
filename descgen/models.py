@@ -9,8 +9,8 @@ from django.db.models.query import Q
 class Template(models.Model):
 
     owner = models.ForeignKey(User)
-    name = models.CharField(max_length=30, validators=[RegexValidator(regex='^[A-Za-z0-9\(\)\[\]\-_ ]+$'),],
-                            help_text='The name of the template. Only letters, numbers, hyphens and parenthesis are allowed.')
+    name = models.CharField(max_length=30,
+                            help_text='Enter the name of the template here.')
     template = models.TextField(max_length=8192, help_text='Enter the template code here.')
     is_public = models.BooleanField(default=False,
                                     help_text='Make this template public. Public templates can be used by all users that are subscribed to you.')
@@ -25,7 +25,7 @@ class Template(models.Model):
         return u'%s-%s' % (self.owner.username, self.name)
 
     def get_unique_name(self):
-        return '%s_%s' % (self.owner.username, self.name)
+        return '%s_%d' % (self.owner.username, self.pk)
 
     def depends_on(self):
         return u', '.join(map(unicode, self.dependencies.all()))
