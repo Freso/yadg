@@ -89,10 +89,7 @@ class SandboxView(TemplateView):
             'json_data': json.dumps(result),
             'id': id
         }
-        if self.request.user.is_authenticated():
-            template_list = Template.templates_for_user(self.request.user)
-        else:
-            template_list = Template.objects.filter(is_default__exact=True)
+        template_list = Template.templates_for_user(self.request.user)
         data['templates'] = sorted(template_list, lambda x,y: cmp(x.name.lower(), y.name.lower()))
         sandbox = SandboxForm()
         if 'template' in self.request.GET:
