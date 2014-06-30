@@ -49,7 +49,7 @@ var yadg_filters = {
             var artist = input[i],
                 artist_name = "";
 
-            if (artist.is_various) {
+            if (artist.isVarious === true) {
                 artist_name = "Various Artists";
             } else {
                 artist_name = artist.name;
