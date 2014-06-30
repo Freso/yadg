@@ -1,8 +1,9 @@
-from descgen.forms import InputForm, SettingsForm
+from descgen.forms import InputForm, SettingsForm, SandboxForm
 from descgen.mixins import CreateTaskMixin, GetFormatMixin
 from descgen.scraper.factory import SCRAPER_ITEMS
 from .visitor.misc import DescriptionVisitor, JSONSerializeVisitor
 from .visitor.template import TemplateVisitor
+from .models import Template
 
 from django.shortcuts import render, redirect
 from django.http import Http404,HttpResponse
@@ -84,8 +85,32 @@ class SandboxView(TemplateView):
         if result['type'] != 'ReleaseResult':
             raise Http404
         import json
-        data = {}
-        data['json_data'] = json.dumps(result)
+        data = {
+            'json_data': json.dumps(result),
+            'id': id
+        }
+        if self.request.user.is_authenticated():
+            template_list = Template.templates_for_user(self.request.user)
+        else:
+            template_list = Template.objects.filter(is_default__exact=True)
+        data['templates'] = sorted(template_list, lambda x,y: cmp(x.name.lower(), y.name.lower()))
+        sandbox = SandboxForm()
+        if 'template' in self.request.GET:
+            t = None
+            try:
+                pk = int(self.request.GET['template'])
+                t = Template.objects.get(pk=pk)
+            except Template.DoesNotExist:
+                pass
+            except ValueError:
+                pass
+            if t is not None and t in template_list:
+                data['template'] = t.template
+                data['dependencies'] = {}
+                for dep in t.cached_dependencies_set():
+                    data['dependencies'][dep.get_unique_name()] = dep.template
+                sandbox = SandboxForm(data={'template': t.template})
+        data['sandboxform'] = sandbox
         return data
     
 

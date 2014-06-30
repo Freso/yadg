@@ -68,3 +68,7 @@ class TemplateForm(forms.ModelForm):
                 raise ValidationError('A template may only depend on own templates or public templates of users you are subscribed to.')
 
         return self.cleaned_data
+
+
+class SandboxForm(forms.Form):
+    template = forms.CharField(widget=CodeMirrorTextarea(keymap='yadg', mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', js_var_format='%s_editor'), initial='Please enter you description template')
