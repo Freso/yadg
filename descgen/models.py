@@ -131,6 +131,13 @@ def dependency_changed(sender, **kwargs):
             if not DependencyClosure.objects.filter(descendant_id__in=l, ancestor_id__exact=pk).exists():
                 # if it does not the dependency is local to the modified template and has to be deleted
                 DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=pk).delete()
+                # now get a list of dependencies of the dependency we just removed
+                possible_stale_deps = DependencyClosure.objects.filter(descendant_id__exact=pk).values('ancestor_id')
+                for possible_stale_dep in possible_stale_deps:
+                    # check if there are any other dependencies besides pk that depend on the removal candidate
+                    if not DependencyClosure.objects.filter(Q(descendant_id__in=l, ancestor_id__exact=possible_stale_dep['ancestor_id']) & ~Q(descendant_id__exact=pk)).exists():
+                        # if not the removal candidate was local to the removed dependency and can be deleted too
+                        DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=possible_stale_dep['ancestor_id']).delete()
                 deps_modified = True
         # if we modified the dependencies we have to update all descendants
         if deps_modified:
