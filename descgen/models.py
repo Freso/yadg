@@ -205,7 +205,7 @@ def subscription_deleted(sender, **kwargs):
     instance = kwargs['instance']
     l1 = Template.objects.filter(owner_id__exact=instance.subscriber_id)
     l2 = Template.objects.filter(owner_id__exact=instance.user_id, is_default__exact=False)
-    for deps in Template.dependencies.through.objects.filter(from_template__in=l1, to_template__in=l2):
+    for deps in Template.dependencies.through.objects.filter(from_template__in=l1, to_template__in=l2).select_related('from_template', 'to_template'):
         deps.from_template.dependencies.remove(deps.to_template)
 
 
