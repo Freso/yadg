@@ -22,11 +22,17 @@ class Command(BaseCommand):
             if cached != actual:
                 self.stdout.write('Mismatch for template "%s" (%d):\n' % (template.name, template.pk))
                 self.stdout.write('  is:\n')
-                for templ in sorted(cmp_func, cached):
-                    self.stdout.write('    %s (%d)' % (templ.name, templ.pk))
+                if cached:
+                    for templ in sorted(cached, cmp_func):
+                        self.stdout.write('    * %s (%d)\n' % (templ.name, templ.pk))
+                else:
+                    self.stdout.write('    <empty>\n')
                 self.stdout.write('  should be:\n')
-                for templ in sorted(cmp_func, actual):
-                    self.stdout.write('    %s (%d)' % (templ.name, templ.pk))
+                if actual:
+                    for templ in sorted(actual, cmp_func):
+                        self.stdout.write('    * %s (%d)\n' % (templ.name, templ.pk))
+                else:
+                    self.stdout.write('    <empty>\n')
                 self.stdout.write('\n\n')
                 clean =False
 
@@ -34,7 +40,7 @@ class Command(BaseCommand):
             percent = (i / float(count))*100
             if percent >= last+5:
                 last = (percent // 5) * 5
-                sys.stderr.write('%d%%\n\n' % last)
+                sys.stderr.write('%d%%\n' % last)
 
 
         if clean:
