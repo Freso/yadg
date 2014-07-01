@@ -200,3 +200,13 @@ class Subscription(models.Model):
     def __unicode__(self):
         return u'%s to %s' % (self.subscriber.username, self.user.username)
 
+
+def subscription_deleted(sender, **kwargs):
+    instance = kwargs['instance']
+    l1 = Template.objects.filter(owner_id__exact=instance.subscriber_id)
+    l2 = Template.objects.filter(owner_id__exact=instance.user_id, is_default__exact=False)
+    for deps in Template.dependencies.through.objects.filter(from_template__in=l1, to_template__in=l2):
+        deps.from_template.dependencies.remove(deps.to_template)
+
+
+post_delete.connect(subscription_deleted, sender=Subscription)
