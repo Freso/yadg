@@ -29,12 +29,22 @@ def paginator(context, adjacent_pages=2):
         endPage = paginator.num_pages + 1
     page_numbers = [n for n in range(startPage, endPage) if n > 0 and n <= paginator.num_pages]
 
+    queries = context['request'].GET.copy()
+    if 'page' in queries:
+        del queries['page']
+    if queries:
+        base_url = '?' + queries.urlencode() + '&'
+    else:
+        base_url = '?'
+
     return {
         'page_obj': page_obj,
         'paginator': paginator,
         'page_numbers': page_numbers,
         'show_first': 1 not in page_numbers,
         'show_last': paginator.num_pages not in page_numbers,
+        'base_url': base_url
         }
+
 
 register.inclusion_tag('paginator.html', takes_context=True)(paginator)
