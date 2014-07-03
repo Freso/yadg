@@ -11,7 +11,7 @@ class Template(models.Model):
     owner = models.ForeignKey(User)
     name = models.CharField(max_length=30,
                             help_text='Enter the name of the template here.')
-    template = models.TextField(max_length=8192, help_text='Enter the template code here.')
+    template = models.TextField(max_length=8192, blank=True, help_text='Enter the template code here.')
     is_public = models.BooleanField(default=False,
                                     help_text='Make this template public. Public templates can be used by all users that are subscribed to you.')
     is_default = models.BooleanField(default=False,
