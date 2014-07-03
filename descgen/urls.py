@@ -4,7 +4,7 @@ from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse
 from django.utils.functional import lazy
 
-from descgen.views import IndexView,ResultView,DownloadResultView,SettingsView,ScrapersView,SandboxView
+from descgen.views import IndexView,ResultView,DownloadResultView,SettingsView,ScrapersView,SandboxView,UserListView,SubscribeView, UnsubscribeView
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -14,6 +14,9 @@ reverse_lazy = lazy(reverse, str)
 
 urlpatterns = patterns('',
     url(r'^$', IndexView.as_view(), name='index'),
+    url(r'^users$', UserListView.as_view(), name='user_list'),
+    url(r'^subscribe$', SubscribeView.as_view(), name='subscribe_to_user'),
+    url(r'^unsubscribe$', UnsubscribeView.as_view(), name='unsubscribe'),
     url(r'^sandbox/(?P<id>[\w\d-]+)$', SandboxView.as_view(), name='sandbox'),
     url(r'^result/(?P<id>[\w\d-]+)$', ResultView.as_view(), name='get_result'),
     url(r'^result/(?P<id>[\w\d-]+)/(?P<format>[\w\d-]+)/(?P<title>.+?)\.txt$', DownloadResultView.as_view(), name='download_result'),

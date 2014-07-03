@@ -1,5 +1,5 @@
 from django import template
-from descgen.forms import InputForm, FormatForm
+from descgen.forms import InputForm, FormatForm, SubscribeForm
 from descgen.formatter import FORMAT_DEFAULT, Formatter
 from descgen.scraper.factory import SCRAPER_DEFAULT, ScraperFactory
 
@@ -14,3 +14,7 @@ def add_input_form(context):
 def add_format_form(context):
     return FormatForm(initial={'description_format': Formatter.get_valid_format(
             context['request'].session.get("default_format", FORMAT_DEFAULT))})
+
+@register.filter
+def subscribe_form(user):
+    return SubscribeForm(initial={'user_id': user.pk})

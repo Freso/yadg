@@ -1,10 +1,18 @@
 from django import forms
 from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
-from .models import Template
+from .models import Template, Subscription
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from codemirror import CodeMirrorTextarea
+
+
+search_form_widget_kwargs = {
+    'attrs': {
+        'class': 'input-medium search-query'
+    }
+}
 
 
 class InputForm(forms.Form):
@@ -28,6 +36,43 @@ class SettingsForm(forms.Form):
     scraper = forms.ChoiceField(label='Default Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT)
 
 
+class UserSearchForm(forms.Form):
+    username = forms.CharField(label='User: ', required=False, max_length=30, widget=forms.TextInput(**search_form_widget_kwargs))
+    template_name = forms.CharField(label='with template: ', required=False, max_length=30, widget=forms.TextInput(**search_form_widget_kwargs))
+
+
+class SubscribeForm(forms.Form):
+    user_id = forms.IntegerField(widget=forms.HiddenInput)
+
+    def clean_user_id(self):
+        user_id = self.cleaned_data['user_id']
+        try:
+            User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            raise ValidationError('No valid user id specified')
+        return user_id
+
+
+class UnsubscribeForm(forms.Form):
+    next = forms.CharField(widget=forms.HiddenInput, required=False)
+    user_id = forms.IntegerField(widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        self.subscriber = kwargs['subscriber']
+        kwargs.pop('subscriber')
+        super(UnsubscribeForm, self).__init__(*args, **kwargs)
+
+    def clean_user_id(self):
+        user_id = self.cleaned_data['user_id']
+        try:
+            User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            raise ValidationError('No valid user id specified')
+        if not Subscription.objects.filter(subscriber_id__exact=self.subscriber.pk, user_id__exact=user_id).exists():
+            raise ValidationError('You cannot unsubscribe from a user you are not subscribed to.')
+        return user_id
+
+
 class TemplateForm(forms.ModelForm):
 
     class Meta:
@@ -42,7 +87,7 @@ class TemplateForm(forms.ModelForm):
             try:
                 u = self.instance.owner
             except ObjectDoesNotExist:
-                t = Template.objects.all()
+                t = Template.objects.none()
             else:
                 t = Template.templates_for_user(u)
 

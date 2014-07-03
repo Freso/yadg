@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load url from future %}
+
+{% block title%}Sure? – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block content%}
+{% if form.errors %}
+<div class="page-header">
+<h1>What did you do?</h1>
+</div>
+<div class="alert alert-error">{{ form.user_id.errors }}</div>
+{% else %}
+<div class="page-header">
+<h1>Are you sure?</h1>
+</div>
+<div class="well"><p>Are you sure you want to unsubscribe from <strong>{{ unsub_user.username }}</strong>? If you click yes all of your templates that have a dependency to one of <strong>{{ unsub_user.username }}</strong>'s templates won't be functional anymore.</p>
+{% if dependant_templates %}</div><div class="alert alert-danger"><p>The following templates will be affected:</p>
+<ul>
+    {% for template in dependant_templates %}
+    <li>{{ template.name }}</li>
+    {% endfor %}
+</ul>
+{% endif %}</div>
+ <form action="{% url 'unsubscribe' %}" method="post" id="unsubscribe_form">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn-danger" id="subscribe_submit_{{ user.pk }}">Yes, I'm sure</button>
+</form>
+{% endif %}
+{% endblock %}
