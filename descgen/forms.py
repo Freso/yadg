@@ -23,10 +23,15 @@ class InputForm(forms.Form):
 
 class FormatForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
+        if 'with_utility' in kwargs:
+            with_utility = kwargs['with_utility']
+            del kwargs['with_utility']
+        else:
+            with_utility = False
         super(FormatForm, self).__init__(*args, **kwargs)
         self.fields['template'] = forms.ChoiceField(label='Format:',
                                                     choices=map(lambda x: (x.pk, x.name),
-                                                                sorted(Template.templates_for_user(user, with_utility=False),
+                                                                sorted(Template.templates_for_user(user, with_utility=with_utility),
                                                                        lambda x, y: cmp(x.name.lower(), y.name.lower()))),
                                                     widget=forms.Select(attrs={'class': 'auto_width'}))
 
