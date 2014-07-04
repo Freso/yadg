@@ -29,7 +29,7 @@ class FormatForm(forms.Form):
         else:
             with_utility = False
         super(FormatForm, self).__init__(*args, **kwargs)
-        self.fields['template'] = forms.ChoiceField(label='Format:',
+        self.fields['template'] = forms.ChoiceField(label='Template:',
                                                     choices=map(lambda x: (x.pk, x.name),
                                                                 sorted(Template.templates_for_user(user, with_utility=with_utility),
                                                                        lambda x, y: cmp(x.name.lower(), y.name.lower()))),
