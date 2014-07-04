@@ -1,10 +1,7 @@
 {% extends "base.html" %}
 
-{% block additionalHeaders %}<script src="{{ STATIC_URL }}js/bootstrap-tooltip.min.js"></script>
-<script type="text/javascript">
+{% block additionalHeaders %}<script type="text/javascript">
     $(document).ready(function() {
-        $('#permalink_tooltip').tooltip();
-
         $('#result_permalink_input').focus(function(e) {
             e.preventDefault();
             $(this).select();
