@@ -587,7 +587,7 @@ class DiscogsTest(TestCase):
         expected.set_format('CD, Album, Limited Edition, Digibook, CD, Compilation, Limited Edition')
 
         label_id = expected.create_label_id()
-        label_id.set_label(u'[Trisol] Music Group GmbH')
+        label_id.set_label(u'Trisol')
         label_id.append_catalogue_nr(u'TRI 231 CD')
         expected.append_label_id(label_id)
 
@@ -9550,7 +9550,7 @@ class ITunesTest(TestCase):
 
         track = disc.create_track()
         track.set_number('13')
-        track.set_title('No. 1 in A-Flat - "Harp Study"')
+        track.set_title('12 Etudes, Op. 25: No. 1 in A-Flat - "Harp Study"')
         track.set_length(171)
         track_artist = expected.create_artist()
         track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
@@ -9956,7 +9956,7 @@ class ITunesTest(TestCase):
 
         track = disc.create_track()
         track.set_number('3')
-        track.set_title('III. Rondo (Vivace)')
+        track.set_title('Piano Concerto No. 1 in E Minor, Op. 11: III. Rondo (Vivace)')
         track.set_length(619)
         track_artist = expected.create_artist()
         track_artist.set_name(u'Berliner Philharmoniker')
