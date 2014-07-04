@@ -10,7 +10,8 @@ from codemirror import CodeMirrorTextarea
 
 search_form_widget_kwargs = {
     'attrs': {
-        'class': 'input-medium search-query'
+        'class': 'input-medium search-query',
+        'placeholder': 'leave empty for all'
     }
 }
 
