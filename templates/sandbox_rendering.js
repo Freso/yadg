@@ -1,6 +1,6 @@
 var sandbox = new JSandbox(),
     templates = {
-        {% for name,code in dependencies.items %}"{{ name|escapejs }}" : "{{ code|escapejs }}",
+        {% for name,dep in dependencies.items %}"{{ name|escapejs }}" : "{{ dep.template|escapejs }}",
         {%  endfor %}
     },
     template = "{{ template|escapejs }}",

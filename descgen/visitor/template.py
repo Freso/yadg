@@ -57,7 +57,7 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         dependencies = {}
         if format:
             for dep in format.cached_dependencies_set():
-                dependencies[dep.get_unique_name()] = dep.template
+                dependencies[dep.get_unique_name()] = dep
 
         import json
         from .misc import JSONSerializeVisitor
