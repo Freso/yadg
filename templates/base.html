@@ -45,8 +45,15 @@
         width: 400px;
       }
     </style>
-    {% block additionalHeaders %}
-    {% endblock %}
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('html').addClass('jquery-js-enabled');
+        });
+    </script>
+
+    {% block additionalHeaders %}{% endblock %}
 </head>
 
   <body>
