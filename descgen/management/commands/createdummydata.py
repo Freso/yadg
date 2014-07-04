@@ -126,7 +126,7 @@ class Command(BaseCommand):
         for template in templates.values():
             candidates = []
             if template.owner_id in templates_for_user:
-                candidates += templates_for_user[template.owner_id]
+                candidates += filter(lambda x: (not template.is_public) or x.is_public, templates_for_user[template.owner_id])
             for subscribed_to in subscriptions[template.owner_id] if template.owner_id in subscriptions else []:
                 candidates += filter(lambda x: x.is_public, templates_for_user[subscribed_to] if subscribed_to in templates_for_user else [])
 
