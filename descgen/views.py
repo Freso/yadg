@@ -328,6 +328,10 @@ class SandboxView(TemplateView):
         data['format_form'] = form
 
         return data
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SandboxView, self).dispatch(request, *args, **kwargs)
     
 
 class SettingsView(FormView,GetFormatMixin,CreateTaskMixin):
