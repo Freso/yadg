@@ -45,7 +45,7 @@
             "name": "Whatcd",
             "is_default": false,
             "dependencies": [2, 3],
-            "template": "{% set gazelle_url=\"https://what.cd\" %}{% include \"can_2\" %}\r\n{% include \"can_3\" %}",
+            "template": "{% set gazelle_url=\"https://what.cd\" %}{% include \"Slack_2\" %}\r\n{% include \"Slack_3\" %}",
             "owner": 1,
             "is_public": false,
             "is_utility": false
@@ -58,7 +58,7 @@
             "name": "Whatcd (Tracks only)",
             "is_default": false,
             "dependencies": [3],
-            "template": "{% include \"can_3\" %}",
+            "template": "{% include \"Slack_3\" %}",
             "owner": 1,
             "is_public": false,
             "is_utility": false
@@ -71,7 +71,7 @@
             "name": "StudioXcd",
             "is_default": false,
             "dependencies": [2, 3],
-            "template": "{% set gazelle_url=\"https://studiox.cd\" %}{% include \"can_2\" %}\r\n{% include \"can_3\" %}",
+            "template": "{% set gazelle_url=\"https://studiox.cd\" %}{% include \"Slack_2\" %}\r\n{% include \"Slack_3\" %}",
             "owner": 1,
             "is_public": false,
             "is_utility": false
@@ -110,7 +110,7 @@
             "name": "Wafflesfm",
             "is_default": false,
             "dependencies": [8],
-            "template": "[size=4][b]{% set main_artists=artists|artistsbytype(\"main\") %}{% if main_artists.length == 1 && main_artists[0].isVarious %}Various Artists{% else %}{{ main_artists|wrap('[artist=\"%s\"]',\", \", \" & \") }}{% endif %}{% set featured_artists=artists|artistsbytype(\"guest\") %}{% if featured_artists.length > 0 %} feat. {{ featured_artists|wrap('[artist=\"%s\"]',\", \", \" & \") }}{% endif %} \u2013 {{ title }}[/b][/size]\r\n{% if labelIds %}[b]Label/Cat#:[/b] {% for labelId in labelIds %}{{ labelId.label }}{% if labelId.catalogueNrs %} \u2013 {{ labelId.catalogueNrs|join(\" or \") }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}\r\n{% endif %}{% if releaseEvents %}{% set releaseEvent=releaseEvents|first %}{% if releaseEvent.country %}[b]Country:[/b] {{ releaseEvent.country }}\r\n{% endif %}{% if releaseEvent.date %}[b]Year:[/b] {{ releaseEvent.date }}\r\n{% endif %}{% endif %}{% if genres %}[b]Genre:[/b] {% for g in genres %}[url=https://www.waffles.fm/tags.php?tag=\"{{ g|lower|url_encode }}\"]{{ g }}[/url]{% if not loop.last %}, {% endif %}{% endfor %}\r\n{% endif %}{% if styles %}[b]Style:[/b] {% for s in styles %}[url=https://www.waffles.fm/tags.php?tag=\"{{ s|lower|url_encode }}\"]{{ s }}[/url]{% if not loop.last %}, {% endif %}{% endfor %}\r\n{% endif %}{% if format %}[b]Format:[/b] {{ format }}\r\n{% endif %}\r\n{% include \"can_8\" %}",
+            "template": "[size=4][b]{% set main_artists=artists|artistsbytype(\"main\") %}{% if main_artists.length == 1 && main_artists[0].isVarious %}Various Artists{% else %}{{ main_artists|wrap('[artist=\"%s\"]',\", \", \" & \") }}{% endif %}{% set featured_artists=artists|artistsbytype(\"guest\") %}{% if featured_artists.length > 0 %} feat. {{ featured_artists|wrap('[artist=\"%s\"]',\", \", \" & \") }}{% endif %} \u2013 {{ title }}[/b][/size]\r\n{% if labelIds %}[b]Label/Cat#:[/b] {% for labelId in labelIds %}{{ labelId.label }}{% if labelId.catalogueNrs %} \u2013 {{ labelId.catalogueNrs|join(\" or \") }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}\r\n{% endif %}{% if releaseEvents %}{% set releaseEvent=releaseEvents|first %}{% if releaseEvent.country %}[b]Country:[/b] {{ releaseEvent.country }}\r\n{% endif %}{% if releaseEvent.date %}[b]Year:[/b] {{ releaseEvent.date }}\r\n{% endif %}{% endif %}{% if genres %}[b]Genre:[/b] {% for g in genres %}[url=https://www.waffles.fm/tags.php?tag=\"{{ g|lower|url_encode }}\"]{{ g }}[/url]{% if not loop.last %}, {% endif %}{% endfor %}\r\n{% endif %}{% if styles %}[b]Style:[/b] {% for s in styles %}[url=https://www.waffles.fm/tags.php?tag=\"{{ s|lower|url_encode }}\"]{{ s }}[/url]{% if not loop.last %}, {% endif %}{% endfor %}\r\n{% endif %}{% if format %}[b]Format:[/b] {{ format }}\r\n{% endif %}\r\n{% include \"Slack_8\" %}",
             "owner": 1,
             "is_public": false,
             "is_utility": false
