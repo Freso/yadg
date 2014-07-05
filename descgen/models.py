@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, post_delete, post_save
-from django.core.validators import RegexValidator
 from django.db.models.query import Q
 
 
@@ -46,13 +45,6 @@ class Template(models.Model):
             res.add(f.ancestor)
         return res
 
-    # def descendants_set(self):
-    #     res = set()
-    #     for f in self.depending_set.all():
-    #         res.add(f)
-    #         res.update(f.descendants_set())
-    #     return res
-
     @staticmethod
     def circular_checker(parent, child):
         """
@@ -63,8 +55,6 @@ class Template(models.Model):
             raise ValidationError('A template may not depend on itself.')
         if child in parent.dependencies_set():
             raise ValidationError('One of the dependencies has a dependency on this template.')
-        # if child in parent.descendants_set():
-        #     raise ValidationError('The object is a descendant.')
 
     @staticmethod
     def templates_for_user(user, with_utility=True):
