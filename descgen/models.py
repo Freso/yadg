@@ -21,7 +21,7 @@ class Template(models.Model):
                                           help_text='Choose which templates this template depends on. Chosen templates can be included or extended in your template code.')
 
     def __unicode__(self):
-        return u'%s-%s' % (self.owner.username, self.name)
+        return u'%s [%s]' % (self.name, self.owner.username)
 
     def get_unique_name(self):
         return '%s_%d' % (self.owner.username, self.pk)
