@@ -65,4 +65,4 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         data = v.visit(result)
 
         return render(self.request, 'result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form,
-                                                   'json_data': json.dumps(data), 'template':format.template if format else '', 'dependencies':dependencies})
+                                                   'json_data': json.dumps(data), 'template':format, 'dependencies':dependencies})

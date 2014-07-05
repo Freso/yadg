@@ -3,7 +3,7 @@ var sandbox = new JSandbox(),
         {% for name,dep in dependencies.items %}"{{ name|escapejs }}" : "{{ dep.template|escapejs }}",
         {%  endfor %}
     },
-    template = "{{ template|escapejs }}",
+    template = "{{ template.template|escapejs }}",
     data = {{ json_data|safe }},
     eval_string = "myswig.render(input.template, { locals: input.data, filename: 'test' + (i++) })";
 
