@@ -135,4 +135,4 @@ class TemplateForm(forms.ModelForm):
 
 
 class SandboxForm(forms.Form):
-    template = forms.CharField(widget=CodeMirrorTextarea(keymap='yadg', mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', js_var_format='%s_editor'), initial='Please enter you description template')
+    template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(keymap='yadg', mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', js_var_format='%s_editor'), initial='Please enter you description template')

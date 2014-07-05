@@ -200,25 +200,43 @@ class SandboxView(TemplateView):
             'json_data': json.dumps(result),
             'id': id
         }
-        template_list = Template.templates_for_user(self.request.user)
-        data['templates'] = sorted(template_list, lambda x,y: cmp(x.name.lower(), y.name.lower()))
+
+        from .formatter import Formatter
+        formatter = Formatter()
+        data['release_title'] = formatter.title_from_ReleaseResult(release_result=task.result[0])
+
+        from .forms import FormatForm
+        form = FormatForm(self.request.user, self.request.GET, with_utility=True)
+
         sandbox = SandboxForm()
-        if 'template' in self.request.GET:
-            t = None
+        t = None
+        if form.is_valid():
             try:
-                pk = int(self.request.GET['template'])
-                t = Template.objects.get(pk=pk)
+                t = Template.objects.get(pk=form.cleaned_data['template'])
             except Template.DoesNotExist:
                 pass
-            except ValueError:
+        elif form.fields['template'].choices:
+            try:
+                t = Template.objects.get(pk=form.fields['template'].choices[0][0])
+            except Template.DoesNotExist:
                 pass
-            if t is not None and t in template_list:
-                data['template'] = t.template
-                data['dependencies'] = {}
-                for dep in t.cached_dependencies_set():
-                    data['dependencies'][dep.get_unique_name()] = dep.template
-                sandbox = SandboxForm(data={'template': t.template})
+
+        data['visible_templates_ids'] = map(lambda x: x[0], form.fields['template'].choices)
+        if t is not None:
+            data['template'] = t
+            data['dependencies'] = {}
+            for dep in t.cached_dependencies_set(prefetch_owner=True):
+                data['dependencies'][dep.get_unique_name()] = dep
+            data['immediate_dependencies'] = {}
+            for dep in t.dependencies.all().select_related('owner'):
+                data['immediate_dependencies'][dep.get_unique_name()] = dep
+
+            sandbox = SandboxForm(data={'template_code': t.template})
+
         data['sandboxform'] = sandbox
+
+        data['format_form'] = form
+
         return data
     
 

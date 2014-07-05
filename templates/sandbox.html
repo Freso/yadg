@@ -1,27 +1,63 @@
-{% extends "result.html" %}{% load url from future %}
+{% extends "base.html" %}{% load url from future %}
+
+{% block home_li_tags %}{% endblock %}
 
 {% block additionalHeaders %}
     {{ sandboxform.media }}
-    {{ block.super }}
-{% endblock %}
 
-{% block additionalJS %}
-        template_editor.on("changes", function() {
-            var template = template_editor.getValue();
+    {% include 'sandbox_rendering_headers.html' %}
 
-            sandbox.eval(eval_string, success_callback, {template: template, data: data}, failure_callback);
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var success_callback = function (description) {
+                    $("textarea#render_result").text(description);
+                },
+                failure_callback = function(message) {
+                    $("textarea#render_result").text((message) ? "Error: " + message : "Error: Could not parse your template.");
+                };
+
+            {% include 'sandbox_rendering.js' %}
+
+            template_code_editor.on("changes", function() {
+                var template = template_code_editor.getValue();
+
+                sandbox.eval(eval_string, success_callback, {template: template, data: data}, failure_callback);
+            });
         });
+    </script>
 {% endblock %}
 
 {% block title%}Sandbox – {% endblock %}
 
-{% block subcontent %}<div class="well"><textarea id="description_area"></textarea></div>
-<div class="well">{{ sandboxform }}</div>
-<ul>
-    {% for template in templates %}
-    <li><a href="{% url 'sandbox' id %}?template={{ template.pk }}">{{ template.name }}</a></li>
-    {% empty %}
-    <li>Sorry, no templates in this list!</li>
-    {% endfor %}
-</ul>
+{% block content %}<div class="page-header">
+    <h1>Sandbox <small>for release: <a href="{% url 'get_result' id %}">{{ release_title }}</a></small></h1>
+</div>
+<div class="well"><h2>{{ sandboxform.template_code.label }}</h2>{{ sandboxform.template_code }}</div>
+<div class="row">
+    <div class="span8"><div class="well"><h2>Preview:</h2><textarea id="render_result" style="width: 100%; height: 300px" readonly></textarea></div></div>
+    <div class="span4">
+        {% include 'format_form.html' %}
+        <div class="clear form-actions">
+            <a class="btn btn-primary" href="#">New template</a>
+            {% if template.owner_id == request.user.pk %}<a class="btn" href="#">Save template</a>{% endif %}
+        </div>
+        {% if immediate_dependencies %}{% regroup immediate_dependencies.values|dictsort:"owner.username.lower" by owner as grouped_dependencies %}
+            <div class="well"><h2>Dependencies <a class="yadg_tooltip" href="#" title="The list of templates that are available to be included by this template's code. Each entry lists the name of the user the accessible template belongs to, it's name (in bold letters) and below that the id which can be used to refer to the template in code.">[?]</a>:</h2>
+                <dl style="overflow-x: auto;">
+                    {% for group in grouped_dependencies %}
+                        <dt>by {% if group.grouper.pk == request.user.pk %}you{% else %}<a href="#">{{ group.grouper }}</a>{% endif %}:</dt>
+                        <dd>
+                            <dl>
+                                {% for dependency in group.list|dictsort:"name.lower" %}
+                                <dt>{% if dependency.pk in visible_templates_ids %}<a href="{{ request.path }}?template={{ dependency.pk }}">{{ dependency.name }}</a>{% else %}{{ dependency.name }}{% endif %} as</dt>
+                                <dd>{{ dependency.get_unique_name }}</dd>
+                                {% endfor %}
+                            </dl>
+                        </dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
