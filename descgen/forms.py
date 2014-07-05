@@ -3,6 +3,7 @@ from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 from .models import Template, Subscription
 from django.contrib.auth.models import User
+from django.db.models.query import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from codemirror import CodeMirrorTextarea
@@ -152,6 +153,20 @@ class TemplateForm(TemplateAdminForm):
 
     class Meta(TemplateAdminForm.Meta):
         fields = ('name', 'template', 'is_utility', 'is_public', 'dependencies')
+
+    def clean(self):
+        cleaned_data = super(TemplateForm, self).clean()
+
+        if self.instance:
+            q = Q(name__exact=cleaned_data['name']) & Q(owner_id__exact=self.instance.owner_id)
+            if self.instance.pk:
+                q &= ~Q(pk=self.instance.pk)
+            if Template.objects.filter(q):
+                msg = 'A template with this name already exists.'
+                self._errors['name'] = self.error_class([msg])
+                del cleaned_data['name']
+
+        return cleaned_data
 
 
 class TemplateDeleteForm(forms.Form):
