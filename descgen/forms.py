@@ -88,7 +88,8 @@ class TemplateAdminForm(forms.ModelForm):
     class Meta:
         model = Template
         widgets = {
-            'template': CodeMirrorTextarea(mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', keymap='yadg')
+            'template': CodeMirrorTextarea(mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', keymap='yadg'),
+            'dependencies': forms.SelectMultiple(attrs={'class': 'input-automax'})
         }
 
     def __init__(self, *args, **kwargs):
