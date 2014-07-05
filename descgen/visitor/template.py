@@ -56,7 +56,7 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
 
         dependencies = {}
         if format:
-            for dep in format.cached_dependencies_set():
+            for dep in format.cached_dependencies_set(prefetch_owner=True):
                 dependencies[dep.get_unique_name()] = dep
 
         import json

@@ -37,9 +37,12 @@ class Template(models.Model):
             res.update(f.dependencies_set())
         return res
 
-    def cached_dependencies_set(self):
+    def cached_dependencies_set(self, prefetch_owner=False):
         res = set()
-        for f in DependencyClosure.objects.filter(descendant__exact=self).select_related('ancestor'):
+        q = DependencyClosure.objects.filter(descendant__exact=self).select_related('ancestor')
+        if prefetch_owner:
+            q = q.prefetch_related('ancestor__owner')
+        for f in q:
             res.add(f.ancestor)
         return res
 
