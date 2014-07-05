@@ -13,22 +13,7 @@
     <form action="{% url 'settings' %}" method="post">
         {% csrf_token %}
         <fieldset xmlns="http://www.w3.org/1999/xhtml">
-            <legend>Settings</legend>
-            <div class="control-group{% if form.description_format.errors %} error{% endif %}">
-              <label for="id_description_format" class="control-label">{{ form.description_format.label }}</label>
-              <div class="controls">
-                {{ form.description_format }}{% if form.description_format.errors %}
-                <span class="help-inline">{{ form.description_format.errors|first|escape }}</span>{% endif %}
-              </div>
-            </div>
-            
-            <div class="control-group{% if form.scraper.errors %} error{% endif %}">
-              <label for="id_scraper" class="control-label">{{ form.scraper.label }}</label>
-              <div class="controls">
-                {{ form.scraper }}{% if form.scraper.errors %}
-                <span class="help-inline">{{ form.scraper.errors|first|escape }}</span>{% endif %}
-              </div>
-            </div>
+            {% include 'bootstrap_form_fields.html' %}
             
             <div class="form-actions">
               <button class="btn btn-primary" type="submit">Save defaults</button>
