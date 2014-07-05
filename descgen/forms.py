@@ -83,7 +83,7 @@ class UnsubscribeForm(forms.Form):
         return user_id
 
 
-class TemplateForm(forms.ModelForm):
+class TemplateAdminForm(forms.ModelForm):
 
     class Meta:
         model = Template
@@ -92,46 +92,59 @@ class TemplateForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(TemplateForm, self).__init__(*args, **kwargs)
+        super(TemplateAdminForm, self).__init__(*args, **kwargs)
         if self.instance:
             try:
                 u = self.instance.owner
             except ObjectDoesNotExist:
                 t = Template.objects.none()
             else:
-                t = Template.templates_for_user(u)
+                t = Template.templates_for_user(u).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
 
             self.fields['dependencies'].queryset = t
 
     def clean(self):
-        dependencies = self.cleaned_data.get('dependencies')
+        cleaned_data = super(TemplateAdminForm, self).clean()
+        dependencies = cleaned_data.get('dependencies')
 
+        dependency_errors = []
         # make sure there are no circular dependencies
         for dep in dependencies:
-            Template.circular_checker(dep, self.instance)
+            try:
+                Template.circular_checker(dep, self.instance)
+            except ValidationError as e:
+                dependency_errors = e.messages
 
         # make sure a public template only has public dependencies
-        is_public = self.cleaned_data.get('is_public')
+        is_public = cleaned_data.get('is_public')
         if is_public and any([not x.is_public for x in dependencies]):
-            raise ValidationError('A template may only be public if all of its dependencies are public.')
+            msg = 'A template may only be public if all of its dependencies are public.'
+            self._errors['is_public'] = self.error_class([msg])
 
         # make sure a default template only has dependencies that are also default
-        is_default = self.cleaned_data.get('is_default')
+        is_default = cleaned_data.get('is_default')
         if is_default and any([not x.is_default for x in dependencies]):
-            raise ValidationError('A template may only be a default template if all of its dependencies are default templates.')
+            msg = 'A template may only be a default template if all of its dependencies are default templates.'
+            self._errors['is_default'] = self.error_class([msg])
 
         if self.instance.pk and not is_default and any([x.is_default for x in self.instance.depending_set.all()]):
-            raise ValidationError('One ore more template depending on this template is a default template. Therefore removing the default status of this template is not allowed.')
+            msg = 'One ore more template depending on this template is a default template. Therefore removing the default status of this template is not allowed.'
+            self._errors['is_default'] = self.error_class([msg])
 
         # make sure dependencies are either public templates of users subscribed to or own templates
-        u = self.cleaned_data.get('owner')
+        u = cleaned_data.get('owner')
         if u:
             t = Template.templates_for_user(u)
 
             if any([(not x in t) for x in dependencies]):
-                raise ValidationError('A template may only depend on own templates or public templates of users you are subscribed to.')
+                msg = 'A template may only depend on own templates or public templates of users you are subscribed to.'
+                dependency_errors.append(msg)
 
-        return self.cleaned_data
+        if dependency_errors:
+            self._errors['dependencies'] = self.error_class(dependency_errors)
+            del cleaned_data['dependencies']
+
+        return cleaned_data
 
 
 class SandboxForm(forms.Form):
