@@ -98,7 +98,7 @@ class Command(BaseCommand):
 
                 is_public = random.uniform(0,1) <= percent_public_templates
                 try:
-                    template = Template.objects.create(owner=user, name=name, is_public=is_public)
+                    template = Template.objects.create(owner=user, name=name, template=name, is_public=is_public)
                 except Exception as excp:
                     raise CommandError('Could not create template object with name: %s, Exception: %s' % (name, excp))
 
