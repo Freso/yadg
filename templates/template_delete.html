@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load url from future %}
+
+{% block title%}Sure? – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block content%}
+    {% if form.errors %}
+        <div class="page-header">
+            <h1>What did you do?</h1>
+        </div>
+        <div class="alert alert-error">{{ form.errors }}</div>
+    {% else %}
+        <div class="page-header">
+            <h1>Are you sure?</h1>
+        </div>
+        <div class="well"><p>Are you sure you want to delete the following templates?</p>
+            <ul>
+                {% for template in to_delete|dictsort:"name.lower" %}
+                    <li><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% if dependencies or other_users_depend %}
+            <div class="alert alert-danger">
+                <ul>
+                    {% if other_users_depend %}
+                        <li>There is at least one template of another user that depends on some of the templates that are to be deleted.</li>
+                    {% endif %}
+                    {% if dependencies %}
+                        <li>The following of your own templates depend on some of the templates that are to be deleted.
+                            <ul>
+                                {% for template in dependencies|dictsort:"name.lower" %}
+                                    <li><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        {% endif %}
+        <form action="{% url 'template_delete' %}" method="post">
+            {% csrf_token %}
+            {% for template in to_delete %}
+                <input type="hidden" name="to_delete" value="{{ template.pk }}"/>
+            {% endfor %}
+            <button type="submit" class="btn btn-danger">Yes, I'm sure</button>
+        </form>
+    {% endif %}
+{% endblock %}

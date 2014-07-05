@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load url from future %}
+
+{% block title%}Edit template – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block additionalHeaders %}
+    {{ form.media }}
+{% endblock %}
+
+{% block content%}
+    {% if successful %}<div class="alert alert-success">Template was saved successfully.</div>{% endif %}
+    <form action="{% url 'template_edit' template_id %}" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <fieldset xmlns="http://www.w3.org/1999/xhtml">
+            <legend>Edit template</legend>
+            {% include 'bootstrap_form_fields.html' %}
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save template</button>
+                <a class="btn" href="{{ request.path }}">Reset</a>
+            </div>
+        </fieldset>
+    </form>
+{% endblock %}

@@ -81,6 +81,7 @@
             <li><a href="{% url 'api_root' %}">API</a></li>
           </ul>
           <ul class="nav pull-right">
+              <li{% block templatelist_li_tags %}{% endblock %}><a href="{% url 'template_list' %}">My templates</a></li>
               <li{% block settings_li_tags %}{% endblock %}><a href="{% url 'settings' %}">Settings</a></li>
           </ul>
         </div>

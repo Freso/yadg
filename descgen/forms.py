@@ -147,5 +147,20 @@ class TemplateAdminForm(forms.ModelForm):
         return cleaned_data
 
 
+class TemplateForm(TemplateAdminForm):
+
+    class Meta(TemplateAdminForm.Meta):
+        fields = ('name', 'template', 'is_utility', 'is_public', 'dependencies')
+
+
+class TemplateDeleteForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs['user']
+        kwargs.pop('user')
+        super(TemplateDeleteForm, self).__init__(*args, **kwargs)
+        self.fields['to_delete'] = forms.TypedMultipleChoiceField(coerce=int, choices=map(lambda x: (x.pk, x.name), self.user.template_set.all()))
+
+
 class SandboxForm(forms.Form):
     template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(keymap='yadg', mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', js_var_format='%s_editor'), initial='Please enter you description template')
