@@ -318,6 +318,10 @@ class SandboxIndexView(View):
         else:
             return render(request, 'sandbox_index_no_release.html')
 
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SandboxIndexView, self).dispatch(request, *args, **kwargs)
+
 
 # TODO: rename "sandbox" to "scratchpad"
 class SandboxView(TemplateView):
