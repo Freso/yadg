@@ -325,6 +325,7 @@ class ScratchpadView(TemplateView):
     template_name = 'scratchpad.html'
 
     def get_context_data(self, id):
+        # TODO: cleanup ScratchpadView
         try:
             task = TaskMeta.objects.get(task_id=id)
         except TaskMeta.DoesNotExist:

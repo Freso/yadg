@@ -31,6 +31,7 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         return render(self.request, 'result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
 
     def visit_ReleaseResult(self, result):
+        # TODO: cleanup TemplateVisitor
         form = FormatForm(self.request.user, self.request.GET)
         if form.is_valid():
             format = form.cleaned_data['template']
@@ -62,6 +63,7 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         import json
         from .misc import JSONSerializeVisitor
         v = JSONSerializeVisitor()
+        # TODO: namespace the release data to avoid conflicts at a later date
         data = v.visit(result)
 
         return render(self.request, 'result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form,
