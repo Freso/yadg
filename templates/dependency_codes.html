@@ -1,0 +1,10 @@
+{% regroup immediate_dependencies|dictsort:"owner.username.lower" by owner as grouped_dependencies %}
+<h2>Dependencies <a class="yadg_tooltip" href="#" title="The list of templates that are available to be included by this template's code. Each entry lists the name of the user the accessible template belongs to, it's name (in bold letters) and below that the id which can be used to refer to the template in code.">[?]</a>:</h2>
+<dl style="overflow-x: auto;">
+    {% for group in grouped_dependencies %}
+        <dt>by {% if group.grouper.pk == request.user.pk %}you{% else %}<a href="#">{{ group.grouper }}</a>{% endif %}:</dt>
+        <dd>
+            {% block dependency_codes_list_dd %}{% endblock %}
+        </dd>
+    {% endfor %}
+</dl>

@@ -1,0 +1,16 @@
+{% extends "template_edit.html" %}{% load url from future %}
+
+{% block title%}{% if template_id %}Edit{% else %}Add{% endif %} template – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block content%}
+    <div class="alert alert-danger">
+        <strong>Warning!</strong> Your changes from the sandbox have not yet been saved. If you want to do so click the button at the bottom.
+    </div>
+    {% if template_id %}
+        {% include 'template_edit_form.html' %}
+    {% else %}
+        {% include 'template_add_form.html' %}
+    {% endif %}
+{% endblock %}

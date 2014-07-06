@@ -245,10 +245,13 @@ class TemplateAddView(FormView):
 class TemplateEditView(FormView):
     form_class = TemplateForm
     template_name = 'template_edit.html'
+    template = None
 
     def get_context_data(self, **kwargs):
         ctx = super(TemplateEditView, self).get_context_data(**kwargs)
         ctx['template_id'] = self.kwargs['id']
+        if self.template is not None:
+            ctx['immediate_dependencies'] = self.template.dependencies.all().select_related('owner')
         return ctx
 
     def get_form_kwargs(self):
@@ -256,7 +259,7 @@ class TemplateEditView(FormView):
         template_id = int(self.kwargs['id'])
         template = Template.objects.filter(owner_id__exact=self.request.user.pk, pk=template_id)
         if template:
-            kwargs['instance'] = template[0]
+            kwargs['instance'] = self.template = template[0]
         else:
             raise Http404
         return kwargs
@@ -264,13 +267,54 @@ class TemplateEditView(FormView):
     def form_valid(self, form):
         form.save()
         #return redirect(reverse('template_edit', args=[form.instance.pk]))
-        return render(self.request, self.template_name, {'form': form, 'successful': True, 'template_id': self.kwargs['id']})
+        return render(self.request, self.template_name, self.get_context_data(form=form, successful=True))
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(TemplateEditView, self).dispatch(request, *args, **kwargs)
 
 
+class TemplateFromSandboxView(FormView):
+    form_class = SandboxForm
+    template_name = 'template_from_sandbox.html'
+
+    def get(self, request, *args, **kwargs):
+        # TODO redirect to sandbox overview
+        return redirect(reverse('template_list'))
+
+    def form_valid(self, form):
+        template_code = form.cleaned_data['template_code']
+        t = Template(owner=self.request.user)
+        immediate_dependencies = None
+        id = None
+        if 'id' in self.kwargs and self.kwargs['id']:
+            id = int(self.kwargs['id'])
+            try:
+                t = Template.objects.get(pk=id, owner_id__exact=self.request.user.pk)
+            except Template.DoesNotExist:
+                raise Http404
+            immediate_dependencies = t.dependencies.all().select_related('owner')
+        t.template = template_code
+        new_form = TemplateForm(instance=t)
+        ctx = {
+            'form': new_form
+        }
+        if immediate_dependencies is not None:
+            ctx['immediate_dependencies'] = immediate_dependencies
+        if id is not None:
+            ctx['template_id'] = id
+        return self.render_to_response(ctx)
+
+    def form_invalid(self, form):
+        # TODO redirect to sandbox overview
+        return redirect(reverse('template_list'))
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(TemplateFromSandboxView, self).dispatch(request, *args, **kwargs)
+
+
+# TODO: rename "sandbox" to "scratchpad"
 class SandboxView(TemplateView):
     template_name = 'sandbox.html'
 
@@ -317,9 +361,7 @@ class SandboxView(TemplateView):
             data['dependencies'] = {}
             for dep in t.cached_dependencies_set(prefetch_owner=True):
                 data['dependencies'][dep.get_unique_name()] = dep
-            data['immediate_dependencies'] = {}
-            for dep in t.dependencies.all().select_related('owner'):
-                data['immediate_dependencies'][dep.get_unique_name()] = dep
+            data['immediate_dependencies'] = t.dependencies.all().select_related('owner')
 
             sandbox = SandboxForm(data={'template_code': t.template})
 

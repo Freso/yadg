@@ -1,0 +1,11 @@
+{% load url from future %}<form action="{% url 'template_add' %}" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <fieldset xmlns="http://www.w3.org/1999/xhtml">
+        <legend>Add new template</legend>
+        {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+        {% include 'bootstrap_form_fields.html' %}
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Save new template</button>
+        </div>
+    </fieldset>
+</form>

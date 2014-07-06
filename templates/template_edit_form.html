@@ -1,0 +1,15 @@
+{% load url from future %}<form action="{% url 'template_edit' template_id %}" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <fieldset xmlns="http://www.w3.org/1999/xhtml">
+        <legend>Edit template</legend>
+        {% include 'bootstrap_form_fields.html' %}
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Save template</button>
+            <a class="btn" href="{{ request.path }}">Reset</a>
+            {% if immediate_dependencies %}
+                <a class="btn pull-right" href="#" id="show_dependencies">Show dependency codes</a>
+                <div class="well" id="dependencies">{% include 'dependency_codes_template_edit.html' %}</div>
+            {% endif %}
+        </div>
+    </fieldset>
+</form>

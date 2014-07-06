@@ -6,19 +6,45 @@
 
 {% block additionalHeaders %}
     {{ form.media }}
+
+    {% if immediate_dependencies %}
+        <style>
+            #dependencies {
+                max-height: 300px;
+                overflow-y: auto;
+                z-index: 1000;
+            }
+        </style>
+
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $("#dependencies").hide();
+
+                $("#show_dependencies").click(function(e){
+                    e.preventDefault();
+                    var divToShow = $("#dependencies");
+
+                    if (!divToShow.is(':visible')) {
+                        divToShow.css({
+                            display: "block",
+                            position: "absolute",
+                            left: ($(this).offset().left - divToShow.outerWidth() + $(this).outerWidth()) + "px",
+                            top: ($(this).offset().top - divToShow.outerHeight()) + "px"
+                        });
+
+                        divToShow.show();
+                        $(this).text('Hide dependency codes');
+                    } else {
+                        divToShow.hide();
+                        $(this).text('Show dependency codes');
+                    }
+                });
+            });
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block content%}
     {% if successful %}<div class="alert alert-success">Template was saved successfully.</div>{% endif %}
-    <form action="{% url 'template_edit' template_id %}" method="post" class="form-horizontal">
-        {% csrf_token %}
-        <fieldset xmlns="http://www.w3.org/1999/xhtml">
-            <legend>Edit template</legend>
-            {% include 'bootstrap_form_fields.html' %}
-            <div class="form-actions">
-                <button class="btn btn-primary" type="submit">Save template</button>
-                <a class="btn" href="{{ request.path }}">Reset</a>
-            </div>
-        </fieldset>
-    </form>
+    {% include 'template_edit_form.html' %}
 {% endblock %}
