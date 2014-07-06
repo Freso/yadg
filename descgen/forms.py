@@ -4,7 +4,6 @@ from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 from .models import Template, Subscription
 from django.contrib.auth.models import User
 from django.db.models.query import Q
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from codemirror import CodeMirrorTextarea
 import operator
