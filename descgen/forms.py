@@ -7,7 +7,7 @@ from django.db.models.query import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from codemirror import CodeMirrorTextarea
-
+import operator
 
 search_form_widget_kwargs = {
     'attrs': {
@@ -94,6 +94,9 @@ class TemplateAdminForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        prefetch_owner = kwargs.get('prefetch_owner', True)
+        if 'prefetch_owner' in kwargs:
+            del kwargs['prefetch_owner']
         super(TemplateAdminForm, self).__init__(*args, **kwargs)
         if self.instance:
             try:
@@ -102,6 +105,8 @@ class TemplateAdminForm(forms.ModelForm):
                 t = Template.objects.none()
             else:
                 t = Template.templates_for_user(u).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+                if prefetch_owner:
+                    t = t.select_related('owner')
 
             self.fields['dependencies'].queryset = t
 
@@ -144,6 +149,16 @@ class TemplateAdminForm(forms.ModelForm):
             if any([(not x in t) for x in dependencies]):
                 msg = 'A template may only depend on own templates or public templates of users you are subscribed to.'
                 dependency_errors.append(msg)
+
+        # make sure the total number of ancestors in the new dependency graph is not too great
+        max_elements = 50
+        all_elements = reduce(operator.or_, map(lambda x: x.cached_dependencies_set(), dependencies), set(dependencies))
+        if self.instance and self.instance.pk:
+            all_elements |= self.instance.cached_dependencies_set()
+        num_elements = len(all_elements)
+        if num_elements > max_elements:
+            msg = "The total number of ancestors in the dependency graph is %d. It mustn't be greater than %d." % (num_elements, max_elements)
+            dependency_errors.append(msg)
 
         if dependency_errors:
             self._errors['dependencies'] = self.error_class(dependency_errors)
