@@ -38,11 +38,12 @@ class Template(models.Model):
 
     def cached_dependencies_set(self, prefetch_owner=False):
         res = set()
-        q = DependencyClosure.objects.filter(descendant__exact=self).select_related('ancestor')
+        l = DependencyClosure.objects.filter(descendant__exact=self, path_length__gt=0).values('ancestor_id').distinct()
+        q = Template.objects.filter(id__in=l)
         if prefetch_owner:
-            q = q.prefetch_related('ancestor__owner')
+            q = q.select_related('owner')
         for f in q:
-            res.add(f.ancestor)
+            res.add(f)
         return res
 
     @staticmethod
@@ -75,12 +76,14 @@ class DependencyClosure(models.Model):
 
     descendant = models.ForeignKey(Template, related_name='closure_descendant')
     ancestor = models.ForeignKey(Template, related_name='closure_ancestor')
+    path_length = models.IntegerField()
+    count = models.IntegerField()
 
     class Meta:
-        unique_together = ('descendant', 'ancestor')
+        unique_together = ('descendant', 'ancestor', 'path_length')
 
     def __unicode__(self):
-        return u'%s depends on %s' % (self.descendant, self.ancestor)
+        return u'%s depends on %s over %d hops' % (self.descendant, self.ancestor, self.path_length)
 
 
 def dependency_changed(sender, **kwargs):
@@ -92,87 +95,127 @@ def dependency_changed(sender, **kwargs):
     if action == 'post_add':
         instance = kwargs['instance']
         pk_set = kwargs['pk_set']
-        # get all templates that depend on the we one that was modified
-        cur_closure_descendants = DependencyClosure.objects.filter(ancestor__exact=instance.pk)
+        # get all templates that depend on the we one that was modified and are at least one hop away (exclude the self
+        # links)
+        modified_instance_descendants = DependencyClosure.objects.filter(ancestor_id__exact=instance.pk, path_length__gt=0)
         for pk in pk_set:
-            # for every added dependency check if we already have an entry for that in the closure table
-            if not DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=pk).exists():
-                # this dependency has no entry in the closure table, so we create one
-                new_dep = DependencyClosure.objects.create(descendant_id=instance.pk, ancestor_id=pk)
-                # and update every descendant (= template that depends on this template)
-                for cur_closure_descendant in cur_closure_descendants:
-                    # check if the descendant already has a dependency for the newly added template dependency, if not create one
-                    if not DependencyClosure.objects.filter(descendant_id__exact=cur_closure_descendant.descendant_id, ancestor_id__exact=new_dep.ancestor_id).exists():
-                        DependencyClosure.objects.create(descendant_id=cur_closure_descendant.descendant_id, ancestor_id=new_dep.ancestor_id)
-                # the added dependency could have dependencies itself, so add those to this template and any of its descendants
-                new_closure_deps = DependencyClosure.objects.filter(descendant_id__exact=pk)
-                for new_closure_dep in new_closure_deps:
-                    modified_closure = None
-                    # does the template already have a dependency for the dependency of the newly added one
-                    if not DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=new_closure_dep.ancestor_id).exists():
-                        # if it does not, create one
-                        modified_closure = DependencyClosure.objects.create(descendant_id=instance.pk, ancestor_id=new_closure_dep.ancestor_id)
-                    # and update all descendants again
-                    if modified_closure is not None:
-                        for cur_closure_descendant in cur_closure_descendants:
-                            if not DependencyClosure.objects.filter(descendant_id__exact=cur_closure_descendant.descendant_id, ancestor_id__exact=modified_closure.ancestor_id).exists():
-                                DependencyClosure.objects.create(descendant_id=cur_closure_descendant.descendant_id, ancestor_id=modified_closure.ancestor_id)
+            # for every added dependency and it's dependencies we add a new path from the modified instance
+            current_pk_ancestors = DependencyClosure.objects.filter(descendant_id__exact=pk)
+            for current_pk_ancestor in current_pk_ancestors:
+                # old situation:   pk --> ... --> current_pk_ancestor
+                #                     \         /
+                #                     path_length
+                #
+                # new situation:   instance --> pk --> ... --> current_pk_ancestor
+                #                           \               /
+                #                            path_length + 1
+                #
+                # Note: every template automatically has the path:         pk -
+                #                                                           ^   \  length = 0
+                #                                                            \__/
+                #       so the path    instance --> pk   with length 1
+                #       will be added without the need for any special corner case handling
+                try:
+                    # see if we already have a path from instance to current_pk_ancestor with the expected length
+                    path_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=instance.pk, ancestor_id__exact=current_pk_ancestor.ancestor_id, path_length=current_pk_ancestor.path_length+1)
+                except DependencyClosure.DoesNotExist:
+                    # if we don't create one
+                    path_to_ancestor = DependencyClosure.objects.create(descendant_id=instance.pk, ancestor_id=current_pk_ancestor.ancestor_id, path_length=current_pk_ancestor.path_length+1, count=1)
+                else:
+                    # otherwise increase the count to include the new path
+                    path_to_ancestor.count += 1
+                    path_to_ancestor.save()
+
+                # now we have to add the new path to all descendants of the modified instance
+                #
+                #       modified_instance_descendant --> ... --> instance --> ... --> current_pk_ancestor
+                #                                    \        /           \         /
+                #                                 old_path_length         path_length
+                #
+                # so the new path from modified_instance_descendant to current_pk_ancestor has a length of
+                # old_path_length + path_length
+                for modified_instance_descendant in modified_instance_descendants:
+                    try:
+                        # so see if such a path already exists
+                        path_from_descendant_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=modified_instance_descendant.descendant_id, ancestor_id__exact=path_to_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+path_to_ancestor.path_length)
+                    except DependencyClosure.DoesNotExist:
+                        # if not we create one
+                        DependencyClosure.objects.create(descendant_id=modified_instance_descendant.descendant_id, ancestor_id=path_to_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+path_to_ancestor.path_length, count=1)
+                    else:
+                        # otherwise increase the count to include the new path
+                        path_from_descendant_to_ancestor.count += 1
+                        path_from_descendant_to_ancestor.save()
     elif action == 'post_remove':
         instance = kwargs['instance']
         pk_set = kwargs['pk_set']
-        # get a list of all dependencies of the modified template
-        l = DependencyClosure.objects.filter(descendant_id__exact=instance.pk).values_list('ancestor')
-        deps_modified = False
+        # get all templates that depend on the we one that was modified and are at least one hop away (exclude the self
+        # links)
+        modified_instance_descendants = DependencyClosure.objects.filter(ancestor_id__exact=instance.pk, path_length__gt=0)
         for pk in pk_set:
-            # check if any of the other dependencies has a dependency to the removed template
-            if not DependencyClosure.objects.filter(descendant_id__in=l, ancestor_id__exact=pk).exists():
-                # if it does not the dependency is local to the modified template and has to be deleted
-                DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=pk).delete()
-                # now get a list of dependencies of the dependency we just removed
-                possible_stale_deps = DependencyClosure.objects.filter(descendant_id__exact=pk).values('ancestor_id')
-                for possible_stale_dep in possible_stale_deps:
-                    # check if there are any other dependencies besides pk that depend on the removal candidate
-                    if not DependencyClosure.objects.filter(Q(descendant_id__in=l, ancestor_id__exact=possible_stale_dep['ancestor_id']) & ~Q(descendant_id__exact=pk)).exists():
-                        # if not the removal candidate was local to the removed dependency and can be deleted too
-                        DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=possible_stale_dep['ancestor_id']).delete()
-                deps_modified = True
-        # if we modified the dependencies we have to update all descendants
-        if deps_modified:
-            # for this we first get a list of all descendants
-            l2 = DependencyClosure.objects.filter(ancestor_id__exact=instance.pk).values_list('descendant')
-            # get a list of template objects that have to be updated (create a python list to force immediate evaluation
-            # of the query
-            templates = list(Template.objects.filter(pk__in=l2))
-            # now delete all cached dependencies for the templates
-            DependencyClosure.objects.filter(descendant_id__in=l2).delete()
-            # create now closures by brute forcing the calculation for each template
-            for template in templates:
-                dependencies = template.dependencies_set()
-                # create a new closure for each dependency
-                for dependency in dependencies:
-                    DependencyClosure.objects.create(descendant=template, ancestor=dependency)
+            # for every removed dependency and it's dependencies we remove the path from the modified instance
+            current_pk_ancestors = DependencyClosure.objects.filter(descendant_id__exact=pk)
+            for current_pk_ancestor in current_pk_ancestors:
+                try:
+                    # this object should exist, if it does not there is a consistency problem
+                    path_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=instance.pk, ancestor_id__exact=current_pk_ancestor.ancestor_id, path_length=current_pk_ancestor.path_length+1)
+                except DependencyClosure.DoesNotExist:
+                    # consistency error in the database, we can't do anything so continue with next pk
+                    continue
+
+                if path_to_ancestor.count <= 1:
+                    # if the removed path was the only path, remove the closure from the database
+                    path_to_ancestor.delete()
+                else:
+                    # otherwise decrease the count to reflect the removal of the path
+                    path_to_ancestor.count -= 1
+                    path_to_ancestor.save()
+
+                # new delete the removed path from all descendants of the modified instance
+                for modified_instance_descendant in modified_instance_descendants:
+                    try:
+                        # again this should exist
+                        path_from_descendant_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=modified_instance_descendant.descendant_id, ancestor_id__exact=path_to_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+path_to_ancestor.path_length)
+                    except DependencyClosure.DoesNotExist:
+                        # consistency error in the database, we can't do anything so continue
+                        continue
+
+                    if path_from_descendant_to_ancestor.count <= 1:
+                        # if the removed path was the only path, remove the closure from the database
+                        path_from_descendant_to_ancestor.delete()
+                    else:
+                        # otherwise decrease the count to reflect the removal of the path
+                        path_from_descendant_to_ancestor.count -= 1
+                        path_from_descendant_to_ancestor.save()
     elif action == 'post_clear':
         instance = kwargs['instance']
-        # delete all cached dependencies for the modified template
-        DependencyClosure.objects.filter(descendant_id__exact=instance.pk).delete()
-        # then get a list of descendant templates that need to be updated
-        l = DependencyClosure.objects.filter(ancestor_id__exact=instance.pk).values_list('descendant')
-        # get a list of template objects that have to be updated (create a python list to force immediate evaluation
-        # of the query
-        templates = list(Template.objects.filter(pk__in=l))
-        # now delete all cached dependencies for the templates
-        DependencyClosure.objects.filter(descendant_id__in=l).delete()
-        # create now closures by brute forcing the calculation for each template
-        for template in templates:
-            dependencies = template.dependencies_set()
-            # create a new closure for each dependency
-            for dependency in dependencies:
-                DependencyClosure.objects.create(descendant=template, ancestor=dependency)
+        # get all real ancestors and descendants of the modified instance
+        modified_instance_ancestors = DependencyClosure.objects.filter(descendant_id__exact=instance.pk, path_length__gt=0)
+        modified_instance_descendants = DependencyClosure.objects.filter(ancestor_id__exact=instance.pk, path_length__gt=0)
+        for modified_instance_ancestor in modified_instance_ancestors:
+            # all paths to ancestors of the modified instance will be removed, so remove those paths also from the
+            # descendants of the modified instance
+            for modified_instance_descendant in modified_instance_descendants:
+                try:
+                    # again this should exist
+                    path_from_descendant_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=modified_instance_descendant.descendant_id, ancestor_id__exact=modified_instance_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+modified_instance_ancestor.path_length)
+                except DependencyClosure.DoesNotExist:
+                    # consistency error in the database, we can't do anything so continue
+                    continue
+
+                if path_from_descendant_to_ancestor.count <= 1:
+                    # if the removed path was the only path, remove the closure from the database
+                    path_from_descendant_to_ancestor.delete()
+                else:
+                    # otherwise decrease the count to reflect the removal of the path
+                    path_from_descendant_to_ancestor.count -= 1
+                    path_from_descendant_to_ancestor.save()
+        # now delete all ancestors
+        modified_instance_ancestors.delete()
 
 
 def template_deleted(sender, **kwargs):
     instance = kwargs['instance']
-    closure = DependencyClosure.objects.filter(descendant__exact=instance, ancestor__exact=instance)
+    closure = DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=instance.pk)
     if closure.count() > 1:
         closure.delete()
 
@@ -180,7 +223,9 @@ def template_deleted(sender, **kwargs):
 def template_saved(sender, **kwargs):
     instance = kwargs['instance']
     created = kwargs['created']
-    if (not created) and (not (instance.is_default or instance.is_public)):
+    if created:
+        DependencyClosure.objects.create(ancestor_id=instance.pk, descendant_id=instance.pk, count=1, path_length=0)
+    elif not (instance.is_default or instance.is_public):
         # the template might have been public before, so remove all dependencies that are not from templates
         # owned by this user
         dependant_templates = instance.depending_set.filter(~Q(owner_id__exact=instance.owner.pk))
