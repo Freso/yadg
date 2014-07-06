@@ -4,6 +4,7 @@ from descgen.scraper.factory import SCRAPER_ITEMS
 from .visitor.misc import DescriptionVisitor, JSONSerializeVisitor
 from .visitor.template import TemplateVisitor
 from .models import Template, Subscription
+from .result import ReleaseResult
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -314,6 +315,29 @@ class TemplateFromSandboxView(FormView):
         return super(TemplateFromSandboxView, self).dispatch(request, *args, **kwargs)
 
 
+class SandboxIndexView(View):
+
+    def get(self, request):
+        results = TaskMeta.objects.filter(status__exact='SUCCESS').order_by('id')
+
+        task_id = None
+        i = 0
+        while task_id is None and i < len(results):
+            task = results[i]
+            temp = task.result[0]
+            if isinstance(temp, ReleaseResult):
+                task_id = task.task_id
+            i += 1
+
+        if task_id is not None:
+            redirect_url = reverse('sandbox', args=(task_id,))
+            if self.request.GET:
+                redirect_url += '?' + self.request.GET.urlencode()
+            return redirect(redirect_url)
+        else:
+            return render(request, 'sandbox_index_no_release.html')
+
+
 # TODO: rename "sandbox" to "scratchpad"
 class SandboxView(TemplateView):
     template_name = 'sandbox.html'
@@ -390,7 +414,7 @@ class SettingsView(FormView,GetFormatMixin,CreateTaskMixin):
     def form_valid(self, form):
         self.request.session['default_format'] = form.cleaned_data['description_format']
         self.request.session['default_scraper'] = form.cleaned_data['scraper']
-        return render(self.request,self.template_name,{'form':form, 'successful':True})
+        return (self.request,self.template_name,{'form':form, 'successful':True})
 
 
 class ScrapersView(TemplateView):

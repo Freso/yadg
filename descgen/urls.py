@@ -4,7 +4,7 @@ from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse
 from django.utils.functional import lazy
 
-from descgen.views import IndexView,ResultView,DownloadResultView,SettingsView,ScrapersView,SandboxView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromSandboxView
+from descgen.views import IndexView,ResultView,DownloadResultView,SettingsView,ScrapersView,SandboxView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromSandboxView, SandboxIndexView
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -22,6 +22,7 @@ urlpatterns = patterns('',
     url(r'^templates/delete$', TemplateDeleteView.as_view(), name='template_delete'),
     url(r'^templates/sandbox(?:/(?P<id>[\d]+))?$', TemplateFromSandboxView.as_view(), name='template_from_sandbox'),
     url(r'^templates/(?P<id>[\d]+)$', TemplateEditView.as_view(), name='template_edit'),
+    url(r'^sandbox$', SandboxIndexView.as_view(), name='sandbox_index'),
     url(r'^sandbox/(?P<id>[\w\d-]+)$', SandboxView.as_view(), name='sandbox'),
     url(r'^result/(?P<id>[\w\d-]+)$', ResultView.as_view(), name='get_result'),
     url(r'^result/(?P<id>[\w\d-]+)/(?P<format>[\w\d-]+)/(?P<title>.+?)\.txt$', DownloadResultView.as_view(), name='download_result'),

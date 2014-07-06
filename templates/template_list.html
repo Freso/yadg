@@ -8,7 +8,7 @@
 
 {% block additionalHeaders %}
     <style>
-        tr td:first-child {
+        tr td:first-child, tr td:last-child {
             width: .1em !important;
             text-align: center !important;
         }
@@ -32,6 +32,7 @@
                     <th>Template name</th>
                     <th>Utility</th>
                     <th>Public</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -41,6 +42,7 @@
                         <td><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></td>
                         <td>{{ template.is_utility|yesnoimg }}</td>
                         <td>{{ template.is_public|yesnoimg }}</td>
+                        <td><a href="{% url 'sandbox_index' %}?template={{ template.pk }}" title="View this template in the sandbox"><i class="icon-eye-open"></i><span class="hide">Sandbox</span></a></td>
                     </tr>
                 {% endfor %}
             </tbody>
