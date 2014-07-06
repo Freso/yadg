@@ -183,19 +183,17 @@ class TemplateForm(TemplateAdminForm):
     class Meta(TemplateAdminForm.Meta):
         fields = ('name', 'template', 'is_utility', 'is_public', 'dependencies')
 
-    def clean(self):
-        cleaned_data = super(TemplateForm, self).clean()
+    def clean_name(self):
+        name = self.cleaned_data['name']
 
         if self.instance:
-            q = Q(name__exact=cleaned_data['name']) & Q(owner_id__exact=self.instance.owner_id)
+            q = Q(name__exact=name) & Q(owner_id__exact=self.instance.owner_id)
             if self.instance.pk:
                 q &= ~Q(pk=self.instance.pk)
             if Template.objects.filter(q):
-                msg = 'A template with this name already exists.'
-                self._errors['name'] = self.error_class([msg])
-                del cleaned_data['name']
+                raise ValidationError('A template with this name already exists.')
 
-        return cleaned_data
+        return name
 
 
 class TemplateDeleteForm(forms.Form):
