@@ -84,6 +84,10 @@ class DependencyClosure(models.Model):
 
 
 def dependency_changed(sender, **kwargs):
+    """
+    This method for updating the dependency closures assumes that only the forward relation for the many-to-many field
+    is ever modified, i.e. template.dependencies.add(other_template) and never other_template.depending_set.add(template)
+    """
     action = kwargs['action']
     if action == 'post_add':
         instance = kwargs['instance']
@@ -175,7 +179,8 @@ def template_deleted(sender, **kwargs):
 
 def template_saved(sender, **kwargs):
     instance = kwargs['instance']
-    if not (instance.is_default or instance.is_public):
+    created = kwargs['created']
+    if (not created) and (not (instance.is_default or instance.is_public)):
         # the template might have been public before, so remove all dependencies that are not from templates
         # owned by this user
         dependant_templates = instance.depending_set.filter(~Q(owner_id__exact=instance.owner.pk))
