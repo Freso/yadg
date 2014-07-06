@@ -261,8 +261,7 @@ class TemplateFromScratchpadView(FormView):
     template_name = 'template_from_scratchpad.html'
 
     def get(self, request, *args, **kwargs):
-        # TODO redirect to scratchpad overview
-        return redirect(reverse('template_list'))
+        return redirect(reverse('scratchpad_index'))
 
     def form_valid(self, form):
         template_code = form.cleaned_data['template_code']
@@ -288,8 +287,7 @@ class TemplateFromScratchpadView(FormView):
         return self.render_to_response(ctx)
 
     def form_invalid(self, form):
-        # TODO redirect to scratchpad overview
-        return redirect(reverse('template_list'))
+        return redirect(reverse('scratchpad_index'))
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
