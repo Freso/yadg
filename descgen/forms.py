@@ -16,6 +16,16 @@ search_form_widget_kwargs = {
     }
 }
 
+template_code_widget_kwargs = {
+    'keymap': 'yadg',
+    'mode': 'swig',
+    'config': {
+        'lineWrapping': True,
+        'lineNumbers': True,
+        'styleActiveLine': True
+    },
+    'theme': 'neo'
+}
 
 class InputForm(forms.Form):
     input = forms.CharField(label='Search Term:', max_length=255, widget=forms.TextInput(attrs={'placeholder': 'Enter release url or search term','class':'input-xhlarge'}))
@@ -89,7 +99,7 @@ class TemplateAdminForm(forms.ModelForm):
     class Meta:
         model = Template
         widgets = {
-            'template': CodeMirrorTextarea(mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', keymap='yadg'),
+            'template': CodeMirrorTextarea(**template_code_widget_kwargs),
             'dependencies': forms.SelectMultiple(attrs={'class': 'input-automax'})
         }
 
@@ -150,6 +160,7 @@ class TemplateAdminForm(forms.ModelForm):
                 msg = 'A template may only depend on own templates or public templates of users you are subscribed to.'
                 dependency_errors.append(msg)
 
+        # TODO: if it becomes a problem restrict the maximum height of a dependency graph (descendants + ancestors)
         # make sure the total number of ancestors in the new dependency graph is not too great
         max_elements = 50
         all_elements = reduce(operator.or_, map(lambda x: x.cached_dependencies_set(), dependencies), set(dependencies))
@@ -197,4 +208,4 @@ class TemplateDeleteForm(forms.Form):
 
 
 class SandboxForm(forms.Form):
-    template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(keymap='yadg', mode='swig', config={'lineWrapping': True, 'lineNumbers': True, 'styleActiveLine': True}, theme='neo', js_var_format='%s_editor'), initial='Please enter you description template')
+    template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(js_var_format='%s_editor', **template_code_widget_kwargs), initial='Please enter you description template')
