@@ -108,17 +108,17 @@ class TemplateAdminForm(forms.ModelForm):
         if 'prefetch_owner' in kwargs:
             del kwargs['prefetch_owner']
         super(TemplateAdminForm, self).__init__(*args, **kwargs)
+        t = Template.objects.none()
         if self.instance:
             try:
                 u = self.instance.owner
             except User.DoesNotExist:
-                t = Template.objects.none()
+                pass
             else:
                 t = Template.templates_for_user(u).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
                 if prefetch_owner:
                     t = t.select_related('owner')
-
-            self.fields['dependencies'].queryset = t
+        self.fields['dependencies'].queryset = t
 
     def clean(self):
         cleaned_data = super(TemplateAdminForm, self).clean()
