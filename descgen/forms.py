@@ -121,58 +121,68 @@ class TemplateAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(TemplateAdminForm, self).clean()
-        dependencies = cleaned_data.get('dependencies')
 
         dependency_errors = []
-        # make sure there are no circular dependencies
-        for dep in dependencies:
-            try:
-                Template.circular_checker(dep, self.instance)
-            except ValidationError as e:
-                dependency_errors = e.messages
+        dependencies = cleaned_data.get('dependencies', None)
+        if dependencies is not None:
+            # make sure there are no circular dependencies
+            for dep in dependencies:
+                try:
+                    Template.circular_checker(dep, self.instance)
+                except ValidationError as e:
+                    dependency_errors = e.messages
 
-        # make sure a public template only has public dependencies
-        is_public = cleaned_data.get('is_public')
-        if is_public and any([not x.is_public for x in dependencies]):
-            msg = 'A template may only be public if all of its dependencies are public.'
-            self._errors['is_public'] = self.error_class([msg])
-            del cleaned_data['is_public']
-
-        # make sure a default template only has dependencies that are also default
-        is_default = cleaned_data.get('is_default')
-        if is_default and any([not x.is_default for x in dependencies]):
-            msg = 'A template may only be a default template if all of its dependencies are default templates.'
-            self._errors['is_default'] = self.error_class([msg])
-            del cleaned_data['is_default']
-
-        if self.instance.pk and not is_default and any([x.is_default for x in self.instance.depending_set.all()]):
-            msg = 'One ore more template depending on this template is a default template. Therefore removing the default status of this template is not allowed.'
-            self._errors['is_default'] = self.error_class([msg])
-            del cleaned_data['is_default']
-
-        # make sure dependencies are either public templates of users subscribed to or own templates
-        u = cleaned_data.get('owner')
-        if u:
-            t = Template.templates_for_user(u)
+            # make sure dependencies are either public templates of users subscribed to or own templates
+            owner = cleaned_data.get('owner', None)
+            if owner is None and self.instance:
+                try:
+                    owner = self.instance.owner
+                except User.DoesNotExist:
+                    pass
+            if owner:
+                t = Template.templates_for_user(owner)
+            else:
+                t = Template.objects.none()
 
             if any([(not x in t) for x in dependencies]):
                 msg = 'A template may only depend on own templates or public templates of users you are subscribed to.'
                 dependency_errors.append(msg)
 
-        # TODO: if it becomes a problem restrict the maximum height of a dependency graph (descendants + ancestors)
-        # make sure the total number of ancestors in the new dependency graph is not too great
-        max_elements = 50
-        all_elements = reduce(operator.or_, map(lambda x: x.cached_dependencies_set(), dependencies), set(dependencies))
-        if self.instance and self.instance.pk:
-            all_elements |= self.instance.cached_dependencies_set()
-        num_elements = len(all_elements)
-        if num_elements > max_elements:
-            msg = "The total number of ancestors in the dependency graph is %d. It mustn't be greater than %d." % (num_elements, max_elements)
-            dependency_errors.append(msg)
+            # TODO: if it becomes a problem restrict the maximum height of a dependency graph (descendants + ancestors)
+            # make sure the total number of ancestors in the new dependency graph is not too great
+            max_elements = 50
+            all_elements = reduce(operator.or_, map(lambda x: x.cached_dependencies_set(), dependencies), set(dependencies))
+            num_elements = len(all_elements)
+            if num_elements > max_elements:
+                msg = "The total number of ancestors in the dependency graph is %d. It mustn't be greater than %d." % (num_elements, max_elements)
+                dependency_errors.append(msg)
 
         if dependency_errors:
             self._errors['dependencies'] = self.error_class(dependency_errors)
             del cleaned_data['dependencies']
+
+        # make sure a public template only has public dependencies
+        is_public = cleaned_data.get('is_public', None)
+        if is_public is not None and dependencies is not None:
+            if is_public and any([not x.is_public for x in dependencies]):
+                msg = 'A template may only be public if all of its dependencies are public.'
+                self._errors['is_public'] = self.error_class([msg])
+                del cleaned_data['is_public']
+
+        is_default = cleaned_data.get('is_default', None)
+        if is_default is not None:
+            if dependencies is not None:
+                # make sure a default template only has dependencies that are also default
+                if is_default and any([not x.is_default for x in dependencies]):
+                    msg = 'A template may only be a default template if all of its dependencies are default templates.'
+                    self._errors['is_default'] = self.error_class([msg])
+                    del cleaned_data['is_default']
+
+            # don't allow removal of default status if dependant templates are also default
+            if self.instance.pk and not is_default and any([x.is_default for x in self.instance.depending_set.all()]):
+                msg = 'One or more template depending on this template is a default template. Therefore removing the default status of this template is not allowed.'
+                self._errors['is_default'] = self.error_class([msg])
+                del cleaned_data['is_default']
 
         return cleaned_data
 
