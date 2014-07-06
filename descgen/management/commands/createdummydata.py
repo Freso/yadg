@@ -15,10 +15,6 @@ class Command(BaseCommand):
     help = 'Creates a specified amount of dummy users with templates, subscriptions and dependencies.'
 
     def handle(self, *args, **options):
-        # disable model signals for bulk operations
-        m2m_changed.disconnect(dependency_changed, sender=Template.dependencies.through)
-        post_save.disconnect(template_saved, sender=Template)
-
         user_count = int(args[0])
 
         percent_users_with_templates = .95
@@ -143,21 +139,6 @@ class Command(BaseCommand):
                     raise CommandError('Could not create dependency from %s (%d) to %s (%d), Exception: %s' % (template.name, template.pk, dependency_templ.name, dependency_templ.pk, excp))
                 ascendant_num[template.pk] = max(ascendant_num[template.pk], ascendant_num[dependency_templ.pk]+1)
                 descendant_num[dependency_templ.pk] = max(descendant_num[dependency_templ.pk], descendant_num[template.pk]+1)
-
-            i += 1
-            percent = (i / float(length))*100
-            if percent >= last+5:
-                last = (percent // 5) * 5
-                print '%d%%' % last
-
-        print "Creating dependency closures"
-        it_list = templates.values()
-        length = len(it_list)
-        last = 0
-        i = 0
-        for template in templates.values():
-            for dep in template.dependencies_set():
-                DependencyClosure.objects.create(descendant=template, ancestor=dep)
 
             i += 1
             percent = (i / float(length))*100
