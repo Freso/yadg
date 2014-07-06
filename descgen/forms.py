@@ -111,7 +111,7 @@ class TemplateAdminForm(forms.ModelForm):
         if self.instance:
             try:
                 u = self.instance.owner
-            except ObjectDoesNotExist:
+            except User.DoesNotExist:
                 t = Template.objects.none()
             else:
                 t = Template.templates_for_user(u).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
