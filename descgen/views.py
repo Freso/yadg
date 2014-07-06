@@ -1,4 +1,4 @@
-from descgen.forms import InputForm, SettingsForm, SandboxForm, SubscribeForm, UnsubscribeForm, UserSearchForm, TemplateForm, TemplateDeleteForm
+from descgen.forms import InputForm, SettingsForm, ScratchpadForm, SubscribeForm, UnsubscribeForm, UserSearchForm, TemplateForm, TemplateDeleteForm
 from descgen.mixins import CreateTaskMixin, GetFormatMixin
 from descgen.scraper.factory import SCRAPER_ITEMS
 from .visitor.misc import DescriptionVisitor, JSONSerializeVisitor
@@ -256,12 +256,12 @@ class TemplateEditView(FormView):
         return super(TemplateEditView, self).dispatch(request, *args, **kwargs)
 
 
-class TemplateFromSandboxView(FormView):
-    form_class = SandboxForm
-    template_name = 'template_from_sandbox.html'
+class TemplateFromScratchpadView(FormView):
+    form_class = ScratchpadForm
+    template_name = 'template_from_scratchpad.html'
 
     def get(self, request, *args, **kwargs):
-        # TODO redirect to sandbox overview
+        # TODO redirect to scratchpad overview
         return redirect(reverse('template_list'))
 
     def form_valid(self, form):
@@ -288,15 +288,15 @@ class TemplateFromSandboxView(FormView):
         return self.render_to_response(ctx)
 
     def form_invalid(self, form):
-        # TODO redirect to sandbox overview
+        # TODO redirect to scratchpad overview
         return redirect(reverse('template_list'))
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(TemplateFromSandboxView, self).dispatch(request, *args, **kwargs)
+        return super(TemplateFromScratchpadView, self).dispatch(request, *args, **kwargs)
 
 
-class SandboxIndexView(View):
+class ScratchpadIndexView(View):
 
     def get(self, request):
         results = TaskMeta.objects.filter(status__exact='SUCCESS').order_by('id')
@@ -311,21 +311,20 @@ class SandboxIndexView(View):
             i += 1
 
         if task_id is not None:
-            redirect_url = reverse('sandbox', args=(task_id,))
+            redirect_url = reverse('scratchpad', args=(task_id,))
             if self.request.GET:
                 redirect_url += '?' + self.request.GET.urlencode()
             return redirect(redirect_url)
         else:
-            return render(request, 'sandbox_index_no_release.html')
+            return render(request, 'scratchpad_index_no_release.html')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(SandboxIndexView, self).dispatch(request, *args, **kwargs)
+        return super(ScratchpadIndexView, self).dispatch(request, *args, **kwargs)
 
 
-# TODO: rename "sandbox" to "scratchpad"
-class SandboxView(TemplateView):
-    template_name = 'sandbox.html'
+class ScratchpadView(TemplateView):
+    template_name = 'scratchpad.html'
 
     def get_context_data(self, id):
         try:
@@ -351,7 +350,7 @@ class SandboxView(TemplateView):
         from .forms import FormatForm
         form = FormatForm(self.request.user, self.request.GET, with_utility=True)
 
-        sandbox = SandboxForm()
+        scratchpad = ScratchpadForm()
         t = None
         if form.is_valid():
             try:
@@ -372,9 +371,9 @@ class SandboxView(TemplateView):
                 data['dependencies'][dep.get_unique_name()] = dep
             data['immediate_dependencies'] = t.dependencies.all().select_related('owner')
 
-            sandbox = SandboxForm(data={'template_code': t.template})
+            scratchpad = ScratchpadForm(data={'template_code': t.template})
 
-        data['sandboxform'] = sandbox
+        data['scratchpadform'] = scratchpad
 
         data['format_form'] = form
 
@@ -382,7 +381,7 @@ class SandboxView(TemplateView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(SandboxView, self).dispatch(request, *args, **kwargs)
+        return super(ScratchpadView, self).dispatch(request, *args, **kwargs)
     
 
 class SettingsView(FormView,GetFormatMixin,CreateTaskMixin):

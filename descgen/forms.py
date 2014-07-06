@@ -204,5 +204,5 @@ class TemplateDeleteForm(forms.Form):
         self.fields['to_delete'] = forms.TypedMultipleChoiceField(coerce=int, choices=map(lambda x: (x.pk, x.name), self.user.template_set.all()))
 
 
-class SandboxForm(forms.Form):
+class ScratchpadForm(forms.Form):
     template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(js_var_format='%s_editor', **template_code_widget_kwargs), initial='Please enter you description template')

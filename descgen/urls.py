@@ -4,7 +4,7 @@ from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse
 from django.utils.functional import lazy
 
-from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,SandboxView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromSandboxView, SandboxIndexView
+from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,ScratchpadView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromScratchpadView, ScratchpadIndexView
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -20,10 +20,10 @@ urlpatterns = patterns('',
     url(r'^templates$', TemplateListView.as_view(), name='template_list'),
     url(r'^templates/add$', TemplateAddView.as_view(), name='template_add'),
     url(r'^templates/delete$', TemplateDeleteView.as_view(), name='template_delete'),
-    url(r'^templates/sandbox(?:/(?P<id>[\d]+))?$', TemplateFromSandboxView.as_view(), name='template_from_sandbox'),
+    url(r'^templates/scratchpad(?:/(?P<id>[\d]+))?$', TemplateFromScratchpadView.as_view(), name='template_from_scratchpad'),
     url(r'^templates/(?P<id>[\d]+)$', TemplateEditView.as_view(), name='template_edit'),
-    url(r'^sandbox$', SandboxIndexView.as_view(), name='sandbox_index'),
-    url(r'^sandbox/(?P<id>[\w\d-]+)$', SandboxView.as_view(), name='sandbox'),
+    url(r'^scratchpad$', ScratchpadIndexView.as_view(), name='scratchpad_index'),
+    url(r'^scratchpad/(?P<id>[\w\d-]+)$', ScratchpadView.as_view(), name='scratchpad'),
     url(r'^result/(?P<id>[\w\d-]+)$', ResultView.as_view(), name='get_result'),
     url(r'^settings$', SettingsView.as_view(), name='settings'),
     url(r'^available-scrapers$', ScrapersView.as_view(), name='scrapers_overview'),

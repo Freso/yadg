@@ -1,7 +1,7 @@
 {% extends "base_with_form.html" %}{% load url from future %}
 
 {% block additionalHeaders %}{{ block.super }}
-    {% include 'sandbox_rendering_headers.html' %}
+    {% include 'scratchpad_rendering_headers.html' %}
 
     <script type="text/javascript">
     $(document).ready(function() {
@@ -12,7 +12,7 @@
                 $("textarea#description_area").text((message) ? "Error: " + message : "Error: Could not parse your template.");
             };
 
-        {% include 'sandbox_rendering.js' %}
+        {% include 'scratchpad_rendering.js' %}
      });
     </script>
 {% endblock %}
@@ -20,6 +20,6 @@
 {% block title%}{{ release_title }} – {% endblock %}
 
 {% block subcontent %}<div class="well"><textarea id="description_area">Please enable JavaScript for this site to be able to see the result.</textarea>
-{% if request.user.is_authenticated %}<a href="{% url 'sandbox' result_id %}?template={{ template.pk }}" class="btn">Go to sandbox</a>{% endif %}&nbsp;{% include "format_form.html" %}</div>
+{% if request.user.is_authenticated %}<a href="{% url 'scratchpad' result_id %}?template={{ template.pk }}" class="btn">Go to scratchpad</a>{% endif %}&nbsp;{% include "format_form.html" %}</div>
 
 {% include "perma_link.html" %}{% endblock %}

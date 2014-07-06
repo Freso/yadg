@@ -3,7 +3,7 @@
 {% block home_li_tags %}{% endblock %}
 
 {% block additionalHeaders %}
-    {{ sandboxform.media }}
+    {{ scratchpadform.media }}
 
     {% include 'sandbox_rendering_headers.html' %}
 
@@ -26,18 +26,18 @@
 
             $('#action_new_template').click(function(e) {
                 e.preventDefault();
-                var form = $('#sandbox_form');
+                var form = $('#scratchpad_form');
 
-                form.attr('action', '{% url 'template_from_sandbox' %}');
+                form.attr('action', '{% url 'template_from_scratchpad' %}');
                 form.submit();
             });
 
             {% if template.owner_id == request.user.pk %}
             $('#action_edit_template').click(function(e) {
                 e.preventDefault();
-                var form = $('#sandbox_form');
+                var form = $('#scratchpad_form');
 
-                form.attr('action', '{% url 'template_from_sandbox' template.pk %}');
+                form.attr('action', '{% url 'template_from_scratchpad' template.pk %}');
                 form.submit();
             });
             {% endif %}
@@ -56,15 +56,15 @@
     </style>
 {% endblock %}
 
-{% block title%}Sandbox – {% endblock %}
+{% block title%}Scratchpad – {% endblock %}
 
 {% block content %}<div class="page-header">
-    <h1>Sandbox <small>for release: <a href="{% url 'get_result' id %}">{{ release_title }}</a></small></h1>
+    <h1>Scratchpad <small>for release: <a href="{% url 'get_result' id %}">{{ release_title }}</a></small></h1>
 </div>
-<form class="well" method="post" id="sandbox_form">
+<form class="well" method="post" id="scratchpad_form">
     {% csrf_token %}
-    <h2>{{ sandboxform.template_code.label }}</h2>
-    {{ sandboxform.template_code }}
+    <h2>{{ scratchpadform.template_code.label }}</h2>
+    {{ scratchpadform.template_code }}
 </form>
 <div class="row">
     <div class="span8">
@@ -86,7 +86,7 @@
         </div>
         {% if immediate_dependencies %}
             <div class="well">
-                {% include 'dependency_codes_sandbox.html' %}
+                {% include 'dependency_codes_scratchpad.html' %}
             </div>
         {% endif %}
     </div>
