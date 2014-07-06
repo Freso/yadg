@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, post_delete, post_save
 from django.db.models.query import Q
+from django.db.models import Max
 
 
 class Template(models.Model):
@@ -45,6 +46,14 @@ class Template(models.Model):
         for f in q:
             res.add(f)
         return res
+
+    def max_dependency_height(self, include_descendants):
+        aggregate = DependencyClosure.objects.filter(descendant__exact=self).aggregate(max_height=Max('path_length'))
+        height = aggregate['max_height']
+        if include_descendants:
+            aggregate = DependencyClosure.objects.filter(ancestor__exact=self).aggregate(max_height=Max('path_length'))
+            height += aggregate['max_height']
+        return height
 
     @staticmethod
     def circular_checker(parent, child):
