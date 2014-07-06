@@ -163,25 +163,6 @@ class ResultView(View):
             return render(request, 'result_waiting.html')
 
 
-class DownloadResultView(View, GetFormatMixin):
-    
-    def get(self, request, id, format, title):
-        try:
-            task = TaskMeta.objects.get(task_id=id)
-        except TaskMeta.DoesNotExist:
-            raise Http404
-        format_cleaned = self.get_valid_format(format)
-        if task.status != 'SUCCESS' or format_cleaned != format:
-            raise Http404
-        visitor = DescriptionVisitor(description_format=format_cleaned)
-        try:
-            result = visitor.visit(task.result[0])
-        except visitor.WrongResultType:
-            raise Http404
-        response = HttpResponse(result,mimetype='text/plain; charset=utf-8')
-        return response
-
-
 class TemplateListView(ListView):
     template_name = 'template_list.html'
     paginate_by = 20

@@ -4,7 +4,7 @@ from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse
 from django.utils.functional import lazy
 
-from descgen.views import IndexView,ResultView,DownloadResultView,SettingsView,ScrapersView,SandboxView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromSandboxView, SandboxIndexView
+from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,SandboxView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromSandboxView, SandboxIndexView
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -25,7 +25,6 @@ urlpatterns = patterns('',
     url(r'^sandbox$', SandboxIndexView.as_view(), name='sandbox_index'),
     url(r'^sandbox/(?P<id>[\w\d-]+)$', SandboxView.as_view(), name='sandbox'),
     url(r'^result/(?P<id>[\w\d-]+)$', ResultView.as_view(), name='get_result'),
-    url(r'^result/(?P<id>[\w\d-]+)/(?P<format>[\w\d-]+)/(?P<title>.+?)\.txt$', DownloadResultView.as_view(), name='download_result'),
     url(r'^settings$', SettingsView.as_view(), name='settings'),
     url(r'^available-scrapers$', ScrapersView.as_view(), name='scrapers_overview'),
     url(r'^api/$', RedirectView.as_view(url=reverse_lazy('api_v1_root'), permanent=False), name='api_root'),
