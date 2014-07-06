@@ -110,7 +110,7 @@ def dependency_changed(sender, **kwargs):
                 #                           \               /
                 #                            path_length + 1
                 #
-                # Note: every template automatically has the path:         pk -
+                # Note: every template automatically has the path:         pk --
                 #                                                           ^   \  length = 0
                 #                                                            \__/
                 #       so the path    instance --> pk   with length 1
