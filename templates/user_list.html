@@ -16,18 +16,20 @@
     <h1>Users</h1>
 </div>
 {% include 'user_search_form.html' %}
-<div style="clear: right"></div>
+<div class="clear"></div>
 {% if is_paginated %}{% paginator 2 %}{% endif %}
 <ul class="unstyled">
 {% with get_query_string=request.GET.urlencode|urlencode %}
 {% for user in users %}
+    {% with is_subscribed_to=request.user|subscribedto:user %}
     <li class="well">
         {% if request.user.pk != user.pk %}
-            {% if not request.user|subscribedto:user %}
+            {% if not is_subscribed_to %}
                 {% with subscribe_form=user|subscribe_form %}
                     {% include 'subscribe_form.html' %}
                 {% endwith %}
             {% else %}
+                <!-- TODO: move unsubscribe button/link into own template file -->
                 <a href="{% url 'unsubscribe' %}?user_id={{ user.pk }}&amp;next={{ request.path }}{% if get_query_string %}%3F{{ get_query_string }}{% endif %}" id="unsubscribe_{{ user.pk }}" class="btn btn-danger pull-right">Unsubscribe</a>
             {% endif %}
         {% endif %}
@@ -38,14 +40,15 @@
                     <thead>
                         <tr>
                             <th>{%  if request.user.pk == user.pk %}My{% else %}Public{% endif %} template</th>
-                            <th>Is utility</th>
-                            {%  if request.user.pk == user.pk %}<th>Is public</th>{% endif %}
+                            <th>Utility</th>
+                            {%  if request.user.pk == user.pk %}<th>Public</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
+                    <!-- TODO: only display part of the list if it is too big (full list then on user details page) -->
                     {% for template in templates %}
                         <tr>
-                            <td>{{ template.name }}</td>
+                            <td>{% if is_subscribed_to or request.user.pk == user.pk %}<a href="{% url 'scratchpad_index' %}?template={{ template.pk }}">{{ template.name }}</a>{% else %}{{ template.name }}{% endif %}</td>
                             <td>{{ template.is_utility|yesnoimg }}</td>
                             {%  if request.user.pk == user.pk %}
                                 <td>{{ template.is_public|yesnoimg }}</td>
@@ -59,6 +62,7 @@
             {% endif %}
         {% endwith %}
     </li>
+    {% endwith %}
 {% empty %}
     <li class="alert alert-info">No users to display.</li>
 {% endfor %}
