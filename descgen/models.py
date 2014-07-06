@@ -16,7 +16,7 @@ class Template(models.Model):
     is_default = models.BooleanField(default=False,
                                      help_text='Make this template a default. Default templates can be used by all registered users and users that are not logged in.')
     is_utility = models.BooleanField(default=False,
-                                     help_text="Mark this template as a utility. Utility templates are only used as the basis for other templates and won't be shown to users directly.")
+                                     help_text="Mark this template as a utility. Utility templates are only used as the basis for other templates and won't appear in the list of available templates for rendering a release directly.")
     dependencies = models.ManyToManyField('self', symmetrical=False, related_name='depending_set', blank=True,
                                           help_text='Choose which templates this template depends on. Chosen templates can be included or extended in your template code.')
 
