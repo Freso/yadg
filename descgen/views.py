@@ -188,8 +188,8 @@ class TemplateDeleteView(View, TemplateResponseMixin):
             t = Template.objects.filter(id__in=form.cleaned_data['to_delete'])
             d_values = Template.dependencies.through.objects.filter(Q(to_template__in=t) & ~Q(from_template__in=t) & Q(from_template__owner_id__exact=self.request.user.pk)).values('from_template_id').distinct()
             d = Template.objects.filter(id__in=d_values)
-            other_users_dep = Template.dependencies.through.objects.filter(Q(to_template__in=t) & ~Q(from_template__in=t) & ~Q(from_template__owner_id__exact=self.request.user.pk)).exists()
-            return self.render_to_response({'to_delete': t, 'dependencies': d, 'other_users_depend': other_users_dep})
+            other_users_template_count = Template.dependencies.through.objects.filter(Q(to_template__in=t) & ~Q(from_template__owner_id__exact=self.request.user.pk)).values('from_template_id').distinct().count()
+            return self.render_to_response({'to_delete': t, 'dependencies': d, 'other_users_template_count': other_users_template_count})
         else:
             return redirect(reverse('template_list'))
 

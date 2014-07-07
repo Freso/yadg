@@ -24,8 +24,8 @@
         {% if dependencies or other_users_depend %}
             <div class="alert alert-danger">
                 <ul>
-                    {% if other_users_depend %}
-                        <li>There is at least one template of another user that depends on some of the templates that are to be deleted.</li>
+                    {% if other_users_template_count %}
+                        <li>There {% if other_users_template_count == 1 %}is <strong>one</strong> template of another user{% else %}are <strong>{{ other_users_template_count }}</strong> templates of other users{% endif %} that depend{{ other_users_template_count|pluralize:"s," }} on some of the templates that are to be deleted.</li>
                     {% endif %}
                     {% if dependencies %}
                         <li>The following of your own templates depend on some of the templates that are to be deleted.
