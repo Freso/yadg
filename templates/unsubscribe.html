@@ -25,7 +25,7 @@
  <form action="{% url 'unsubscribe' %}" method="post" id="unsubscribe_form">
     {% csrf_token %}
     {{ form }}
-    <button type="submit" class="btn btn-danger" id="subscribe_submit_{{ user.pk }}">Yes, I'm sure</button>
+    <button type="submit" class="btn btn-danger">Yes, I'm sure</button>
 </form>
 {% endif %}
 {% endblock %}
