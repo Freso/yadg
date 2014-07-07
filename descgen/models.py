@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db.models.signals import m2m_changed, post_delete, post_save
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.db.models.query import Q
 from django.db.models import Max
 
@@ -129,10 +129,10 @@ def dependency_changed(sender, **kwargs):
                     path_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=instance.pk, ancestor_id__exact=current_pk_ancestor.ancestor_id, path_length=current_pk_ancestor.path_length+1)
                 except DependencyClosure.DoesNotExist:
                     # if we don't create one
-                    path_to_ancestor = DependencyClosure.objects.create(descendant_id=instance.pk, ancestor_id=current_pk_ancestor.ancestor_id, path_length=current_pk_ancestor.path_length+1, count=1)
+                    path_to_ancestor = DependencyClosure.objects.create(descendant_id=instance.pk, ancestor_id=current_pk_ancestor.ancestor_id, path_length=current_pk_ancestor.path_length+1, count=current_pk_ancestor.count)
                 else:
-                    # otherwise increase the count to include the new path
-                    path_to_ancestor.count += 1
+                    # otherwise increase the count to include the new paths
+                    path_to_ancestor.count += current_pk_ancestor.count
                     path_to_ancestor.save()
 
                 # now we have to add the new path to all descendants of the modified instance
@@ -149,10 +149,10 @@ def dependency_changed(sender, **kwargs):
                         path_from_descendant_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=modified_instance_descendant.descendant_id, ancestor_id__exact=path_to_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+path_to_ancestor.path_length)
                     except DependencyClosure.DoesNotExist:
                         # if not we create one
-                        DependencyClosure.objects.create(descendant_id=modified_instance_descendant.descendant_id, ancestor_id=path_to_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+path_to_ancestor.path_length, count=1)
+                        DependencyClosure.objects.create(descendant_id=modified_instance_descendant.descendant_id, ancestor_id=path_to_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+path_to_ancestor.path_length, count=current_pk_ancestor.count*modified_instance_descendant.count)
                     else:
-                        # otherwise increase the count to include the new path
-                        path_from_descendant_to_ancestor.count += 1
+                        # otherwise increase the count to include the new paths
+                        path_from_descendant_to_ancestor.count += current_pk_ancestor.count*modified_instance_descendant.count
                         path_from_descendant_to_ancestor.save()
     elif action == 'post_remove':
         instance = kwargs['instance']
@@ -171,12 +171,12 @@ def dependency_changed(sender, **kwargs):
                     # consistency error in the database, we can't do anything so continue with next pk
                     continue
 
-                if path_to_ancestor.count <= 1:
+                if path_to_ancestor.count <= current_pk_ancestor.count:
                     # if the removed path was the only path, remove the closure from the database
                     path_to_ancestor.delete()
                 else:
                     # otherwise decrease the count to reflect the removal of the path
-                    path_to_ancestor.count -= 1
+                    path_to_ancestor.count -= current_pk_ancestor.count
                     path_to_ancestor.save()
 
                 # new delete the removed path from all descendants of the modified instance
@@ -188,12 +188,12 @@ def dependency_changed(sender, **kwargs):
                         # consistency error in the database, we can't do anything so continue
                         continue
 
-                    if path_from_descendant_to_ancestor.count <= 1:
+                    if path_from_descendant_to_ancestor.count <= current_pk_ancestor.count*modified_instance_descendant.count:
                         # if the removed path was the only path, remove the closure from the database
                         path_from_descendant_to_ancestor.delete()
                     else:
                         # otherwise decrease the count to reflect the removal of the path
-                        path_from_descendant_to_ancestor.count -= 1
+                        path_from_descendant_to_ancestor.count -= current_pk_ancestor.count*modified_instance_descendant.count
                         path_from_descendant_to_ancestor.save()
     elif action == 'post_clear':
         instance = kwargs['instance']
@@ -211,22 +211,42 @@ def dependency_changed(sender, **kwargs):
                     # consistency error in the database, we can't do anything so continue
                     continue
 
-                if path_from_descendant_to_ancestor.count <= 1:
+                if path_from_descendant_to_ancestor.count <= modified_instance_ancestor.count*modified_instance_descendant.count:
                     # if the removed path was the only path, remove the closure from the database
                     path_from_descendant_to_ancestor.delete()
                 else:
                     # otherwise decrease the count to reflect the removal of the path
-                    path_from_descendant_to_ancestor.count -= 1
+                    path_from_descendant_to_ancestor.count -= modified_instance_ancestor.count*modified_instance_descendant.count
                     path_from_descendant_to_ancestor.save()
         # now delete all ancestors
         modified_instance_ancestors.delete()
 
 
-def template_deleted(sender, **kwargs):
+def template_pre_delete(sender, **kwargs):
     instance = kwargs['instance']
-    closure = DependencyClosure.objects.filter(descendant_id__exact=instance.pk, ancestor_id__exact=instance.pk)
-    if closure.count() > 1:
-        closure.delete()
+    # get all real ancestors and descendants (including the modified instance) of the modified instance
+    modified_instance_ancestors = DependencyClosure.objects.filter(descendant_id__exact=instance.pk)
+    modified_instance_descendants = DependencyClosure.objects.filter(ancestor_id__exact=instance.pk, path_length__gt=0)
+    for modified_instance_ancestor in modified_instance_ancestors:
+        # all paths to ancestors of the modified instance will be removed, so remove those paths also from the
+        # descendants of the modified instance
+        for modified_instance_descendant in modified_instance_descendants:
+            try:
+                # again this should exist
+                path_from_descendant_to_ancestor = DependencyClosure.objects.get(descendant_id__exact=modified_instance_descendant.descendant_id, ancestor_id__exact=modified_instance_ancestor.ancestor_id, path_length=modified_instance_descendant.path_length+modified_instance_ancestor.path_length)
+            except DependencyClosure.DoesNotExist:
+                # consistency error in the database, we can't do anything so continue
+                continue
+
+            if path_from_descendant_to_ancestor.count <= modified_instance_ancestor.count*modified_instance_descendant.count:
+                # if the removed path was the only path, remove the closure from the database
+                path_from_descendant_to_ancestor.delete()
+            else:
+                # otherwise decrease the count to reflect the removal of the path
+                path_from_descendant_to_ancestor.count -= modified_instance_ancestor.count*modified_instance_descendant.count
+                path_from_descendant_to_ancestor.save()
+    # now delete all ancestors
+    modified_instance_ancestors.delete()
 
 
 def template_saved(sender, **kwargs):
@@ -244,8 +264,8 @@ def template_saved(sender, **kwargs):
 
 
 m2m_changed.connect(dependency_changed, sender=Template.dependencies.through)
-post_delete.connect(template_deleted, sender=Template)
 post_save.connect(template_saved, sender=Template)
+pre_delete.connect(template_pre_delete, sender=Template)
 
 
 class Subscription(models.Model):
