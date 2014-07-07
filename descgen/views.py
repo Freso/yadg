@@ -248,8 +248,8 @@ class TemplateEditView(FormView):
 
     def form_valid(self, form):
         form.save()
-        #return redirect(reverse('template_edit', args=[form.instance.pk]))
-        return render(self.request, self.template_name, self.get_context_data(form=form, successful=True))
+        return redirect(reverse('template_list'))
+        #return render(self.request, self.template_name, self.get_context_data(form=form, successful=True))
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
