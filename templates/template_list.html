@@ -9,8 +9,12 @@
 {% block additionalHeaders %}
     <style>
         tr td:first-child, tr td:last-child {
-            width: .1em !important;
-            text-align: center !important;
+            width: .1em;
+            text-align: center;
+        }
+
+         tr td:last-child {
+            white-space: nowrap;
         }
     </style>
 {% endblock %}
@@ -42,7 +46,10 @@
                         <td><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></td>
                         <td>{{ template.is_utility|yesnoimg }}</td>
                         <td>{{ template.is_public|yesnoimg }}</td>
-                        <td><a href="{% url 'scratchpad_index' %}?template={{ template.pk }}" title="View this template in the scratchpad"><i class="icon-eye-open"></i><span class="hide">Scratchpad</span></a></td>
+                        <td>
+                            <a href="{% url 'template_delete' %}?to_delete={{ template.pk }}" title="Delete this template"><i class="icon-remove-sign"></i><span class="hide">Delete</span></a>
+                            <a href="{% url 'scratchpad_index' %}?template={{ template.pk }}" title="View this template in the scratchpad"><i class="icon-eye-open"></i><span class="hide">Scratchpad</span></a>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
