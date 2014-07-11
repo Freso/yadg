@@ -82,7 +82,10 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         if not artist_anchors:
             #apparently the artist is not always part of the breadcrumbs
             artist_anchors = self.parsed_response.cssselect('div#product_heading_artist a')
-            artist_anchors = filter(lambda x: x.attrib['href'].startswith('/artists/'), artist_anchors)
+            if artist_anchors:
+                artist_anchors = filter(lambda x: x.attrib['href'].startswith('/artists/'), artist_anchors)
+            else:
+                artist_anchors = self.parsed_response.cssselect('div#product_heading_artist')
             in_breadcrumbs = False
         is_feature = False
         has_various = False

@@ -42,7 +42,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin, Logger
         #we have to check if the track artist of each track equals the release artist
         artist_h2 = self.parsed_response.cssselect('div#title h2')
         track_artist_tds = self.parsed_response.cssselect('table.tracklist-table tbody tr.song.music td.artist')
-        self._release_artist_equal_track_artists = True
+        self._release_artist_equal_track_artists = False
         if len(artist_h2) == 1:
             release_artist = artist_h2[0].text_content()
             release_artist = self.remove_whitespace(release_artist)
