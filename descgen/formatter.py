@@ -16,7 +16,7 @@ _FORMATS = {
 FORMAT_CHOICES = map(lambda x: (x,_FORMATS[x][1]),_FORMATS)
 FORMAT_CHOICES.sort(lambda x,y: cmp(x[0],y[0]))
 
-FORMAT_DEFAULT = 'whatcd'
+FORMAT_DEFAULT = 'whatcd-tracks-only'
 
 FORMATS = _FORMATS.keys()
 
