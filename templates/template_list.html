@@ -42,12 +42,12 @@
             <tbody>
                 {% for template in templates|dictsort:"name.lower" %}
                     <tr>
-                        <td><input type="checkbox" name="to_delete" value="{{ template.pk }}"/></td>
+                        <td>{% if not template.is_default %}<input type="checkbox" name="to_delete" value="{{ template.pk }}"/>{% endif %}</td>
                         <td><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></td>
                         <td>{{ template.is_utility|yesnoimg }}</td>
                         <td>{{ template.is_public|yesnoimg }}</td>
                         <td>
-                            <a href="{% url 'template_delete' %}?to_delete={{ template.pk }}" title="Delete this template"><i class="icon-remove-sign"></i><span class="hide">Delete</span></a>
+                            {% if not template.is_default %}<a href="{% url 'template_delete' %}?to_delete={{ template.pk }}" title="Delete this template"><i class="icon-remove-sign"></i><span class="hide">Delete</span></a>{% endif %}
                             <a href="{% url 'scratchpad_index' %}?template={{ template.pk }}" title="View this template in the scratchpad"><i class="icon-eye-open"></i><span class="hide">Scratchpad</span></a>
                         </td>
                     </tr>

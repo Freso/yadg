@@ -213,6 +213,14 @@ class TemplateDeleteForm(forms.Form):
         super(TemplateDeleteForm, self).__init__(*args, **kwargs)
         self.fields['to_delete'] = forms.TypedMultipleChoiceField(coerce=int, choices=map(lambda x: (x.pk, x.name), self.user.template_set.all()))
 
+    def clean_to_delete(self):
+        to_delete = self.cleaned_data['to_delete']
+
+        if Template.objects.filter(id__in=to_delete, is_default__exact=True).exists():
+            raise ValidationError('Deleting a default template is not permitted.')
+
+        return to_delete
+
 
 class ScratchpadForm(forms.Form):
     template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(js_var_format='%s_editor', **template_code_widget_kwargs), initial='Please enter you description template')
