@@ -1,4 +1,5 @@
 # Django settings for whatdesc project.
+import secret
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -122,6 +123,8 @@ INSTALLED_APPS = (
     'descgen',
     'djangorestframework',
     'codemirror',
+    'contact',
+    'captcha',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -212,3 +215,11 @@ SESSION_COOKIE_HTTPONLY = False # make sure cookie is sent with ajax calls
 CSRF_FAILURE_VIEW = "descgen.views.csrf_failure"
 
 CODEMIRROR_PATH = STATIC_URL + r"js/codemirror"
+
+#recaptcha settings
+RECAPTCHA_PUBLIC_KEY = secret.RECAPTCHA_PUBLIC_KEY
+RECAPTCHA_PRIVATE_KEY = secret.RECAPTCHA_PRIVATE_KEY
+RECAPTCHA_USE_SSL = True
+
+#contact form settings
+CONTACT_RECIPIENTS = map(lambda x: x[1], ADMINS)

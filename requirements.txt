@@ -9,3 +9,4 @@ requests==0.13.6
 wsgiref==0.1.2
 PyYAML==3.10
 django-codemirror-widget==0.4.0
+django-recaptcha==1.0
