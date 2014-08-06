@@ -51,30 +51,39 @@ class ResultForm(forms.Form):
     include_raw_data = forms.BooleanField(required=False, label='Include raw data:', initial=False)
 
 
-class SettingsForm(forms.ModelForm):
-
-    empty_label = '--- Site default'
+class SettingsAdminForm(forms.ModelForm):
 
     class Meta:
         model = Settings
-        exclude = ('user', )
 
     def __init__(self, *args, **kwargs):
         prefetch_owner = kwargs.get('prefetch_owner', True)
         if 'prefetch_owner' in kwargs:
             del kwargs['prefetch_owner']
-        super(SettingsForm, self).__init__(*args, **kwargs)
-        t = Template.objects.none()
-        if self.instance:
-            try:
-                u = self.instance.user
-            except User.DoesNotExist:
-                pass
-            else:
-                t = Template.templates_for_user(u).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
-                if prefetch_owner:
-                    t = t.select_related('owner')
+        super(SettingsAdminForm, self).__init__(*args, **kwargs)
+        t = Template.templates_for_user(self.instance.user if self.instance else None).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+        if prefetch_owner:
+            t = t.select_related('owner')
         self.fields['default_template'].queryset = t
+
+    def clean_user(self):
+        user = self.cleaned_data['user']
+
+        if user is None and Settings.objects.filter(user__isnull=True).exists():
+            raise ValidationError('Only one settings object with a blank user is allowed at any time.')
+
+        return user
+
+
+class SettingsForm(SettingsAdminForm):
+
+    empty_label = '--- Site default'
+
+    class Meta(SettingsAdminForm.Meta):
+        exclude = ('user', )
+
+    def __init__(self, *args, **kwargs):
+        super(SettingsForm, self).__init__(*args, **kwargs)
         self.fields['default_template'].empty_label = self.empty_label
         self.fields['default_scraper'].choices = [("", self.empty_label)] + list(self.fields["default_scraper"].choices)[1:] # todo: replace this ugly hack when switching to Django 1.7
 

@@ -70,7 +70,7 @@ class Template(models.Model):
 
     @staticmethod
     def templates_for_user(user, with_utility=True):
-        if user.is_authenticated():
+        if user is not None and user.is_authenticated():
             subscribed_to = user.subscribed_to.values('user_id').distinct()
             t = Template.objects.filter(Q(owner__in=subscribed_to, is_public__exact=True) | Q(owner__exact=user.pk) | Q(is_default__exact=True))
         else:
@@ -295,6 +295,20 @@ post_delete.connect(subscription_deleted, sender=Subscription)
 
 class Settings(models.Model):
 
-    user = models.OneToOneField(User, null=True, blank=True)
-    default_template = models.ForeignKey(Template, blank=True, null=True, on_delete=models.SET_NULL)
-    default_scraper = models.CharField(max_length=40, choices=SCRAPER_CHOICES, blank=True, null=True)
+    class Meta:
+        verbose_name_plural = "settings"
+
+    user = models.OneToOneField(User, null=True, blank=True,
+                                help_text='The user these settings belong to. If left blank these settings will apply to every unauthenticated user')
+    default_template = models.ForeignKey(Template, blank=True, null=True, on_delete=models.SET_NULL,
+                                         help_text='This template will be the default template when viewing a result.')
+    default_scraper = models.CharField(max_length=40, choices=SCRAPER_CHOICES, blank=True, null=True,
+                                       help_text='This scraper will be selected by default in the scraper dropdown menu.')
+
+    def __unicode__(self):
+        if self.user:
+            username = u"%s's" % self.user.username
+        else:
+            username = u'default'
+
+        return username + u" settings"
