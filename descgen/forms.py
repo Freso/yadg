@@ -33,11 +33,9 @@ class InputForm(forms.Form):
 
 class FormatForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
+        with_utility = kwargs.get('with_utility', False)
         if 'with_utility' in kwargs:
-            with_utility = kwargs['with_utility']
             del kwargs['with_utility']
-        else:
-            with_utility = False
         super(FormatForm, self).__init__(*args, **kwargs)
         self.fields['template'] = forms.ChoiceField(label='Template:',
                                                     choices=map(lambda x: (x.pk, x.name),
