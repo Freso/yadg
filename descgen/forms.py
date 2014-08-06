@@ -26,6 +26,7 @@ template_code_widget_kwargs = {
     'theme': 'neo'
 }
 
+
 class InputForm(forms.Form):
     input = forms.CharField(label='Search Term:', max_length=255, widget=forms.TextInput(attrs={'placeholder': 'Enter release url or search term','class':'input-xhlarge'}))
     scraper = forms.ChoiceField(required=False, label='Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT, widget=forms.Select(attrs={'class':'auto_width'}))
