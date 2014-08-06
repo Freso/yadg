@@ -115,5 +115,14 @@
             "is_public": false,
             "is_utility": false
         }
+    },
+    {
+        "pk": 1,
+        "model": "descgen.settings",
+        "fields": {
+            "user": null,
+            "default_template": 1,
+            "default_scraper": "discogs"
+        }
     }
 ]
