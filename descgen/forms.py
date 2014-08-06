@@ -67,8 +67,13 @@ class SettingsAdminForm(forms.ModelForm):
     def clean_user(self):
         user = self.cleaned_data['user']
 
-        if user is None and Settings.objects.filter(user__isnull=True).exists():
-            raise ValidationError('Only one settings object with a blank user is allowed at any time.')
+        if user is None:
+            try:
+                default_settings = Settings.objects.get(user__isnull=True)
+            except Settings.DoesNotExist:
+                default_settings = None
+            if default_settings is not None and self.instance != default_settings:
+                raise ValidationError('Only one settings object with a blank user is allowed at any given time.')
 
         return user
 
