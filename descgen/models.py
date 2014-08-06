@@ -69,7 +69,7 @@ class Template(models.Model):
             raise ValidationError('One of the dependencies has a dependency on this template.')
 
     @staticmethod
-    def templates_for_user(user, with_utility=True):
+    def templates_for_user(user, with_utility=True, sort_by_name=False):
         if user is not None and user.is_authenticated():
             subscribed_to = user.subscribed_to.values('user_id').distinct()
             t = Template.objects.filter(Q(owner__in=subscribed_to, is_public__exact=True) | Q(owner__exact=user.pk) | Q(is_default__exact=True))
@@ -77,6 +77,8 @@ class Template(models.Model):
             t = Template.objects.filter(is_default__exact=True)
         if not with_utility:
             t = t.filter(is_utility__exact=False)
+        if sort_by_name:
+            t = t.extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
         return t
 
     class Meta:
