@@ -1,16 +1,13 @@
 from django.conf.urls import patterns, url, include
 
 from django.views.generic.base import RedirectView
-from django.core.urlresolvers import reverse
-from django.utils.functional import lazy
+from django.core.urlresolvers import reverse_lazy
 
 from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,ScratchpadView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromScratchpadView, ScratchpadIndexView
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
-
-reverse_lazy = lazy(reverse, str)
 
 urlpatterns = patterns('',
     url(r'^$', IndexView.as_view(), name='index'),
