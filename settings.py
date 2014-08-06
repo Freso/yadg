@@ -1,5 +1,6 @@
 # Django settings for whatdesc project.
 import secret
+from django.core.urlresolvers import reverse_lazy
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -223,3 +224,8 @@ RECAPTCHA_USE_SSL = True
 
 #contact form settings
 CONTACT_RECIPIENTS = map(lambda x: x[1], ADMINS)
+
+#config for auth
+LOGIN_REDIRECT_URL = reverse_lazy('index')
+LOGIN_URL = reverse_lazy('login')
+LOGOUT_URL = reverse_lazy('logout')

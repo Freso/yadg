@@ -8,6 +8,7 @@ from .result import ReleaseResult
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import login as contrib_login, logout as contrib_logout
 from django.utils.decorators import method_decorator
 from django.utils.http import is_safe_url
 from django.core.urlresolvers import reverse
@@ -18,6 +19,7 @@ from django.views.generic.edit import FormView
 from django.views.generic.base import TemplateView, TemplateResponseMixin
 from django.views.generic.list import ListView
 from django.db.models.query import Q
+from django.conf import settings
 
 from djcelery.models import TaskMeta
 
@@ -429,6 +431,18 @@ class ScrapersView(TemplateView):
         data['scrapers'] = scrapers
 
         return data
+
+
+def login(request, **kwargs):
+    if request.user.is_authenticated():
+        return redirect(settings.LOGIN_REDIRECT_URL)
+    else:
+        return contrib_login(request, **kwargs)
+
+
+@login_required
+def logout(request, **kwargs):
+    return contrib_logout(request, **kwargs)
 
 
 def csrf_failure(request, reason=""):
