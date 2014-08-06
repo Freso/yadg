@@ -27,7 +27,7 @@ class Template(models.Model):
         return u'%s [%s]' % (self.name, self.owner.username)
 
     def get_unique_name(self):
-        return '%s_%d' % (self.owner.username, self.pk)
+        return 'template_%d' % self.pk
 
     def depends_on(self):
         return u', '.join(map(unicode, self.dependencies.all()))
