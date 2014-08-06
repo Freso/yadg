@@ -8,7 +8,7 @@
 
 {% block content%}{% if successful %}<div class="alert alert-success">Your settings were saved successfully.</div>{% endif %}
 
-    <form action="{% url 'settings' %}" method="post">
+    <form action="{% url 'settings' %}" method="post" class="form-horizontal">
         {% csrf_token %}
         <fieldset xmlns="http://www.w3.org/1999/xhtml">
             <legend>Settings</legend>
@@ -16,8 +16,7 @@
             {% include 'bootstrap_form_fields.html' %}
             
             <div class="form-actions">
-              <button class="btn btn-primary" type="submit">Save defaults</button>
-              <button class="btn" type="reset">Cancel</button>
+              <button class="btn btn-primary" type="submit">Save settings</button>
             </div>
         </fieldset>
     </form>{% endblock %}
