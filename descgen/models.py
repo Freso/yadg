@@ -5,6 +5,8 @@ from django.db.models.signals import m2m_changed, post_delete, post_save, pre_de
 from django.db.models.query import Q
 from django.db.models import Max
 
+from .scraper.factory import SCRAPER_CHOICES
+
 
 class Template(models.Model):
 
@@ -289,3 +291,10 @@ def subscription_deleted(sender, **kwargs):
 
 
 post_delete.connect(subscription_deleted, sender=Subscription)
+
+
+class Settings(models.Model):
+
+    user = models.OneToOneField(User, null=True, blank=True)
+    default_template = models.ForeignKey(Template, blank=True, null=True, on_delete=models.SET_NULL)
+    default_scraper = models.CharField(max_length=40, choices=SCRAPER_CHOICES, blank=True, null=True)

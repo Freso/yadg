@@ -1,7 +1,7 @@
 from django import forms
 from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
-from .models import Template, Subscription
+from .models import Template, Subscription, Settings
 from django.contrib.auth.models import User
 from django.db.models.query import Q
 from django.core.exceptions import ValidationError
@@ -51,9 +51,32 @@ class ResultForm(forms.Form):
     include_raw_data = forms.BooleanField(required=False, label='Include raw data:', initial=False)
 
 
-class SettingsForm(forms.Form):
-    description_format = forms.ChoiceField(label='Default Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT)
-    scraper = forms.ChoiceField(label='Default Scraper:', choices=SCRAPER_CHOICES, initial=SCRAPER_DEFAULT)
+class SettingsForm(forms.ModelForm):
+
+    empty_label = '--- Site default'
+
+    class Meta:
+        model = Settings
+        exclude = ('user', )
+
+    def __init__(self, *args, **kwargs):
+        prefetch_owner = kwargs.get('prefetch_owner', True)
+        if 'prefetch_owner' in kwargs:
+            del kwargs['prefetch_owner']
+        super(SettingsForm, self).__init__(*args, **kwargs)
+        t = Template.objects.none()
+        if self.instance:
+            try:
+                u = self.instance.user
+            except User.DoesNotExist:
+                pass
+            else:
+                t = Template.templates_for_user(u).extra(select={'lower_name': 'lower(name)'}).order_by('lower_name')
+                if prefetch_owner:
+                    t = t.select_related('owner')
+        self.fields['default_template'].queryset = t
+        self.fields['default_template'].empty_label = self.empty_label
+        self.fields['default_scraper'].choices = [("", self.empty_label)] + list(self.fields["default_scraper"].choices)[1:] # todo: replace this ugly hack when switching to Django 1.7
 
 
 class UserSearchForm(forms.Form):

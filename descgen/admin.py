@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Template, Subscription, DependencyClosure
+from .models import Template, Subscription, DependencyClosure, Settings
 from .forms import TemplateAdminForm
 
 class TemplateAdmin(admin.ModelAdmin):
@@ -9,3 +9,4 @@ class TemplateAdmin(admin.ModelAdmin):
 admin.site.register(Template, TemplateAdmin)
 admin.site.register(Subscription)
 admin.site.register(DependencyClosure)
+admin.site.register(Settings)

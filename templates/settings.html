@@ -6,13 +6,13 @@
 
 {% block settings_li_tags %} class="active"{% endblock %}
 
-{% block content%}{% if successful %}<div class="alert alert-success">Your defaults were saved successfully.</div>{% endif %}
-    
-    <div class="alert alert-info">In order for this to work, you have to allow cookies from YADG to be saved in your browser. Furthermore you cannot block the referer for this site.</div>
-    
+{% block content%}{% if successful %}<div class="alert alert-success">Your settings were saved successfully.</div>{% endif %}
+
     <form action="{% url 'settings' %}" method="post">
         {% csrf_token %}
         <fieldset xmlns="http://www.w3.org/1999/xhtml">
+            <legend>Settings</legend>
+
             {% include 'bootstrap_form_fields.html' %}
             
             <div class="form-actions">

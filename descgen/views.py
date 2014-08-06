@@ -1,9 +1,9 @@
 from descgen.forms import InputForm, SettingsForm, ScratchpadForm, SubscribeForm, UnsubscribeForm, UserSearchForm, TemplateForm, TemplateDeleteForm
-from descgen.mixins import CreateTaskMixin, GetFormatMixin
+from descgen.mixins import CreateTaskMixin
 from descgen.scraper.factory import SCRAPER_ITEMS
 from .visitor.misc import DescriptionVisitor, JSONSerializeVisitor
 from .visitor.template import TemplateVisitor
-from .models import Template, Subscription
+from .models import Template, Subscription, Settings
 from .result import ReleaseResult
 
 from django.contrib.auth.models import User
@@ -383,21 +383,26 @@ class ScratchpadView(TemplateView):
         return super(ScratchpadView, self).dispatch(request, *args, **kwargs)
     
 
-class SettingsView(FormView,GetFormatMixin,CreateTaskMixin):
+class SettingsView(FormView):
     form_class = SettingsForm
     template_name = 'settings.html'
-    
-    def get_initial(self):
-        initial = {
-            'scraper': self.get_valid_scraper(None),
-            'description_format': self.get_valid_format(None)
-        }
-        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super(SettingsView, self).get_form_kwargs()
+        try:
+            settings = self.request.user.settings
+        except Settings.DoesNotExist:
+            settings = Settings(user=self.request.user)
+        kwargs['instance'] = settings
+        return kwargs
     
     def form_valid(self, form):
-        self.request.session['default_format'] = form.cleaned_data['description_format']
-        self.request.session['default_scraper'] = form.cleaned_data['scraper']
-        return (self.request,self.template_name,{'form':form, 'successful':True})
+        form.save()
+        return render(self.request, self.template_name, {'form': form, 'successful': True})
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SettingsView, self).dispatch(request, *args, **kwargs)
 
 
 class ScrapersView(TemplateView):
