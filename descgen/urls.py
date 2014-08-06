@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url, include
 from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse_lazy
 
-from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,ScratchpadView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromScratchpadView, ScratchpadIndexView
+from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,ScratchpadView,UserListView,SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromScratchpadView, ScratchpadIndexView, SubscriptionsView
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -14,6 +14,7 @@ urlpatterns = patterns('',
     url(r'^users$', UserListView.as_view(), name='user_list'),
     url(r'^subscribe$', SubscribeView.as_view(), name='subscribe_to_user'),
     url(r'^unsubscribe$', UnsubscribeView.as_view(), name='unsubscribe'),
+    url(r'^subscriptions$', SubscriptionsView.as_view(), name='subscriptions'),
     url(r'^templates$', TemplateListView.as_view(), name='template_list'),
     url(r'^templates/add$', TemplateAddView.as_view(), name='template_add'),
     url(r'^templates/delete$', TemplateDeleteView.as_view(), name='template_delete'),

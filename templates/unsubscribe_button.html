@@ -1,0 +1,2 @@
+{% load url from future %}
+<a href="{% url 'unsubscribe' %}?user_id={{ user_obj.pk }}&amp;next={{ request.path }}{% if get_query_string %}%3F{{ get_query_string }}{% endif %}" id="unsubscribe_{{ user_obj.pk }}" class="btn btn-danger pull-right">Unsubscribe</a>

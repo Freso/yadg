@@ -433,6 +433,21 @@ class ScrapersView(TemplateView):
         return data
 
 
+class SubscriptionsView(ListView):
+    template_name = 'subscriptions.html'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return User.objects.filter(subscriber_set__subscriber__exact=self.request.user).extra(select={'lower_username': 'lower(username)'}).order_by('lower_username')
+
+    def get_context_object_name(self, object_list):
+        return 'subscriptions'
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(SubscriptionsView, self).dispatch(request, *args, **kwargs)
+
+
 def login(request, **kwargs):
     if request.user.is_authenticated():
         return redirect(settings.LOGIN_REDIRECT_URL)
