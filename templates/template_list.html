@@ -62,6 +62,6 @@
         <a class="btn btn-primary" href="{% url 'template_add' %}">Create new template</a>
         {% if is_paginated %}{% paginator 2 %}{% endif %}
     {% else %}
-        <div class="alert alert-info">You don't have any templates yet. Why don't you try <a href="{% url 'template_add' %}">creating one</a>?</div>
+        <div class="alert alert-info">You don't have any templates yet. Why don't you try <a href="{% url 'template_add' %}"><strong>creating one</strong></a>?</div>
     {% endif %}
 {% endblock %}
