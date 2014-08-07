@@ -30,6 +30,7 @@ import markdown
 
 class UserListView(ListView):
     template_name = 'user_list.html'
+    context_object_name = 'users'
     paginate_by = 10
     form = None
 
@@ -52,9 +53,6 @@ class UserListView(ListView):
         ret = super(UserListView, self).get_context_data(**kwargs)
         ret['user_search_form'] = self.form
         return ret
-
-    def get_context_object_name(self, object_list):
-        return 'users'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -194,13 +192,11 @@ class ResultView(View):
 
 class TemplateListView(ListView):
     template_name = 'template_list.html'
+    context_object_name = 'templates'
     paginate_by = 20
 
     def get_queryset(self):
         return self.request.user.template_set.all()
-
-    def get_context_object_name(self, object_list):
-        return 'templates'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -462,13 +458,11 @@ class ScrapersView(TemplateView):
 
 class SubscriptionsView(ListView):
     template_name = 'subscriptions.html'
+    context_object_name = 'subscriptions'
     paginate_by = 20
 
     def get_queryset(self):
         return User.objects.filter(subscriber_set__subscriber__exact=self.request.user).extra(select={'lower_username': 'lower(username)'}).order_by('lower_username')
-
-    def get_context_object_name(self, object_list):
-        return 'subscriptions'
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
