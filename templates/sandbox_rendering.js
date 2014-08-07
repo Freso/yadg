@@ -5,7 +5,7 @@ var sandbox = new JSandbox(),
     },
     template = "{{ template.template|escapejs }}",
     data = {{ json_data|safe }},
-    eval_string = "myswig.render(input.template, { locals: input.data, filename: 'test' + (i++) })";
+    eval_string = "myswig.render(input.template, { locals: input.data, filename: 'scratchpad' + (i++) })";
 
 sandbox.load("{{ STATIC_URL }}js/swig.min.js", function () { // onload
     sandbox.load("{{ STATIC_URL }}js/swig.custom.js", function () {
