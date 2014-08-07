@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
-from django.db.models.signals import m2m_changed, post_save
-from ...models import Template, Subscription, DependencyClosure, dependency_changed, template_saved
+from ...models import Template, Subscription
 import random
 import string
 
@@ -43,8 +42,11 @@ class Command(BaseCommand):
             while name in user_names:
                 name = get_rand_string(20)
 
+            u = User(username=name)
+            u.set_password(name)
+
             try:
-                u = User.objects.create(username=name, password=name)
+                u.save()
             except Exception as excp:
                 raise CommandError('Could not create user object with name: %s, Exception: %s' % (name, excp))
 
