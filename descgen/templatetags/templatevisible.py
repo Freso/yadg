@@ -3,7 +3,7 @@ from django import template
 register = template.Library()
 
 def template_visible_to_user(template_obj, user):
-    return template_obj.is_public or template_obj.is_default or template_obj.owner_id == user.pk
+    return template_obj.visible_to_user(user, assume_subscription=True)
 
 @register.filter
 def getvisiblefor(templates, user):

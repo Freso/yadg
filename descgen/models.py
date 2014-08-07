@@ -4,9 +4,14 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.db.models.query import Q
 from django.db.models import Max
-from django.core.exceptions import ValidationError
 
 from .scraper.factory import SCRAPER_CHOICES
+
+
+class PublicTemplateManager(models.Manager):
+
+    def get_query_set(self):
+        return super(PublicTemplateManager, self).get_query_set().filter(Q(is_default__exact=True) | Q(is_public__exact=True))
 
 
 class Template(models.Model):
@@ -24,8 +29,24 @@ class Template(models.Model):
     dependencies = models.ManyToManyField('self', symmetrical=False, related_name='depending_set', blank=True,
                                           help_text='Choose which templates this template depends on. Chosen templates can be included or extended in your template code.')
 
+    objects = models.Manager()
+    public_templates = PublicTemplateManager()
+
     def __unicode__(self):
         return u'%s [%s]' % (self.name, self.owner.username)
+
+    def visible_to_user(self, user, assume_subscription=False):
+        if user is None:
+            return self.is_default
+        else:
+            if assume_subscription:
+                return self.is_default or self.owner_id == user.id or self.is_public
+            else:
+                return self.is_default or self.owner_id == user.id or (self.owner.subscriber_set.filter(subscriber__exact=user).exists() and self.is_public)
+
+    @property
+    def is_visible(self):
+        return self.is_default or self.is_public
 
     def get_unique_name(self):
         return 'template_%d' % self.pk
@@ -259,7 +280,7 @@ def template_saved(sender, **kwargs):
     created = kwargs['created']
     if created:
         DependencyClosure.objects.create(ancestor_id=instance.pk, descendant_id=instance.pk, count=1, path_length=0)
-    elif not (instance.is_default or instance.is_public):
+    elif not instance.is_visible:
         # the template might have been public before, so remove all dependencies that are not from templates
         # owned by this user
         dependant_templates = instance.depending_set.filter(~Q(owner_id__exact=instance.owner.pk))

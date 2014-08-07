@@ -10,7 +10,6 @@
 {% load addforms %}
 {% load subscribedto %}
 {% load templatevisible %}
-{% load shortcuts %}
 
 {% block content%}<div class="page-header">
     <h1>Users</h1>
@@ -29,33 +28,16 @@
                     {% include 'subscribe_form.html' with sub_user=user_obj %}
                 {% endwith %}
             {% else %}
-                {% include 'unsubscribe_button.html' %}
+                {% include 'unsubscribe_button.html' with unsub_user=user_obj %}
             {% endif %}
         {% endif %}
-        <h2>{{ user_obj.username }}</h2>
-        {% with templates=user_obj.template_set.all|getvisiblefor:request.user|dictsort:"name.lower" %}
-            {% if templates %}
-                <table class="table table-striped table-bordered table-condensed">
-                    <thead>
-                        <tr>
-                            <th>{%  if request.user.pk == user_obj.pk %}My{% else %}Public{% endif %} template</th>
-                            <th>Utility</th>
-                            {%  if request.user.pk == user_obj.pk %}<th>Public</th>{% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <!-- TODO: only display part of the list if it is too big (full list then on user details page) -->
-                    {% for template in templates %}
-                        <tr>
-                            <td>{% if is_subscribed_to or request.user.pk == user_obj.pk %}<a href="{% url 'scratchpad_index' %}?template={{ template.pk }}">{{ template.name }}</a>{% else %}{{ template.name }}{% endif %}</td>
-                            <td>{{ template.is_utility|yesnoimg }}</td>
-                            {%  if request.user.pk == user_obj.pk %}
-                                <td>{{ template.is_public|yesnoimg }}</td>
-                            {% endif %}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        <h2><a href="{% url 'user_detail' user_obj.pk %}">{{ user_obj.username }}</a></h2>
+        {% with all_templates=user_obj.template_set.all|getvisiblefor:request.user|dictsort:"name.lower" %}
+            {% if all_templates %}
+                {% include 'template_overview_table.html' with templates=all_templates|slice:":20" %}
+                {% if all_templates|length > 20 %}
+                    <p><strong>Note:</strong> The list of public templates of this user has been truncated. To view the whole list visit the <a href="{% url 'user_detail' user_obj.pk %}">user page</a>.</p>
+                {% endif %}
             {% else %}
                 <span class="label">This user does not have any public templates.</span>
             {% endif %}

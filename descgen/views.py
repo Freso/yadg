@@ -18,6 +18,7 @@ from django.views.generic.base import View
 from django.views.generic.edit import FormView
 from django.views.generic.base import TemplateView, TemplateResponseMixin
 from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
 from django.db.models.query import Q
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -58,6 +59,26 @@ class UserListView(ListView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(UserListView, self).dispatch(request, *args, **kwargs)
+
+
+class UserDetailView(DetailView):
+    template_name = 'user_detail.html'
+    model = User
+    pk_url_kwarg = 'id'
+    context_object_name = 'user_obj'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(UserDetailView, self).get_context_data(**kwargs)
+        user = ctx[self.context_object_name]
+        ctx['num_subscribers'] = user.subscriber_set.count()
+        ctx['num_templates'] = user.template_set.count()
+        ctx['num_public_templates'] = Template.public_templates.filter(owner__exact=user).count()
+        ctx['public_percent'] = round(ctx['num_public_templates'] / float(ctx['num_templates']) * 100, 2)
+        return ctx
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(UserDetailView, self).dispatch(request, *args, **kwargs)
 
 
 class SubscribeView(View):

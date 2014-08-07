@@ -83,15 +83,16 @@
           <ul class="nav">
             <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url 'index' %}">Home</a></li>
             <li{% block scrapers_li_tags %}{% endblock %}><a href="{% url 'scrapers_overview' %}">Available Scrapers</a></li>
-            {% if request.user.is_authenticated %}<li{% block userlist_li_tags %}{% endblock %}><a href="{% url 'user_list' %}">Users</a></li>{% endif %}
+            {% if user.is_authenticated %}<li{% block userlist_li_tags %}{% endblock %}><a href="{% url 'user_list' %}">Users</a></li>{% endif %}
             <li><a href="{% url 'api_root' %}">API</a></li>
             <li{% block contact_li_tags %}{% endblock %}><a href="{% url 'contact' %}">Contact</a></li>
           </ul>
           <ul class="nav pull-right">
-              {% if request.user.is_authenticated %}
+              {% if user.is_authenticated %}
                <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account<b class="caret"></b></a>
                 <ul class="dropdown-menu">
+                    <li{% block userpage_li_tags %}{% endblock %}><a href="{% url 'user_detail' user.pk %}">My user page</a></li>
                     <li{% block templatelist_li_tags %}{% endblock %}><a href="{% url 'template_list' %}">My templates</a></li>
                     <li{% block subscriptions_li_tags %}{% endblock %}><a href="{% url 'subscriptions' %}">My subscriptions</a></li>
                     <li class="divider"></li>
