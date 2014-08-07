@@ -83,7 +83,8 @@
           <ul class="nav">
             <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url 'index' %}">Home</a></li>
             <li{% block scrapers_li_tags %}{% endblock %}><a href="{% url 'scrapers_overview' %}">Available Scrapers</a></li>
-            {% if user.is_authenticated %}<li{% block userlist_li_tags %}{% endblock %}><a href="{% url 'user_list' %}">Users</a></li>{% endif %}
+            {% if user.is_authenticated %}<li{% block userlist_li_tags %}{% endblock %}><a href="{% url 'user_list' %}">Users</a></li>
+            <li{% block scratchpad_li_tags %}{% endblock %}><a href="{% url 'scratchpad_index' %}">Scratchpad</a></li>{% endif %}
             <li><a href="{% url 'api_root' %}">API</a></li>
             <li{% block contact_li_tags %}{% endblock %}><a href="{% url 'contact' %}">Contact</a></li>
           </ul>
