@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.db.models.query import Q
 from django.db.models import Max
+from django.core.exceptions import ValidationError
 
 from .scraper.factory import SCRAPER_CHOICES
 
@@ -282,6 +283,11 @@ class Subscription(models.Model):
 
     def __unicode__(self):
         return u'%s to %s' % (self.subscriber.username, self.user.username)
+
+    def clean(self):
+        # don't allow reflexive subscriptions
+        if self.subscriber == self.user:
+            raise ValidationError('Subscriptions to yourself are not allowed')
 
 
 def subscription_deleted(sender, **kwargs):

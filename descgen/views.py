@@ -20,6 +20,7 @@ from django.views.generic.base import TemplateView, TemplateResponseMixin
 from django.views.generic.list import ListView
 from django.db.models.query import Q
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from djcelery.models import TaskMeta
 
@@ -68,8 +69,13 @@ class SubscribeView(View):
         form = SubscribeForm(request.POST)
         if form.is_valid():
             user_id = form.cleaned_data['user_id']
-            if user_id != self.request.user.pk and not Subscription.objects.filter(user_id__exact=user_id, subscriber_id__exact=request.user.pk).exists():
-                Subscription.objects.create(user_id=user_id, subscriber_id=request.user.pk)
+            subscription = Subscription(user_id=user_id, subscriber_id=request.user.pk)
+            try:
+                subscription.full_clean()
+            except ValidationError:
+                pass
+            else:
+                subscription.save()
             redirect_to = request.GET.get('next', '')
             if is_safe_url(redirect_to):
                 return redirect(redirect_to)
