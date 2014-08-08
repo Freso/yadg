@@ -10,7 +10,6 @@ from djcelery.models import TaskMeta
 from descgen.forms import ScratchpadForm, TemplateForm
 from descgen.mixins import GetTemplateMixin, GetFormatMixin, SerializeResultMixin, CheckResultMixin
 from descgen.models import Template
-from descgen.result import ReleaseResult
 
 
 class TemplateFromScratchpadView(FormView):
@@ -51,7 +50,7 @@ class TemplateFromScratchpadView(FormView):
         return super(TemplateFromScratchpadView, self).dispatch(request, *args, **kwargs)
 
 
-class ScratchpadIndexView(View):
+class ScratchpadIndexView(View, CheckResultMixin):
 
     def get(self, request):
         results = TaskMeta.objects.filter(status__exact='SUCCESS').order_by('id')
@@ -61,7 +60,7 @@ class ScratchpadIndexView(View):
         while task_id is None and i < len(results):
             task = results[i]
             temp = task.result[0]
-            if isinstance(temp, ReleaseResult):
+            if self.is_release_result(temp):
                 task_id = task.task_id
             i += 1
 
