@@ -3,11 +3,10 @@ from django.conf.urls import patterns, url, include
 from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse_lazy
 
-from descgen.views import IndexView,ResultView,SettingsView,ScrapersView,ScratchpadView,UserListView, UserDetailView, SubscribeView, UnsubscribeView, TemplateEditView, TemplateAddView, TemplateListView, TemplateDeleteView, TemplateFromScratchpadView, ScratchpadIndexView, SubscriptionsView
-
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+from .views.misc import IndexView, ResultView, ScrapersView, SettingsView
+from .views.scratchpad import ScratchpadIndexView, ScratchpadView, TemplateFromScratchpadView
+from .views.template import TemplateAddView, TemplateEditView, TemplateDeleteView, TemplateListView
+from .views.user import SubscribeView, SubscriptionsView, UnsubscribeView, UserDetailView, UserListView
 
 urlpatterns = patterns('',
     url(r'^$', IndexView.as_view(), name='index'),
@@ -28,11 +27,4 @@ urlpatterns = patterns('',
     url(r'^available-scrapers$', ScrapersView.as_view(), name='scrapers_overview'),
     url(r'^api/$', RedirectView.as_view(url=reverse_lazy('api_v1_root'), permanent=False), name='api_root'),
     url(r'^api/v1/', include('descgen.api.v1_urls')),
-    # url(r'^whatdesc/', include('whatdesc.foo.urls')),
-
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
 )
