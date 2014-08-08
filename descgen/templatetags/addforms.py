@@ -1,5 +1,5 @@
 from django import template
-from descgen.forms import InputForm, FormatForm, SubscribeForm
+from descgen.forms import InputForm, SubscribeForm
 from ..mixins import CreateTaskMixin
 
 
