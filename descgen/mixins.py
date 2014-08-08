@@ -129,13 +129,23 @@ class SerializeResultMixin(object):
 
     serializer = JSONSerializeVisitor()
     json_kwargs = {}
+    data_namespace = 'data'
 
-    def serialize_to_json(self, result):
+    def serialize_to_json(self, result, additional_data={}):
         data = self.serializer.visit(result)
+        if self.get_data_namespace():
+            data = self._namespace_result(data)
+        data.update(additional_data)
         return json.dumps(data, **self.get_json_kwargs())
 
     def get_json_kwargs(self):
         return self.json_kwargs
+
+    def get_data_namespace(self):
+        return self.data_namespace
+
+    def _namespace_result(self, result):
+        return {self.get_data_namespace(): result}
 
 
 class CheckResultMixin(object):
