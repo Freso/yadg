@@ -91,7 +91,7 @@ class GetTemplateMixin(GetSettingsMixin):
                 template = None
         else:
             template = self.get_default_template()
-            form = FormatForm(self.get_template_form_user(), default_template=template)
+            form = FormatForm(self.get_template_form_user(), default_template=template, with_utility=with_utility)
         return template, form
 
     def get_all_dependencies(self, template, prefetch_owner=False):
