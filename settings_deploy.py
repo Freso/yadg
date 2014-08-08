@@ -1,4 +1,5 @@
 # Django settings for whatdesc project.
+import secret
 from datetime import timedelta
 
 DEBUG = False
@@ -14,8 +15,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'yadg',                      # Or path to database file if using sqlite3.
-        'USER': '***REMOVED***',                      # Not used with sqlite3.
-        'PASSWORD': '***REMOVED***',                  # Not used with sqlite3.
+        'USER': secret.DATABASE_USER,                      # Not used with sqlite3.
+        'PASSWORD': secret.DATABASE_PASSWORD,                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -85,7 +86,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '***REMOVED***'
+SECRET_KEY = secret.SECRET_KEY
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -102,7 +103,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'whatdesc.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -121,8 +122,11 @@ INSTALLED_APPS = (
     "djcelery",
     'descgen',
     'djangorestframework',
+    'codemirror',
+    'contact',
+    'captcha',
     # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 )
@@ -167,8 +171,8 @@ LOGGING = {
 
 #email settings
 EMAIL_HOST = '***REMOVED***'
-EMAIL_HOST_USER = '***REMOVED***'
-EMAIL_HOST_PASSWORD = '***REMOVED***'
+EMAIL_HOST_USER = secret.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
 SERVER_EMAIL = '***REMOVED***'
 
@@ -180,8 +184,8 @@ djcelery.setup_loader()
 #celery config
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
-BROKER_USER = "***REMOVED***"
-BROKER_PASSWORD = "***REMOVED***"
+BROKER_USER = secret.BROKER_USER
+BROKER_PASSWORD = secret.BROKER_PASSWORD
 BROKER_VHOST = "/yadg"
 CELERY_RESULT_BACKEND = 'database'
 CELERYD_CONCURRENCY = 8
@@ -205,7 +209,25 @@ SESSION_COOKIE_AGE = 31536000 # 1 year in seconds
 SESSION_COOKIE_HTTPONLY = False # make sure cookie is sent with ajax calls
 
 #set a custum csrf_failure view
-CSRF_FAILURE_VIEW = "descgen.views.csrf_failure"
+CSRF_FAILURE_VIEW = "descgen.views.misc.csrf_failure"
+
+CODEMIRROR_PATH = STATIC_URL + r"js/codemirror"
+
+#recaptcha settings
+RECAPTCHA_PUBLIC_KEY = secret.RECAPTCHA_PUBLIC_KEY
+RECAPTCHA_PRIVATE_KEY = secret.RECAPTCHA_PRIVATE_KEY
+RECAPTCHA_USE_SSL = True
+
+#contact form settings
+CONTACT_RECIPIENTS = map(lambda x: x[1], ADMINS)
+
+#config for auth
+LOGIN_REDIRECT_URL = 'index'
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'
+
+#from 1.6 onward used instead of TransactionMiddleware
+ATOMIC_REQUESTS = True
 
 #set allowed hosts
 ALLOWED_HOSTS = ['.yadg.cc', '88.198.107.164']
