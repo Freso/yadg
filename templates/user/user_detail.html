@@ -19,10 +19,10 @@
         {% if user.pk != user_obj.pk %}
             {% if not is_subscribed_to %}
                 {% with subscribe_form=user_obj|subscribe_form %}
-                    {% include 'subscribe_form.html' with sub_user=user_obj %}
+                    {% include 'user/subscribe_form.html' with sub_user=user_obj %}
                 {% endwith %}
             {% else %}
-                {% include 'unsubscribe_button.html' with unsub_user=user_obj %}
+                {% include 'user/unsubscribe_button.html' with unsub_user=user_obj %}
             {% endif %}
         {% endif %}
 
@@ -41,7 +41,7 @@
         <h2>Templates</h2>
         {% with templates=user_obj.template_set.all|getvisiblefor:user|dictsort:"name.lower" %}
             {% if templates %}
-                {% include 'template_overview_table.html' %}
+                {% include 'template/template_overview_table.html' %}
             {% else %}
                 <p>This user does not have any public templates.</p>
             {% endif %}

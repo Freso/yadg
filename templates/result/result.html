@@ -22,4 +22,4 @@
 {% block subcontent %}<div class="well"><textarea id="description_area">Please enable JavaScript for this site to be able to see the result.</textarea>
 {% if request.user.is_authenticated %}<a href="{% url 'scratchpad' result_id %}?template={{ template.pk }}" class="btn">Go to scratchpad</a>{% endif %}&nbsp;{% include "format_form.html" %}</div>
 
-{% include "perma_link.html" %}{% endblock %}
+{% include "result/perma_link.html" %}{% endblock %}

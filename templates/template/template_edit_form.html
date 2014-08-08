@@ -8,7 +8,7 @@
             <a class="btn" href="{{ request.path }}">Reset</a>
             {% if immediate_dependencies %}
                 <a class="btn pull-right" href="#" id="show_dependencies">Show dependency codes</a>
-                <div class="well" id="dependencies">{% include 'dependency_codes_template_edit.html' %}</div>
+                <div class="well" id="dependencies">{% include 'template/dependency_codes_template_edit.html' %}</div>
             {% endif %}
         </div>
     </fieldset>

@@ -24,10 +24,10 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin
         self.input_form = InputForm(initial=self.additional_data)
 
     def visit_NotFoundResult(self, result):
-        return render(self.request, 'result_id_not_found.html', {'input_form': self.input_form})
+        return render(self.request, 'result/result_id_not_found.html', {'input_form': self.input_form})
 
     def visit_ListResult(self, result):
-        return render(self.request, 'result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
+        return render(self.request, 'result/result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
 
     def visit_ReleaseResult(self, result):
         template, form = self.get_template_and_form()
@@ -39,5 +39,5 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin
         # TODO: namespace the release data to avoid conflicts at a later date
         data = self.serialize_to_json(result)
 
-        return render(self.request, 'result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': form, 'input_form': self.input_form,
+        return render(self.request, 'result/result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': form, 'input_form': self.input_form,
                                                    'json_data': data, 'template':template, 'dependencies':dependencies})

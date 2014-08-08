@@ -14,7 +14,7 @@ from descgen.models import Template
 
 class TemplateFromScratchpadView(FormView):
     form_class = ScratchpadForm
-    template_name = 'template_from_scratchpad.html'
+    template_name = 'scratchpad/template_from_scratchpad.html'
 
     def get(self, request, *args, **kwargs):
         return redirect(reverse('scratchpad_index'))
@@ -70,7 +70,7 @@ class ScratchpadIndexView(View, CheckResultMixin):
                 redirect_url += '?' + self.request.GET.urlencode()
             return redirect(redirect_url)
         else:
-            return render(request, 'scratchpad_index_no_release.html')
+            return render(request, 'scratchpad/scratchpad_index_no_release.html')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -78,7 +78,7 @@ class ScratchpadIndexView(View, CheckResultMixin):
 
 
 class ScratchpadView(TemplateView, GetTemplateMixin, GetFormatMixin, SerializeResultMixin, CheckResultMixin):
-    template_name = 'scratchpad.html'
+    template_name = 'scratchpad/scratchpad.html'
 
     def get_context_data(self, id):
         try:

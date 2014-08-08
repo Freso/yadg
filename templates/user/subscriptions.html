@@ -33,7 +33,7 @@
             {% for user_obj in subscriptions %}
                 <tr>
                     <td><a href="{% url 'user_detail' user_obj.pk %}">{{ user_obj.username }}</a></td>
-                    <td>{% include 'unsubscribe_button.html' with unsub_user=user_obj %}</td>
+                    <td>{% include 'user/unsubscribe_button.html' with unsub_user=user_obj %}</td>
                 </tr>
             {% endfor %}
             </tbody>

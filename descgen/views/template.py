@@ -13,7 +13,7 @@ from descgen.models import Template
 
 
 class TemplateListView(ListView):
-    template_name = 'template_list.html'
+    template_name = 'template/template_list.html'
     context_object_name = 'templates'
     paginate_by = 20
 
@@ -27,7 +27,7 @@ class TemplateListView(ListView):
 
 class TemplateDeleteView(View, TemplateResponseMixin):
     form_class = TemplateDeleteForm
-    template_name = 'template_delete.html'
+    template_name = 'template/template_delete.html'
 
     def get(self, request):
         form = self.form_class(request.GET, user=self.request.user)
@@ -55,7 +55,7 @@ class TemplateDeleteView(View, TemplateResponseMixin):
 
 class TemplateAddView(FormView):
     form_class = TemplateForm
-    template_name = 'template_add.html'
+    template_name = 'template/template_add.html'
 
     def get_form_kwargs(self):
         kwargs = super(TemplateAddView, self).get_form_kwargs()
@@ -73,7 +73,7 @@ class TemplateAddView(FormView):
 
 class TemplateEditView(FormView):
     form_class = TemplateForm
-    template_name = 'template_edit.html'
+    template_name = 'template/template_edit.html'
     template = None
 
     def get_context_data(self, **kwargs):

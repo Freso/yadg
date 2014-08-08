@@ -15,7 +15,7 @@ from .forms import ContactForm
 
 class ContactView(FormView):
     form_class = ContactForm
-    template_name = 'contact.html'
+    template_name = 'contact/contact.html'
 
     def form_valid(self, form):
         data = form.cleaned_data
@@ -37,8 +37,8 @@ class ContactView(FormView):
 
 
 class ContactSuccessView(TemplateView):
-    template_name = 'contact_success.html'
+    template_name = 'contact/contact_success.html'
 
 
 class ContactErrorView(TemplateView):
-    template_name = 'contact_error.html'
+    template_name = 'contact/contact_error.html'

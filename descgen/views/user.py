@@ -15,7 +15,7 @@ from descgen.models import Template, Subscription
 
 
 class UserListView(ListView):
-    template_name = 'user_list.html'
+    template_name = 'user/user_list.html'
     context_object_name = 'users'
     paginate_by = 10
     form = None
@@ -46,7 +46,7 @@ class UserListView(ListView):
 
 
 class UserDetailView(DetailView):
-    template_name = 'user_detail.html'
+    template_name = 'user/user_detail.html'
     model = User
     pk_url_kwarg = 'id'
     context_object_name = 'user_obj'
@@ -87,7 +87,7 @@ class SubscribeView(View):
             else:
                 return redirect(reverse('user_list'))
         else:
-            return render(request, 'user_does_not_exist.html')
+            return render(request, 'user/user_does_not_exist.html')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -95,7 +95,7 @@ class SubscribeView(View):
 
 
 class UnsubscribeView(View, TemplateResponseMixin):
-    template_name = 'unsubscribe.html'
+    template_name = 'user/unsubscribe.html'
 
     def get(self, request):
         initial = self.get_initial()
@@ -142,7 +142,7 @@ class UnsubscribeView(View, TemplateResponseMixin):
 
 
 class SubscriptionsView(ListView):
-    template_name = 'subscriptions.html'
+    template_name = 'user/subscriptions.html'
     context_object_name = 'subscriptions'
     paginate_by = 20
 

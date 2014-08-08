@@ -14,7 +14,7 @@
 {% block content%}<div class="page-header">
     <h1>Users</h1>
 </div>
-{% include 'user_search_form.html' %}
+{% include 'user/user_search_form.html' %}
 <div class="clear"></div>
 {% if is_paginated %}{% paginator 2 %}{% endif %}
 <ul class="unstyled">
@@ -25,16 +25,16 @@
         {% if request.user.pk != user_obj.pk %}
             {% if not is_subscribed_to %}
                 {% with subscribe_form=user_obj|subscribe_form %}
-                    {% include 'subscribe_form.html' with sub_user=user_obj %}
+                    {% include 'user/subscribe_form.html' with sub_user=user_obj %}
                 {% endwith %}
             {% else %}
-                {% include 'unsubscribe_button.html' with unsub_user=user_obj %}
+                {% include 'user/unsubscribe_button.html' with unsub_user=user_obj %}
             {% endif %}
         {% endif %}
         <h2><a href="{% url 'user_detail' user_obj.pk %}">{{ user_obj.username }}</a></h2>
         {% with all_templates=user_obj.template_set.all|getvisiblefor:request.user|dictsort:"name.lower" %}
             {% if all_templates %}
-                {% include 'template_overview_table.html' with templates=all_templates|slice:":20" %}
+                {% include 'template/template_overview_table.html' with templates=all_templates|slice:":20" %}
                 {% if all_templates|length > 20 %}
                     <p><strong>Note:</strong> The list of public templates of this user has been truncated. To view the whole list visit the <a href="{% url 'user_detail' user_obj.pk %}">user page</a>.</p>
                 {% endif %}

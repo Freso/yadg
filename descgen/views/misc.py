@@ -26,7 +26,7 @@ class IndexView(View, CreateTaskMixin):
             return redirect('get_result',id=task.task_id)
         else:
             form = InputForm(initial={'scraper': self.get_valid_scraper(None)})
-        return render(request,'index.html', {'input_form':form})
+        return render(request, 'misc/index.html', {'input_form':form})
 
 
 class ResultView(View):
@@ -35,7 +35,7 @@ class ResultView(View):
         try:
             task = TaskMeta.objects.get(task_id=id)
         except TaskMeta.DoesNotExist:
-            return render(request,'result_404.html', status=404)
+            return render(request, 'result/result_404.html', status=404)
         if task.status == 'SUCCESS':
             (result, additional_data) = task.result
             visitor = TemplateVisitor(self.request, additional_data, id)
@@ -43,14 +43,14 @@ class ResultView(View):
             return visitor.visit(result)
 
         elif task.status == 'FAILURE' or task.status == 'REVOKED':
-            return render(request, 'result_failed.html')
+            return render(request, 'result/result_failed.html')
         else:
-            return render(request, 'result_waiting.html')
+            return render(request, 'result/result_waiting.html')
 
 
 class SettingsView(FormView):
     form_class = SettingsForm
-    template_name = 'settings.html'
+    template_name = 'misc/settings.html'
 
     def get_form_kwargs(self):
         kwargs = super(SettingsView, self).get_form_kwargs()
@@ -71,7 +71,7 @@ class SettingsView(FormView):
 
 
 class ScrapersView(TemplateView):
-    template_name = 'scrapers_overview.html'
+    template_name = 'misc/scrapers_overview.html'
 
     def get_context_data(self, **kwargs):
         data = super(ScrapersView, self).get_context_data(**kwargs)
@@ -97,4 +97,4 @@ class ScrapersView(TemplateView):
 
 
 def csrf_failure(request, reason=""):
-    return render(request, 'csrf_failure.html', status=403)
+    return render(request, 'misc/csrf_failure.html', status=403)
