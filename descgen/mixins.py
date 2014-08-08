@@ -1,11 +1,30 @@
-from .scraper.factory import ScraperFactory, SCRAPER_DEFAULT
+from .scraper.factory import ScraperFactory
 from .formatter import Formatter, FORMAT_DEFAULT
 from .tasks import get_result
+from .models import Settings
 
 from djcelery.models import TaskMeta
 
 
-class CreateTaskMixin(object):
+class GetSettingsMixin(object):
+
+    def get_settings(self, test=lambda x: True):
+        settings = None
+        if self.request.user.is_authenticated():
+            try:
+                settings = self.request.user.settings
+            except Settings.DoesNotExist:
+                pass
+
+        if settings is None or not test(settings):
+            try:
+                settings = Settings.objects.get(user__isnull=True)
+            except Settings.DoesNotExist:
+                pass
+        return settings
+
+
+class CreateTaskMixin(GetSettingsMixin):
     
     factory = ScraperFactory()
     
@@ -27,10 +46,22 @@ class CreateTaskMixin(object):
     
     def get_valid_scraper(self, scraper):
         if not scraper:
-            scraper = self.request.session.get("default_scraper", SCRAPER_DEFAULT)
+            settings = self.get_settings(test=lambda x: x.default_scraper)
+            if settings is not None:
+                scraper = settings.default_scraper
         scraper = self.factory.get_valid_scraper(scraper)
         
         return scraper
+
+
+class GetTemplateMixin(GetSettingsMixin):
+
+    def get_default_template(self):
+        template = None
+        settings = self.get_settings(test=lambda x: x.default_template)
+        if settings is not None:
+            template = settings.default_template
+        return template
 
 
 class GetFormatMixin(object):
