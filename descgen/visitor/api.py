@@ -7,6 +7,8 @@ from django.utils.http import urlencode
 from ..result import ReleaseResult
 from ..formatter import Formatter
 
+import urllib2
+
 
 class APIVisitorV1(Visitor):
 
@@ -60,7 +62,7 @@ class APIVisitorV1(Visitor):
                 "name": item.get_name(),
                 "info": item.get_info(),
                 "release_url": item.get_url(),
-                "query_url": reverse('api_v1_makequery') + '?' + urlencode({'input': item.get_query()})
+                "query_url": urllib2.unquote(reverse('api_v1_makequery')) + '?' + urlencode({'input': item.get_query()})
             })
         return data
 
