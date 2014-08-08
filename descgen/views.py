@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils.http import is_safe_url
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
-from django.http import Http404,HttpResponse
+from django.http import Http404
 from django.views.generic.base import View
 from django.views.generic.edit import FormView
 from django.views.generic.base import TemplateView, TemplateResponseMixin
