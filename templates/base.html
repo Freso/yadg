@@ -97,6 +97,7 @@
                     <li{% block templatelist_li_tags %}{% endblock %}><a href="{% url 'template_list' %}">My templates</a></li>
                     <li{% block subscriptions_li_tags %}{% endblock %}><a href="{% url 'subscriptions' %}">My subscriptions</a></li>
                     <li class="divider"></li>
+                    <li{% block passwordchange_li_tags %}{% endblock %}><a href="{% url 'password_change' %}">Change password</a></li>
                     <li{% block settings_li_tags %}{% endblock %}><a href="{% url 'settings' %}">Settings</a></li>
                 </ul>
               </li>
