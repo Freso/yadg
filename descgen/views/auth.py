@@ -5,9 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import login as contrib_login, logout as contrib_logout
 from django.shortcuts import redirect
 from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.cache import never_cache
 
 
-@sensitive_post_parameters
+@sensitive_post_parameters()
+@never_cache
 def login(request, **kwargs):
     if request.user.is_authenticated():
         return redirect(settings.LOGIN_REDIRECT_URL)
