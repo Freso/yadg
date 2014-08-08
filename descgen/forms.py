@@ -59,7 +59,7 @@ class SettingsAdminForm(forms.ModelForm):
         if 'prefetch_owner' in kwargs:
             del kwargs['prefetch_owner']
         super(SettingsAdminForm, self).__init__(*args, **kwargs)
-        t = Template.templates_for_user(self.instance.user if self.instance else None, sort_by_name=True)
+        t = Template.templates_for_user(self.instance.user if self.instance else None, with_utility=False, sort_by_name=True)
         if prefetch_owner:
             t = t.select_related('owner')
         self.fields['default_template'].queryset = t
