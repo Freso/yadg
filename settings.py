@@ -1,6 +1,5 @@
 # Django settings for whatdesc project.
 import secret
-from django.core.urlresolvers import reverse_lazy
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -225,9 +224,9 @@ RECAPTCHA_USE_SSL = True
 CONTACT_RECIPIENTS = map(lambda x: x[1], ADMINS)
 
 #config for auth
-LOGIN_REDIRECT_URL = reverse_lazy('index')
-LOGIN_URL = reverse_lazy('login')
-LOGOUT_URL = reverse_lazy('logout')
+LOGIN_REDIRECT_URL = 'index'
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'
 
 #from 1.6 onward used instead of TransactionMiddleware
 ATOMIC_REQUESTS = True
