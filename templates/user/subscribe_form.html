@@ -1,4 +1,4 @@
-{% load url from future %}<form action="{% url 'subscribe_to_user' %}?next={{ request.path }}{% if get_query_string %}%3F{{ get_query_string }}{% endif %}" method="post" class="pull-right" id="subscribe_form_{{ sub_user.pk }}">
+<form action="{% url 'subscribe_to_user' %}?next={{ request.path }}{% if get_query_string %}%3F{{ get_query_string }}{% endif %}" method="post" class="pull-right" id="subscribe_form_{{ sub_user.pk }}">
     {% csrf_token %}
     {{ subscribe_form }}
     <button type="submit" class="btn btn-success" id="subscribe_submit_{{ sub_user.pk }}" title="Subscribing to a user grants access to all of their public templates.">Subscribe</button>

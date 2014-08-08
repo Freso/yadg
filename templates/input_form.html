@@ -1,4 +1,4 @@
-{% load url from future %}{% load addforms %}{% if not input_form %}{% add_input_form as input_form %}{% endif %}<form action="{% url 'index' %}" method="get" class="form-inline well">
+{% load addforms %}{% if not input_form %}{% add_input_form as input_form %}{% endif %}<form action="{% url 'index' %}" method="get" class="form-inline well">
   {{ input_form.input.label_tag }} {{ input_form.input }}
   {{ input_form.scraper.label_tag }}
   {{ input_form.scraper }}

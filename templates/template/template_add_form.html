@@ -1,4 +1,4 @@
-{% load url from future %}<form action="{% url 'template_add' %}" method="post" class="form-horizontal">
+<form action="{% url 'template_add' %}" method="post" class="form-horizontal">
     {% csrf_token %}
     <fieldset xmlns="http://www.w3.org/1999/xhtml">
         <legend>Add new template</legend>
