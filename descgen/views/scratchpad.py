@@ -12,7 +12,7 @@ from descgen.mixins import GetTemplateMixin, GetFormatMixin, SerializeResultMixi
 from descgen.models import Template
 
 
-class TemplateFromScratchpadView(FormView):
+class TemplateFromScratchpadView(FormView, GetTemplateMixin):
     form_class = ScratchpadForm
     template_name = 'scratchpad/template_from_scratchpad.html'
 
@@ -30,7 +30,7 @@ class TemplateFromScratchpadView(FormView):
                 t = Template.objects.get(pk=id, owner_id__exact=self.request.user.pk)
             except Template.DoesNotExist:
                 raise Http404
-            immediate_dependencies = t.dependencies.all().select_related('owner')
+            immediate_dependencies = self.get_immediate_dependencies(t, prefetch_owner=True)
         t.template = template_code
         new_form = TemplateForm(instance=t)
         ctx = {

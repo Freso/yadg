@@ -10,6 +10,7 @@ from django.views.generic import ListView, View, FormView
 from django.views.generic.base import TemplateResponseMixin
 from descgen.forms import TemplateDeleteForm, TemplateForm
 from descgen.models import Template
+from ..mixins import GetTemplateMixin
 
 
 class TemplateListView(ListView):
@@ -71,7 +72,7 @@ class TemplateAddView(FormView):
         return super(TemplateAddView, self).dispatch(request, *args, **kwargs)
 
 
-class TemplateEditView(FormView):
+class TemplateEditView(FormView, GetTemplateMixin):
     form_class = TemplateForm
     template_name = 'template/template_edit.html'
     template = None
@@ -80,7 +81,7 @@ class TemplateEditView(FormView):
         ctx = super(TemplateEditView, self).get_context_data(**kwargs)
         ctx['template_id'] = self.kwargs['id']
         if self.template is not None:
-            ctx['immediate_dependencies'] = self.template.dependencies.all().select_related('owner')
+            ctx['immediate_dependencies'] = self.get_immediate_dependencies(self.template, prefetch_owner=True)
         return ctx
 
     def get_form_kwargs(self):
