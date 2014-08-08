@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from .base import Visitor
-from ..forms import InputForm, FormatForm
+from ..forms import InputForm
 from ..formatter import Formatter
-from ..mixins import GetFormatMixin, CreateTaskMixin
-from ..models import Template
+from ..mixins import GetFormatMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin
 
 from django.shortcuts import render
 
 
-class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
+class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin):
 
     def __init__(self, request, additional_data, result_id):
         super(TemplateVisitor, self).__init__()
@@ -31,40 +30,14 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         return render(self.request, 'result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
 
     def visit_ReleaseResult(self, result):
-        # TODO: cleanup TemplateVisitor
-        form = FormatForm(self.request.user, self.request.GET)
-        if form.is_valid():
-            format = form.cleaned_data['template']
-            try:
-                format = Template.objects.get(pk=format)
-            except Template.DoesNotExist:
-                temp = Template.templates_for_user(self.request.user, with_utility=False)
-                if temp:
-                    format = temp[0]
-                else:
-                    format = None
-        else:
-            temp = Template.templates_for_user(self.request.user, with_utility=False)
-            if temp:
-                format = temp[0]
-            else:
-                format = None
+        template, form = self.get_template_and_form()
 
-        #format = self.get_valid_format(format)
-        release_title = self.formatter.title_from_ReleaseResult(release_result=result)
+        release_title = self.get_release_title(release_result=result)
 
-        format_form = form # FormatForm(initial={'description_format': format})
+        dependencies = self.get_all_dependencies(template, prefetch_owner=True)
 
-        dependencies = {}
-        if format:
-            for dep in format.cached_dependencies_set(prefetch_owner=True):
-                dependencies[dep.get_unique_name()] = dep
-
-        import json
-        from .misc import JSONSerializeVisitor
-        v = JSONSerializeVisitor()
         # TODO: namespace the release data to avoid conflicts at a later date
-        data = v.visit(result)
+        data = self.serialize_to_json(result)
 
-        return render(self.request, 'result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form,
-                                                   'json_data': json.dumps(data), 'template':format, 'dependencies':dependencies})
+        return render(self.request, 'result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': form, 'input_form': self.input_form,
+                                                   'json_data': data, 'template':template, 'dependencies':dependencies})

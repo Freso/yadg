@@ -247,3 +247,12 @@ class JSONSerializeVisitor(Visitor):
             u'albumArts':     map(lambda x: self.visit(x), result.get_album_arts())
         }
         return out
+
+
+class CheckReleaseResultVisitor(Visitor):
+
+    def visit_ReleaseResult(self, result):
+        return True
+
+    def generic_visit(self, obj, *args, **kwargs):
+        return False

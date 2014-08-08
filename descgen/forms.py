@@ -37,11 +37,16 @@ class FormatForm(forms.Form):
         with_utility = kwargs.get('with_utility', False)
         if 'with_utility' in kwargs:
             del kwargs['with_utility']
+        default_template = kwargs.get('default_template', None)
+        if 'default_template' in kwargs:
+            del kwargs['default_template']
+        if default_template is not None:
+            default_template = default_template.pk
         super(FormatForm, self).__init__(*args, **kwargs)
         self.fields['template'] = forms.ChoiceField(label='Template:',
                                                     choices=map(lambda x: (x.pk, x.name),
                                                                 Template.templates_for_user(user, with_utility=with_utility, sort_by_name=True)),
-                                                    widget=forms.Select(attrs={'class': 'auto_width'}))
+                                                    widget=forms.Select(attrs={'class': 'auto_width'}), initial=default_template)
 
 
 class ResultForm(forms.Form):

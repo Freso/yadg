@@ -1,9 +1,13 @@
 from .scraper.factory import ScraperFactory
 from .formatter import Formatter, FORMAT_DEFAULT
 from .tasks import get_result
-from .models import Settings
+from .models import Settings, Template
+from .forms import FormatForm
+from .visitor.misc import JSONSerializeVisitor, CheckReleaseResultVisitor
 
 from djcelery.models import TaskMeta
+
+import json
 
 
 class GetSettingsMixin(object):
@@ -56,12 +60,54 @@ class CreateTaskMixin(GetSettingsMixin):
 
 class GetTemplateMixin(GetSettingsMixin):
 
+    with_utility = False
+
+    def get_with_utility(self):
+        return self.with_utility
+
+    def get_template_form_data(self):
+        return self.request.GET
+
+    def get_template_form_user(self):
+        return self.request.user
+
     def get_default_template(self):
         template = None
         settings = self.get_settings(test=lambda x: x.default_template)
         if settings is not None:
             template = settings.default_template
         return template
+
+    def get_template_and_form(self, with_utility=None):
+        if with_utility is None:
+            with_utility = self.get_with_utility()
+        form = FormatForm(self.get_template_form_user(), self.get_template_form_data(), with_utility=with_utility)
+        if form.is_valid():
+            template_id = form.cleaned_data['template']
+            try:
+                template = Template.objects.get(pk=template_id)
+            except Template.DoesNotExist:
+                # this actually can only happen in case of a very unfortunate race condition
+                template = None
+        else:
+            template = self.get_default_template()
+            form = FormatForm(self.get_template_form_user(), default_template=template)
+        return template, form
+
+    def get_all_dependencies(self, template, prefetch_owner=False):
+        dependencies = {}
+        for dep in template.cached_dependencies_set(prefetch_owner=prefetch_owner):
+                dependencies[self.get_dependency_name(dep)] = dep
+        return dependencies
+
+    def get_dependency_name(self, dependency):
+        return dependency.get_unique_name()
+
+    def get_immediate_dependencies(self, template, prefetch_owner=False):
+        dependencies = template.dependencies.all()
+        if prefetch_owner:
+            dependencies = dependencies.select_related('owner')
+        return dependencies
 
 
 class GetFormatMixin(object):
@@ -74,3 +120,27 @@ class GetFormatMixin(object):
         format = self.formatter.get_valid_format(format)
         
         return format
+
+    def get_release_title(self, release_result):
+        return self.formatter.title_from_ReleaseResult(release_result=release_result)
+
+
+class SerializeResultMixin(object):
+
+    serializer = JSONSerializeVisitor()
+    json_kwargs = {}
+
+    def serialize_to_json(self, result):
+        data = self.serializer.visit(result)
+        return json.dumps(data, **self.get_json_kwargs())
+
+    def get_json_kwargs(self):
+        return self.json_kwargs
+
+
+class CheckResultMixin(object):
+
+    release_checker = CheckReleaseResultVisitor()
+
+    def is_release_result(self, result):
+        return self.release_checker.visit(result)

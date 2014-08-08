@@ -1,7 +1,6 @@
 from descgen.forms import InputForm, SettingsForm, ScratchpadForm, SubscribeForm, UnsubscribeForm, UserSearchForm, TemplateForm, TemplateDeleteForm
-from descgen.mixins import CreateTaskMixin
+from descgen.mixins import CreateTaskMixin, GetTemplateMixin, GetFormatMixin, SerializeResultMixin, CheckResultMixin
 from descgen.scraper.factory import SCRAPER_ITEMS
-from .visitor.misc import DescriptionVisitor, JSONSerializeVisitor
 from .visitor.template import TemplateVisitor
 from .models import Template, Subscription, Settings
 from .result import ReleaseResult
@@ -346,56 +345,39 @@ class ScratchpadIndexView(View):
         return super(ScratchpadIndexView, self).dispatch(request, *args, **kwargs)
 
 
-class ScratchpadView(TemplateView):
+class ScratchpadView(TemplateView, GetTemplateMixin, GetFormatMixin, SerializeResultMixin, CheckResultMixin):
     template_name = 'scratchpad.html'
 
     def get_context_data(self, id):
-        # TODO: cleanup ScratchpadView
         try:
             task = TaskMeta.objects.get(task_id=id)
         except TaskMeta.DoesNotExist:
             raise Http404
         if task.status != 'SUCCESS':
             raise Http404
-        visitor = JSONSerializeVisitor()
-        result = visitor.visit(task.result[0])
-        if result['type'] != 'ReleaseResult':
+
+        task_result = task.result[0]
+
+        if not self.is_release_result(task_result):
             raise Http404
-        import json
+
         data = {
-            'json_data': json.dumps(result),
-            'id': id
+            'json_data': self.serialize_to_json(task_result),
+            'id': id,
+            'release_title': self.get_release_title(task_result)
         }
 
-        from .formatter import Formatter
-        formatter = Formatter()
-        data['release_title'] = formatter.title_from_ReleaseResult(release_result=task.result[0])
-
-        from .forms import FormatForm
-        form = FormatForm(self.request.user, self.request.GET, with_utility=True)
-
         scratchpad = ScratchpadForm()
-        t = None
-        if form.is_valid():
-            try:
-                t = Template.objects.get(pk=form.cleaned_data['template'])
-            except Template.DoesNotExist:
-                pass
-        elif form.fields['template'].choices:
-            try:
-                t = Template.objects.get(pk=form.fields['template'].choices[0][0])
-            except Template.DoesNotExist:
-                pass
+
+        template, form = self.get_template_and_form(with_utility=True)
 
         data['visible_templates_ids'] = map(lambda x: x[0], form.fields['template'].choices)
-        if t is not None:
-            data['template'] = t
-            data['dependencies'] = {}
-            for dep in t.cached_dependencies_set(prefetch_owner=True):
-                data['dependencies'][dep.get_unique_name()] = dep
-            data['immediate_dependencies'] = t.dependencies.all().select_related('owner')
+        if template is not None:
+            data['template'] = template
+            data['dependencies'] = self.get_all_dependencies(template, prefetch_owner=True)
+            data['immediate_dependencies'] = self.get_immediate_dependencies(template, prefetch_owner=True)
 
-            scratchpad = ScratchpadForm(data={'template_code': t.template})
+            scratchpad = ScratchpadForm(data={'template_code': template.template})
 
         data['scratchpadform'] = scratchpad
 
