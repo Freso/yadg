@@ -21,6 +21,7 @@ from django.views.generic.detail import DetailView
 from django.db.models.query import Q
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.views.decorators.debug import sensitive_post_parameters
 
 from djcelery.models import TaskMeta
 
@@ -451,6 +452,7 @@ class SubscriptionsView(ListView):
         return super(SubscriptionsView, self).dispatch(request, *args, **kwargs)
 
 
+@sensitive_post_parameters
 def login(request, **kwargs):
     if request.user.is_authenticated():
         return redirect(settings.LOGIN_REDIRECT_URL)
