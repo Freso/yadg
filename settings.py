@@ -86,7 +86,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '***REMOVED***'
+SECRET_KEY = secret.SECRET_KEY
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -171,8 +171,8 @@ LOGGING = {
 
 #email settings
 EMAIL_HOST = '***REMOVED***'
-EMAIL_HOST_USER = '***REMOVED***'
-EMAIL_HOST_PASSWORD = '***REMOVED***'
+EMAIL_HOST_USER = secret.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
 SERVER_EMAIL = '***REMOVED***'
 
@@ -184,8 +184,8 @@ djcelery.setup_loader()
 #celery config
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
+BROKER_USER = secret.BROKER_USER
+BROKER_PASSWORD = secret.BROKER_PASSWORD
 BROKER_VHOST = "/"
 CELERY_RESULT_BACKEND = 'database'
 #CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
