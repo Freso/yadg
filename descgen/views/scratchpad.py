@@ -59,9 +59,16 @@ class ScratchpadIndexView(View, CheckResultMixin):
         i = 0
         while task_id is None and i < len(results):
             task = results[i]
-            temp = task.result[0]
-            if self.is_release_result(temp):
-                task_id = task.task_id
+            # the task could be a cleanup task that has no result, so make sure we don't crash in this case by checking
+            # if result is there
+            if task.result is not None:
+                try:
+                    temp = task.result[0]
+                except:
+                    pass
+                else:
+                    if self.is_release_result(temp):
+                        task_id = task.task_id
             i += 1
 
         if task_id is not None:
