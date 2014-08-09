@@ -189,7 +189,7 @@ BROKER_PASSWORD = secret.BROKER_PASSWORD
 BROKER_VHOST = "/yadg"
 CELERY_RESULT_BACKEND = 'database'
 CELERYD_CONCURRENCY = 8
-CELERY_TASK_RESULT_EXPIRES = timedelta(hours=1)
+CELERY_TASK_RESULT_EXPIRES = timedelta(days=1)
 
 
 #add context processors
