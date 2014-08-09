@@ -64,7 +64,9 @@ class ScratchpadIndexView(View, CheckResultMixin):
             if task.result is not None:
                 try:
                     temp = task.result[0]
-                except:
+                except (TypeError, IndexError):
+                    # if result is unsubscriptable (array access [] can't be used) a TypeError exception will be raised
+                    # if element 0 does not exist an IndexError will be raised
                     pass
                 else:
                     if self.is_release_result(temp):
