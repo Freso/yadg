@@ -185,7 +185,7 @@ class JSONSerializeVisitor(Visitor):
     def visit_AlbumArt(self, albumart):
         out = {
             u'url':    self._unicode_or_none(albumart.get_url()),
-            u'type':   self.ALBUM_ART_TYPE_TRANSLATION[albumart.get_type()],
+            u'type':   self.ALBUM_ART_TYPE_TRANSLATION[albumart.get_type()] if albumart.get_type() else None,
             u'width':  albumart.get_width(),
             u'height': albumart.get_height(),
             u'hint':   self._unicode_or_none(albumart.get_hint())
