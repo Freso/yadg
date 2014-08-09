@@ -35,7 +35,7 @@
             <dd>{{ num_templates }}</dd>
 
             <dt>Number of public templates:</dt>
-            <dd>{{ num_public_templates }} ({{ public_percent }}%)</dd>
+            <dd>{{ num_public_templates }}{% if num_templates > 0 %} ({{ public_percent }}%){% endif %}</dd>
         </dl>
 
         <h2>Templates</h2>
