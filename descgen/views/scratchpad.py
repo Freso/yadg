@@ -125,6 +125,8 @@ class ScratchpadView(TemplateView, GetTemplateMixin, GetFormatMixin, SerializeRe
 
         data['format_form'] = form
 
+        data['pretty_printed_data'] = self.serialize_to_json(task_result, json_kwargs={'indent': 3, 'sort_keys': True})
+
         return data
 
     @method_decorator(login_required)

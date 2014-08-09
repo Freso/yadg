@@ -43,6 +43,20 @@
                 form.submit();
             });
             {% endif %}
+
+            $('#show_raw_data').click(function(e) {
+                e.preventDefault();
+
+                var toShow = $('#raw_data');
+
+                if (toShow.is(":visible")) {
+                    $(this).text('Show raw data');
+                    toShow.hide();
+                } else {
+                    $(this).text('Hide raw data');
+                    toShow.show();
+                }
+            });
         });
     </script>
 
@@ -73,6 +87,13 @@
         <div class="well">
             <h2>Preview:</h2>
             <textarea id="render_result" readonly></textarea>
+
+            <a href="#" id="show_raw_data">Show raw data</a>
+
+            <div id="raw_data" style="display: none;">
+                <h2>Raw data:</h2>
+                <pre>{{ pretty_printed_data }}</pre>
+            </div>
         </div>
     </div>
     <div class="span4">
