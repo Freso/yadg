@@ -57,6 +57,7 @@ class ScratchpadIndexView(View, CheckResultMixin):
 
         task_id = None
         i = 0
+        # todo: maybe be a bit smarter about this and don't loop over all successful tasks
         while task_id is None and i < len(results):
             task = results[i]
             # the task could be a cleanup task that has no result, so make sure we don't crash in this case by checking

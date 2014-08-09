@@ -36,7 +36,6 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin
 
         dependencies = self.get_all_dependencies(template, prefetch_owner=True)
 
-        # TODO: namespace the release data to avoid conflicts at a later date
         data = self.serialize_to_json(result)
 
         return render(self.request, 'result/result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': form, 'input_form': self.input_form,
