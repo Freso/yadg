@@ -57,7 +57,7 @@ class UserDetailView(DetailView):
         ctx['num_subscribers'] = user.subscriber_set.count()
         ctx['num_templates'] = user.template_set.count()
         ctx['num_public_templates'] = Template.public_templates.filter(owner__exact=user).count()
-        ctx['public_percent'] = round(ctx['num_public_templates'] / float(ctx['num_templates']) * 100, 2)
+        ctx['public_percent'] = round((ctx['num_public_templates'] / float(ctx['num_templates']) * 100) if ctx['num_templates'] > 0 else 0.0, 2)
         return ctx
 
     @method_decorator(login_required)
