@@ -131,12 +131,14 @@ class SerializeResultMixin(object):
     json_kwargs = {}
     data_namespace = 'data'
 
-    def serialize_to_json(self, result, additional_data={}):
+    def serialize_to_json(self, result, additional_data={}, json_kwargs=None):
         data = self.serializer.visit(result)
         if self.get_data_namespace():
             data = self._namespace_result(data)
         data.update(additional_data)
-        return json.dumps(data, **self.get_json_kwargs())
+        if json_kwargs is None:
+            json_kwargs = self.get_json_kwargs()
+        return json.dumps(data, **json_kwargs)
 
     def get_json_kwargs(self):
         return self.json_kwargs
