@@ -43,7 +43,7 @@ class FormatForm(forms.Form):
         if default_template is not None:
             default_template = default_template.pk
         super(FormatForm, self).__init__(*args, **kwargs)
-        self.fields['template'] = forms.ChoiceField(label='Template:',
+        self.fields['template'] = forms.TypedChoiceField(coerce=int, label='Template:',
                                                     choices=map(lambda x: (x.pk, x.name),
                                                                 Template.templates_for_user(user, with_utility=with_utility, sort_by_name=True)),
                                                     widget=forms.Select(attrs={'class': 'auto_width'}), initial=default_template)
