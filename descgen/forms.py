@@ -98,7 +98,7 @@ class SettingsForm(SettingsAdminForm):
 
 class UserSearchForm(forms.Form):
     username = forms.CharField(label='User: ', required=False, max_length=30, widget=forms.TextInput(**search_form_widget_kwargs))
-    template_name = forms.CharField(label='with template: ', required=False, max_length=30, widget=forms.TextInput(**search_form_widget_kwargs))
+    template_name = forms.CharField(label='with template: ', required=False, max_length=40, widget=forms.TextInput(**search_form_widget_kwargs))
 
 
 class SubscribeForm(forms.Form):

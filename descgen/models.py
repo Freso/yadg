@@ -18,7 +18,7 @@ class PublicTemplateManager(models.Manager):
 class Template(models.Model):
 
     owner = models.ForeignKey(User)
-    name = models.CharField(max_length=30,
+    name = models.CharField(max_length=40,
                             help_text='Enter the name of the template here.')
     template = models.TextField(validators=[MaxLengthValidator(8192)], blank=True, help_text='Enter the template code here.')
     is_public = models.BooleanField(default=False,
