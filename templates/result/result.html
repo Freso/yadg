@@ -22,4 +22,12 @@
 {% block subcontent %}<div class="well"><textarea id="description_area">Please enable JavaScript for this site to be able to see the result.</textarea>
 {% if request.user.is_authenticated %}<a href="{% url 'scratchpad' result_id %}?template={{ template.pk }}" class="btn">Go to scratchpad</a>{% endif %}&nbsp;{% include "format_form.html" with form_classes="pull-right" %}</div>
 
-{% include "result/perma_link.html" %}{% endblock %}
+{% if not user.is_authenticated %}
+    <div class="row">
+        <div class="span9">{% include "result/perma_link.html" %}</div>
+        <div class="span3"><div class="alert alert-info"><strong>Hint:</strong> You can create your own templates after <strong><a href="#">registering an account</a></strong>.</div></div><!-- todo: insert url to register view here -->
+    </div>
+{% else %}
+    {% include "result/perma_link.html" %}
+{% endif %}
+{% endblock %}
