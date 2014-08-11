@@ -225,7 +225,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://www.junodownload.com'
-    url = 'http://www.junodownload.com/betasearch/'
+    url = 'http://www.junodownload.com/search/'
 
     def get_params(self):
         return {'solrorder': 'relevancy', 'submit-search': 'SEARCH', 'q[all][]': self.search_term}
