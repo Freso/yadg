@@ -7,10 +7,10 @@ from ..result import ReleaseResult, NotFoundResult, ListResult
 
 READABLE_NAME = 'Bandcamp'
 SCRAPER_URL = 'http://www.bandcamp.com/'
-NOTES = u'Links to Bandcamp artists or albums are only picked up automatically if the URL contains the string ' \
-        u'`/album/` or `.bandcamp.com`. In all other cases force the use of the Bandcamp scraper by choosing it from ' \
-        u'the drop down menu. This will result in the input being interpreted as a Bandcamp URL. **Note:** It is not ' \
-        u'possible to search the Bandcamp database this way.'
+NOTES = u'YADG cannot search for releases on Bandcamp, you will always need to enter the exact link. Additionally, ' \
+        u"links to Bandcamp artists or albums are only picked up automatically if the URL contains the string " \
+        u"`/album/` or `.bandcamp.com`. In all other cases you need to force the use of the Bandcamp scraper by " \
+        u"choosing it from the drop down menu (this will result in the input being interpreted as a Bandcamp URL)."
 
 
 _API_KEY = ''
