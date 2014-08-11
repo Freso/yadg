@@ -9,7 +9,7 @@ from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.http import is_safe_url
 from django.views.generic import ListView, DetailView, View
-from django.views.generic.base import TemplateResponseMixin
+from django.views.generic.edit import FormView
 from descgen.forms import UserSearchForm, SubscribeForm, UnsubscribeForm
 from descgen.models import Template, Subscription
 
@@ -94,16 +94,22 @@ class SubscribeView(View):
         return super(SubscribeView, self).dispatch(request, *args, **kwargs)
 
 
-class UnsubscribeView(View, TemplateResponseMixin):
+class UnsubscribeView(FormView):
     template_name = 'user/unsubscribe.html'
+    form_class = UnsubscribeForm
 
-    def get(self, request):
-        initial = self.get_initial()
-        context = {
-            'form': UnsubscribeForm(subscriber=self.request.user, initial=initial)
-        }
+    def get_user_id(self):
+        return self.request.GET.get('user_id', None)
+
+    def get_form_kwargs(self):
+        kwargs = super(UnsubscribeView, self).get_form_kwargs()
+        kwargs['subscriber'] = self.request.user
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(UnsubscribeView, self).get_context_data(**kwargs)
         try:
-            id = int(initial['user_id'])
+            id = int(self.get_user_id())
             u = User.objects.get(pk=id)
         except:
             pass
@@ -111,21 +117,17 @@ class UnsubscribeView(View, TemplateResponseMixin):
             context['unsub_user'] = u
             deps = Template.dependencies.through.objects.filter(from_template__owner_id__exact=self.request.user.pk, to_template__owner_id__exact=u.pk, to_template__is_default__exact=False).select_related('from_template')
             context['dependant_templates'] = set(map(lambda x: x.from_template, deps))
-        return self.render_to_response(context)
-
-    def post(self, request):
-        form = UnsubscribeForm(self.request.POST, subscriber=request.user)
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.render_to_response({'form': form})
+        return context
 
     def get_initial(self):
         initial = {
-            'user_id': self.request.GET.get('user_id', None),
+            'user_id': self.get_user_id(),
             'next': self.request.GET.get('next', None)
         }
         return initial
+
+    def form_invalid(self, form):
+        return self.render_to_response({'form': form})
 
     def form_valid(self, form):
         user_id = form.cleaned_data['user_id']
