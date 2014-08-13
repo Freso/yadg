@@ -59,6 +59,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                         self._info_dict['released'] = dd
                     elif dt == 'Label:':
                         self._info_dict['label'] = dd
+                    elif dt == 'Catalog ID:':
+                        self._info_dict['cat_id'] = dd
         return self._info_dict
 
     def prepare_response_content(self, content):
@@ -79,9 +81,17 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def add_label_ids(self):
         info_dict = self._get_info_dict()
+        label = cat_id = None
         if 'label' in info_dict:
+            label = info_dict['label']
+        if 'cat_id' in info_dict and info_dict['cat_id'] != 'N/A':
+            cat_id = info_dict['cat_id']
+        if label or cat_id:
             label_id = self.result.create_label_id()
-            label_id.set_label(info_dict['label'])
+            if label:
+                label_id.set_label(label)
+            if cat_id:
+                label_id.append_catalogue_nr(cat_id)
             self.result.append_label_id(label_id)
 
     def add_release_title(self):
