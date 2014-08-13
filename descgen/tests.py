@@ -6643,6 +6643,7 @@ class MetalarchivesTest(TestCase):
 
         label_id = expected.create_label_id()
         label_id.set_label('Spinefarm Records')
+        label_id.append_catalogue_nr('spi149CD / 018459-2')
         expected.append_label_id(label_id)
 
         expected.set_title('Century Child')
