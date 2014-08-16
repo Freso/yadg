@@ -1,2 +1,2 @@
-{% include "output_formats/gazelle-generic-header.txt" with gazelle_url="https://studiox.cd" %}
+{% include "output_formats/gazelle-generic-header.txt" with gazelle_url="https://desi.cd" %}
 {% include "output_formats/gazelle-generic-tracks.txt" %}
