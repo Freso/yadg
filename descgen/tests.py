@@ -9678,7 +9678,7 @@ class ITunesTest(TestCase):
         track.set_title('Piano Concerto No. 1 in E Minor, Op. 11: I. Allegro Maestoso')
         track.set_length(1215)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -9688,7 +9688,7 @@ class ITunesTest(TestCase):
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Tam\xe1s V\xe1s\xe1ry')
+        track_artist.set_name(u'Berlin Philharmonic')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -9699,12 +9699,12 @@ class ITunesTest(TestCase):
         track.set_title('Piano Concerto No. 1 in E Minor, Op. 11: II. Romance (Larghetto)')
         track.set_length(636)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_name(u'Jerzy Semkow')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Jerzy Semkow')
+        track_artist.set_name(u'Berlin Philharmonic')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -9720,12 +9720,12 @@ class ITunesTest(TestCase):
         track.set_title('Piano Concerto No. 1 in E Minor, Op. 11: III. Rondo (Vivace)')
         track.set_length(619)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_name(u'Jerzy Semkow')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Jerzy Semkow')
+        track_artist.set_name(u'Berlin Philharmonic')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -9741,12 +9741,12 @@ class ITunesTest(TestCase):
         track.set_title('Piano Concerto No. 2 in F Minor, Op. 21: I. Maestoso')
         track.set_length(901)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_name(u'Janos Kulka')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Janos Kulka')
+        track_artist.set_name(u'Berlin Philharmonic')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -9762,12 +9762,12 @@ class ITunesTest(TestCase):
         track.set_title('Piano Concerto No. 2 in F Minor, Op. 21: II. Larghetto')
         track.set_length(583)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_name(u'Janos Kulka')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Janos Kulka')
+        track_artist.set_name(u'Berlin Philharmonic')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -9783,12 +9783,12 @@ class ITunesTest(TestCase):
         track.set_title('Piano Concerto No. 2 in F Minor, Op. 21: III. Allegro Vivace')
         track.set_length(524)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Berliner Philharmoniker')
+        track_artist.set_name(u'Janos Kulka')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
         track_artist = expected.create_artist()
-        track_artist.set_name(u'Janos Kulka')
+        track_artist.set_name(u'Berlin Philharmonic')
         track_artist.set_various(False)
         track_artist.append_type(expected.ArtistTypes.MAIN)
         track.append_artist(track_artist)
@@ -13222,11 +13222,11 @@ More information: http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b
         visitor = DescriptionVisitor(description_format='studioxcd')
 
         expected = u"""[size=5][b][artist]ASP[/artist], [artist]Chamber[/artist] & [artist]Dritter Main Artist[/artist] feat. [artist]Featuring Artist[/artist] \u2013 Once in a Lifetime[/b][/size]
-[b]Label/Cat#:[/b] [url=https://studiox.cd/torrents.php?recordlabel=Trisol]Trisol[/url] \u2013 TRI 303 CD or Eine andere CatNr, [url=https://studiox.cd/torrents.php?recordlabel=Ein%20anderes%20Label]Ein anderes Label[/url] \u2013 Nr.1 or Nr.2 or Nr.3, [url=https://studiox.cd/torrents.php?recordlabel=Ein%20letztes%20Label]Ein letztes Label[/url] \u2013 Und eine letzte Nummer
+[b]Label/Cat#:[/b] [url=https://desi.cd/torrents.php?recordlabel=Trisol]Trisol[/url] \u2013 TRI 303 CD or Eine andere CatNr, [url=https://desi.cd/torrents.php?recordlabel=Ein%20anderes%20Label]Ein anderes Label[/url] \u2013 Nr.1 or Nr.2 or Nr.3, [url=https://desi.cd/torrents.php?recordlabel=Ein%20letztes%20Label]Ein letztes Label[/url] \u2013 Und eine letzte Nummer
 [b]Country:[/b] Germany
 [b]Year:[/b] 2007-05-25
-[b]Genre:[/b] [url=https://studiox.cd/torrents.php?taglist=Electronic]Electronic[/url], [url=https://studiox.cd/torrents.php?taglist=Rock]Rock[/url]
-[b]Style:[/b] [url=https://studiox.cd/torrents.php?taglist=Goth.Rock]Goth Rock[/url], [url=https://studiox.cd/torrents.php?taglist=Synth-pop]Synth-pop[/url]
+[b]Genre:[/b] [url=https://desi.cd/torrents.php?taglist=Electronic]Electronic[/url], [url=https://desi.cd/torrents.php?taglist=Rock]Rock[/url]
+[b]Style:[/b] [url=https://desi.cd/torrents.php?taglist=Goth.Rock]Goth Rock[/url], [url=https://desi.cd/torrents.php?taglist=Synth-pop]Synth-pop[/url]
 [b]Format:[/b] 4×CD, Album + Live
 
 [size=4][b]Disc 1: [i]Eine tolle CD[/i][/b][/size]
