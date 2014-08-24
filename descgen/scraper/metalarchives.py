@@ -54,6 +54,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                     dd = self.remove_whitespace(children[1].text_content())
                     children = children[2:]
                     if dt == 'Type:':
+                        self._info_dict['type'] = dd
+                    elif dt == 'Format:':
                         self._info_dict['format'] = dd
                     elif dt == 'Release date:':
                         self._info_dict['released'] = dd
@@ -76,8 +78,12 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def add_release_format(self):
         info_dict = self._get_info_dict()
-        if 'format' in info_dict:
-            self.result.set_format(info_dict['format'])
+        format = []
+        if 'type' in info_dict:
+            format.append(info_dict['type'])
+        if 'format' in info_dict and info_dict['format'] != 'Unknown':
+            format.append(info_dict['format'])
+        self.result.set_format(u', '.join(format))
 
     def add_label_ids(self):
         info_dict = self._get_info_dict()
@@ -108,11 +114,13 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         if len(artists_h2) == 0:
             self.raise_exception(u'could not find artist h2')
         for artist_h2 in artists_h2:
-            artist_name = self.remove_whitespace(artist_h2.text_content())
-            artist = self.result.create_artist()
-            artist.set_name(artist_name)
-            artist.append_type(self.result.ArtistTypes.MAIN)
-            self.result.append_release_artist(artist)
+            artist_as = artist_h2.cssselect('a')
+            for artist_a in artist_as:
+                artist_name = self.remove_whitespace(artist_a.text_content())
+                artist = self.result.create_artist()
+                artist.set_name(artist_name)
+                artist.append_type(self.result.ArtistTypes.MAIN)
+                self.result.append_release_artist(artist)
 
     def get_disc_containers(self):
         tracklist_table = self.parsed_response.cssselect('div#album_tabs_tracklist table.table_lyrics tbody')
