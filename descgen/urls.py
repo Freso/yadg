@@ -27,7 +27,7 @@ urlpatterns = patterns('',
     url(r'^settings$', SettingsView.as_view(), name='settings'),
     url(r'^available-scrapers$', ScrapersView.as_view(), name='scrapers_overview'),
     url(r'^api/token$', ApiTokenView.as_view(), name='api_token'),
-    url(r'^api/$', RedirectView.as_view(url=reverse_lazy('api_v1_root'), permanent=False), name='api_root'),
+    url(r'^api/$', RedirectView.as_view(url=reverse_lazy('api_v2_root'), permanent=False), name='api_root'),
     url(r'^api/v1/', include('descgen.api.v1_urls')),
     url(r'^api/v2/', include('descgen.api.v2.urls'))
 )
