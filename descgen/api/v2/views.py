@@ -20,7 +20,7 @@ class ApiRootView(views.APIView):
 
     All the APIs allow anonymous access, and can be navigated either through the browser or from the command line...
 
-        $ curl -X GET https://beta.yadg.cc/api/v2/                           # (Use default renderer)
+        $ curl -X GET https://beta.yadg.cc/api/v2/                                           # (Use default renderer)
         $ curl -X GET https://beta.yadg.cc/api/v2/ -H 'Accept: application/json; indent=4'   # (Use json renderer with indentation)
 
     The renderer can be chosen by standard HTTP accept header negotiation. A list of available renderers can be obtained by calling...
