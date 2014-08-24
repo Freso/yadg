@@ -12,6 +12,7 @@ from django.views.generic import ListView, DetailView, View
 from django.views.generic.edit import FormView
 from descgen.forms import UserSearchForm, SubscribeForm, UnsubscribeForm
 from descgen.models import Template, Subscription
+from rest_framework.authtoken.models import Token
 
 
 class UserListView(ListView):
@@ -58,6 +59,11 @@ class UserDetailView(DetailView):
         ctx['num_templates'] = user.template_set.count()
         ctx['num_public_templates'] = Template.public_templates.filter(owner__exact=user).count()
         ctx['public_percent'] = round((ctx['num_public_templates'] / float(ctx['num_templates']) * 100), 2) if ctx['num_templates'] > 0 else None
+        if self.request.user == user:
+            try:
+                ctx['token'] = user.auth_token
+            except Token.DoesNotExist:
+                pass
         return ctx
 
     @method_decorator(login_required)

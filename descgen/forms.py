@@ -54,6 +54,10 @@ class ResultForm(forms.Form):
     include_raw_data = forms.BooleanField(required=False, label='Include raw data:', initial=False)
 
 
+class ApiTokenForm(forms.Form):
+    action = forms.ChoiceField(choices=[('new', 'new')], initial='new', widget=forms.HiddenInput)
+
+
 class SettingsAdminForm(forms.ModelForm):
 
     class Meta:

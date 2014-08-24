@@ -36,6 +36,15 @@
 
             <dt>Number of public templates:</dt>
             <dd>{{ num_public_templates }}{% if num_templates > 0 %} ({{ public_percent }}%){% endif %}</dd>
+
+            {% if user == user_obj %}
+                <dt>API token:</dt>
+                {% if token %}
+                <dd>{{ token }} (<a href="{% url 'api_token' %}">Create new API token</a>)</dd>
+                {% else %}
+                <dd><a href="{% url 'api_token' %}">Create API token</a></dd>
+                {% endif %}
+            {% endif %}
         </dl>
 
         <h2>Templates</h2>

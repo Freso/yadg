@@ -3,10 +3,11 @@ from django.conf.urls import patterns, url, include
 from django.views.generic.base import RedirectView
 from django.core.urlresolvers import reverse_lazy
 
-from .views.misc import IndexView, ResultView, ScrapersView, SettingsView
+from .views.misc import IndexView, ResultView, ScrapersView, SettingsView, ApiTokenView
 from .views.scratchpad import ScratchpadIndexView, ScratchpadView, TemplateFromScratchpadView
 from .views.template import TemplateAddView, TemplateEditView, TemplateDeleteView, TemplateListView
 from .views.user import SubscribeView, SubscriptionsView, UnsubscribeView, UserDetailView, UserListView
+
 
 urlpatterns = patterns('',
     url(r'^$', IndexView.as_view(), name='index'),
@@ -25,6 +26,8 @@ urlpatterns = patterns('',
     url(r'^result/(?P<id>[\w\d-]+)$', ResultView.as_view(), name='get_result'),
     url(r'^settings$', SettingsView.as_view(), name='settings'),
     url(r'^available-scrapers$', ScrapersView.as_view(), name='scrapers_overview'),
+    url(r'^api/token$', ApiTokenView.as_view(), name='api_token'),
     url(r'^api/$', RedirectView.as_view(url=reverse_lazy('api_v1_root'), permanent=False), name='api_root'),
     url(r'^api/v1/', include('descgen.api.v1_urls')),
+    url(r'^api/v2/', include('descgen.api.v2.urls'))
 )

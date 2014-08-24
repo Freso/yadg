@@ -124,6 +124,8 @@ INSTALLED_APPS = (
     'codemirror',
     'contact',
     'captcha',
+    'rest_framework',
+    'rest_framework.authtoken',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -230,3 +232,21 @@ LOGOUT_URL = 'logout'
 
 #from 1.6 onward used instead of TransactionMiddleware
 ATOMIC_REQUESTS = True
+
+REST_FRAMEWORK = {
+    # Use hyperlinked styles by default.
+    # Only used if the `serializer_class` attribute is not set on a view.
+    'DEFAULT_MODEL_SERIALIZER_CLASS':
+        'rest_framework.serializers.HyperlinkedModelSerializer',
+
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny'
+    ],
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+
+    'PAGINATE_BY_PARAM': 'page_size',
+    'MAX_PAGINATE_BY': 100
+}

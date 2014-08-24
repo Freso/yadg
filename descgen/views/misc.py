@@ -4,12 +4,13 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import View, FormView, TemplateView
-from descgen.forms import InputForm, SettingsForm
+from descgen.forms import InputForm, SettingsForm, ApiTokenForm
 from descgen.mixins import CreateTaskMixin
 from descgen.models import Settings
 from descgen.scraper.factory import SCRAPER_ITEMS
 from descgen.visitor.template import TemplateVisitor
 from djcelery.models import TaskMeta
+from rest_framework.authtoken.models import Token
 import markdown
 
 
@@ -94,6 +95,35 @@ class ScrapersView(TemplateView):
         data['scrapers'] = scrapers
 
         return data
+
+
+class ApiTokenView(FormView):
+    template_name = 'misc/api_token.html'
+    form_class = ApiTokenForm
+
+    def get_context_data(self, **kwargs):
+        data = super(ApiTokenView, self).get_context_data(**kwargs)
+        try:
+            data['token'] = self.request.user.auth_token
+        except Token.DoesNotExist:
+            pass
+        return data
+
+    def form_valid(self, form):
+        try:
+            token = self.request.user.auth_token
+        except Token.DoesNotExist:
+            pass
+        else:
+            token.delete()
+        Token.objects.create(user=self.request.user)
+        return self.render_to_response(self.get_context_data(form=form, created=True))
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ApiTokenView, self).dispatch(request, *args, **kwargs)
+
+
 
 
 def csrf_failure(request, reason=""):
