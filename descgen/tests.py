@@ -3213,6 +3213,66 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_special_track_row_class(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('1999')
+        release_event.set_country('UK')
+        expected.append_release_event(release_event)
+
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Red Wharf')
+        label_id.append_catalogue_nr(u'RWCD004')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Pilgrim')
+
+        artist = expected.create_artist()
+        artist.set_name('Graham Bowers')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Jazz')
+
+        expected.append_style('Modern Classical')
+
+        expected.set_url('http://www.discogs.com/Graham-Bowers-Pilgrim/release/728845')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1a')
+        track.set_title('Unconditional')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('1b')
+        track.set_title('Loss Of Innocence')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('1c')
+        track.set_title('Mechanistics')
+        track.set_length(None)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Graham-Bowers-Pilgrim/release/728845')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)

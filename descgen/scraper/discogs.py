@@ -175,7 +175,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         if not tracklist_tables:
             self.raise_exception(u'could not find tracklisting')
         for table in tracklist_tables:
-            rows = table.cssselect('tr.track')
+            rows = table.cssselect('tr.tracklist_track')
             if not rows:
                 self.raise_exception(u'could not find track information')
             for row in rows:
