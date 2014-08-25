@@ -3213,6 +3213,66 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_special_track_row_class(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('1999')
+        release_event.set_country('UK')
+        expected.append_release_event(release_event)
+
+        expected.set_format('CD, Album')
+
+        label_id = expected.create_label_id()
+        label_id.set_label(u'Red Wharf')
+        label_id.append_catalogue_nr(u'RWCD004')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Pilgrim')
+
+        artist = expected.create_artist()
+        artist.set_name('Graham Bowers')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.append_genre('Electronic')
+        expected.append_genre('Jazz')
+
+        expected.append_style('Modern Classical')
+
+        expected.set_url('http://www.discogs.com/Graham-Bowers-Pilgrim/release/728845')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1a')
+        track.set_title('Unconditional')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('1b')
+        track.set_title('Loss Of Innocence')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('1c')
+        track.set_title('Mechanistics')
+        track.set_length(None)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = discogs.ReleaseScraper.from_string('http://www.discogs.com/Graham-Bowers-Pilgrim/release/728845')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
     def test_404(self):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
@@ -6639,7 +6699,7 @@ class MetalarchivesTest(TestCase):
         release_event.set_country(None)
         expected.append_release_event(release_event)
 
-        expected.set_format('Full-length')
+        expected.set_format('Full-length, CD')
 
         label_id = expected.create_label_id()
         label_id.set_label('Spinefarm Records')
@@ -6897,6 +6957,61 @@ class MetalarchivesTest(TestCase):
         expected.append_disc(disc)
 
         s = metalarchives.ReleaseScraper.from_string('http://www.metal-archives.com/albums/Within_Temptation/Black_Symphony/212779')
+        r = s.get_result()
+
+        self.assertEqual(expected, r)
+
+    def test_multiple_release_artists(self):
+        expected = ReleaseResult()
+        expected.set_scraper_name(None)
+
+        release_event = expected.create_release_event()
+        release_event.set_date('April 14th, 2007')
+        release_event.set_country(None)
+        expected.append_release_event(release_event)
+
+        expected.set_format('Split, 7" vinyl (45 RPM)')
+
+        label_id = expected.create_label_id()
+        label_id.set_label('New Iron Age Records')
+        label_id.append_catalogue_nr('NIA 002')
+        expected.append_label_id(label_id)
+
+        expected.set_title('Clash of Iron Vol. I - Live at Keep It True')
+
+        artist = expected.create_artist()
+        artist.set_name('Manilla Road')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        artist = expected.create_artist()
+        artist.set_name('Brocas Helm')
+        artist.set_various(False)
+        artist.append_type(expected.ArtistTypes.MAIN)
+        expected.append_release_artist(artist)
+
+        expected.set_url('http://www.metal-archives.com/albums/Manilla_Road/Clash_of_Iron_Vol._I_-_Live_at_Keep_It_True/147439')
+
+        disc = expected.create_disc()
+        disc.set_number(1)
+        disc.set_title(None)
+
+        track = disc.create_track()
+        track.set_number('1')
+        track.set_title('Manilla Road - Death by the Hammer')
+        track.set_length(None)
+        disc.append_track(track)
+
+        track = disc.create_track()
+        track.set_number('2')
+        track.set_title('Brocas Helm - Ravenwreck')
+        track.set_length(None)
+        disc.append_track(track)
+
+        expected.append_disc(disc)
+
+        s = metalarchives.ReleaseScraper.from_string('http://www.metal-archives.com/albums/Manilla_Road/Clash_of_Iron_Vol._I_-_Live_at_Keep_It_True/147439')
         r = s.get_result()
 
         self.assertEqual(expected, r)
