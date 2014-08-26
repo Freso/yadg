@@ -25,7 +25,7 @@
 {% if not user.is_authenticated %}
     <div class="row">
         <div class="span9">{% include "result/perma_link.html" %}</div>
-        <div class="span3"><div class="alert alert-info"><strong>Hint:</strong> You can create your own templates after <strong><a href="#">registering an account</a></strong>.</div></div><!-- todo: insert url to register view here -->
+        <div class="span3"><div class="alert alert-info"><strong>Hint:</strong> You can create your own templates after <strong><a href="{% url 'register' %}">registering an account</a></strong>.</div></div>
     </div>
 {% else %}
     {% include "result/perma_link.html" %}

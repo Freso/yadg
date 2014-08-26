@@ -3,9 +3,11 @@ from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
 from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 from .models import Template, Subscription, Settings
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from django.db.models.query import Q
 from django.core.exceptions import ValidationError
 from codemirror import CodeMirrorTextarea
+from captcha.fields import ReCaptchaField
 import operator
 
 search_form_widget_kwargs = {
@@ -268,3 +270,7 @@ class TemplateDeleteForm(forms.Form):
 
 class ScratchpadForm(forms.Form):
     template_code = forms.CharField(required=False, label='Template:', widget=CodeMirrorTextarea(js_var_format='%s_editor', **template_code_widget_kwargs), initial='Please enter you description template')
+
+
+class UserRegisterForm(UserCreationForm):
+    captcha = ReCaptchaField(help_text="Please type in the words to assure you are actually human.")
