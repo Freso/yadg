@@ -44,13 +44,13 @@ class RegisterView(FormView):
         if request.user.is_authenticated():
             return redirect(settings.LOGIN_REDIRECT_URL)
         else:
-            return super(RegisterView, self).get(self, request, *args, **kwargs)
+            return super(RegisterView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated():
             return redirect(settings.LOGIN_REDIRECT_URL)
         else:
-            return super(RegisterView, self).post(self, request, *args, **kwargs)
+            return super(RegisterView, self).post(request, *args, **kwargs)
 
     @method_decorator(sensitive_post_parameters())
     @method_decorator(never_cache)
