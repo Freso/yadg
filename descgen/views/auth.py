@@ -40,6 +40,18 @@ class RegisterView(FormView):
             # something really weird happened, just redirect to the index
             return redirect('index')
 
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated():
+            return redirect(settings.LOGIN_REDIRECT_URL)
+        else:
+            return super(RegisterView, self).get(self, request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if request.user.is_authenticated():
+            return redirect(settings.LOGIN_REDIRECT_URL)
+        else:
+            return super(RegisterView, self).post(self, request, *args, **kwargs)
+
     @method_decorator(sensitive_post_parameters())
     @method_decorator(never_cache)
     def dispatch(self, request, *args, **kwargs):
