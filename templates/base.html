@@ -1,7 +1,7 @@
 {% load scrapernames %}{% scraper_names as SCRAPER_NAMES %}<!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>{% block title %}{% endblock %}YADG beta</title>
+    <title>{% block title %}{% endblock %}YADG</title>
     <meta charset="utf-8">
     <meta name="description" content="Extract release information from {% for scraper_name in SCRAPER_NAMES %}{{ scraper_name }}{% if forloop.counter < SCRAPER_NAMES|length|add:"-1" %}, {% else %}{% if forloop.counter == SCRAPER_NAMES|length|add:"-1" %} or {% endif %}{% endif %}{% empty %}nowhere right now{% endfor %} and create a nice description from it." />
     <meta name="keywords" content="description, generator{% if not SCRAPER_NAMES|length_is:"0" %}, {% endif %}{% for scraper_name in SCRAPER_NAMES %}{{ scraper_name|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}" />
@@ -79,7 +79,7 @@
     <div class="navbar">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="{% url 'index' %}" title="Yet Another Description Generator">YADG:beta</a>
+          <a class="brand" href="{% url 'index' %}" title="Yet Another Description Generator">YADG</a>
           <ul class="nav">
             <li{% block home_li_tags %} class="active"{% endblock %}><a href="{% url 'index' %}">Home</a></li>
             <li{% block scrapers_li_tags %}{% endblock %}><a href="{% url 'scrapers_overview' %}">Available Scrapers</a></li>

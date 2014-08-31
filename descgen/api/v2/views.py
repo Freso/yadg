@@ -20,22 +20,22 @@ class ApiRootView(views.APIView):
 
     All the APIs allow anonymous access, and can be navigated either through the browser or from the command line...
 
-        $ curl -X GET https://beta.yadg.cc/api/v2/                                           # (Use default renderer)
-        $ curl -X GET https://beta.yadg.cc/api/v2/ -H 'Accept: application/json; indent=4'   # (Use json renderer with indentation)
+        $ curl -X GET https://yadg.cc/api/v2/                                           # (Use default renderer)
+        $ curl -X GET https://yadg.cc/api/v2/ -H 'Accept: application/json; indent=4'   # (Use json renderer with indentation)
 
     The renderer can be chosen by standard HTTP accept header negotiation. A list of available renderers can be obtained by calling...
 
-        $ curl -X OPTIONS https://beta.yadg.cc/api/v2/ -H 'Accept: application/json'
+        $ curl -X OPTIONS https://yadg.cc/api/v2/ -H 'Accept: application/json'
 
     The renderer can be overridden by providing an additional `format` GET parameter.
 
-    To authenticate yourself you need to send the `Authorization` header containing your API token. You can obtain your API token [here](https://beta.yadg.cc/api/token) after registering an account. The API token should be prefixed by the string literal "Token", with whitespace separating the two strings. For example:
+    To authenticate yourself you need to send the `Authorization` header containing your API token. You can obtain your API token [here](https://yadg.cc/api/token) after registering an account. The API token should be prefixed by the string literal "Token", with whitespace separating the two strings. For example:
 
         Authorization: Token e4595a049538f01f8bb67218e50d91c722cecd03
 
     An authorized request can then be sent by calling...
 
-        curl -X GET https://beta.yadg.cc/api/v2/ -H 'Authorization: Token e4595a049538f01f8bb67218e50d91c722cecd03'
+        curl -X GET https://yadg.cc/api/v2/ -H 'Authorization: Token e4595a049538f01f8bb67218e50d91c722cecd03'
     """
 
     def get(self, request):
@@ -145,7 +145,7 @@ class MakeQueryView(generics.GenericAPIView, CreateTaskMixin):
 
     Requests have to use `POST`. All available parsers can be obtained by calling...
 
-        $ curl -X OPTIONS https://beta.yadg.cc/api/v2/query/ -H 'Accept: application/json'
+        $ curl -X OPTIONS https://yadg.cc/api/v2/query/ -H 'Accept: application/json'
 
     **Note:** If your request is authenticated as described in the API root this API call will respect the saved defaults if any.
     """
