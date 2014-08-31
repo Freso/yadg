@@ -1,0 +1,10 @@
+{% extends 'dependency_codes.html' %}
+
+{% block dependency_codes_list_dd %}
+<dl>
+    {% for dependency in group.list|dictsort:"name.lower" %}
+        <dt>{% if dependency.owner_id == request.user.pk %}<a href="{% url 'template_edit' dependency.pk %}">{{ dependency.name }}</a>{% else %}{{ dependency.name }}{% endif %} as</dt>
+        <dd>{{ dependency.get_unique_name }}</dd>
+    {% endfor %}
+</dl>
+{% endblock %}

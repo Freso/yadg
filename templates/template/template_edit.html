@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title%}Edit template – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block additionalHeaders %}
+    {{ form.media }}
+
+    {% if immediate_dependencies %}
+        <style>
+            #dependencies {
+                max-height: 300px;
+                overflow-y: auto;
+                z-index: 1000;
+            }
+        </style>
+
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $("#dependencies").hide();
+
+                $("#show_dependencies").click(function(e){
+                    e.preventDefault();
+                    var divToShow = $("#dependencies");
+
+                    if (!divToShow.is(':visible')) {
+                        divToShow.css({
+                            display: "block",
+                            position: "absolute",
+                            left: ($(this).offset().left - divToShow.outerWidth() + $(this).outerWidth()) + "px",
+                            top: ($(this).offset().top - divToShow.outerHeight()) + "px"
+                        });
+
+                        divToShow.show();
+                        $(this).text('Hide dependency codes');
+                    } else {
+                        divToShow.hide();
+                        $(this).text('Show dependency codes');
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block content%}
+    {% if successful %}<div class="alert alert-success">Template was saved successfully.</div>{% endif %}
+    {% include 'template/template_edit_form.html' %}
+{% endblock %}

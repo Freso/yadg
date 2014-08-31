@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title%}User: {{ user_obj.username }} – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block userpage_li_tags %}{% if user == user_obj %} class="active"{% endif %}{% endblock %}
+
+{% load subscribedto %}
+{% load templatevisible %}
+{% load addforms %}
+
+{% block content%}
+    <div class="page-header">
+        <h1>{{ user_obj.username }}{% if user == user_obj %} <small>(You)</small>{% endif %}</h1>
+    </div>
+
+    {% with is_subscribed_to=request.user|subscribedto:user_obj %}
+        {% if user.pk != user_obj.pk %}
+            {% if not is_subscribed_to %}
+                {% with subscribe_form=user_obj|subscribe_form %}
+                    {% include 'user/subscribe_form.html' with sub_user=user_obj %}
+                {% endwith %}
+            {% else %}
+                {% include 'user/unsubscribe_button.html' with unsub_user=user_obj %}
+            {% endif %}
+        {% endif %}
+
+        <h2>General information</h2>
+        <dl>
+            <dt>Number of subscribers:</dt>
+            <dd>{{ num_subscribers }}</dd>
+
+            <dt>Number of templates:</dt>
+            <dd>{{ num_templates }}</dd>
+
+            <dt>Number of public templates:</dt>
+            <dd>{{ num_public_templates }}{% if num_templates > 0 %} ({{ public_percent }}%){% endif %}</dd>
+
+            {% if user == user_obj %}
+                <dt>API token:</dt>
+                {% if token %}
+                <dd>{{ token }} (<a href="{% url 'api_token' %}">Create new API token</a>)</dd>
+                {% else %}
+                <dd><a href="{% url 'api_token' %}">Create API token</a></dd>
+                {% endif %}
+            {% endif %}
+        </dl>
+
+        <h2>Templates</h2>
+        {% with templates=user_obj.template_set.all|getvisiblefor:user|dictsort:"name.lower" %}
+            {% if templates %}
+                {% include 'template/template_overview_table.html' %}
+            {% else %}
+                <p>This user does not have any public templates.</p>
+            {% endif %}
+        {% endwith %}
+    {% endwith %}
+{% endblock %}

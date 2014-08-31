@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title%}My templates – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block templatelist_li_tags %} class="active"{% endblock %}
+
+{% block additionalHeaders %}
+    <style>
+        tr td:first-child, tr td:last-child {
+            width: .1em;
+        }
+
+        tr td:first-child {
+            text-align: center;
+        }
+
+         tr td:last-child {
+            white-space: nowrap;
+            text-align: right;
+        }
+    </style>
+{% endblock %}
+
+{% if is_paginated %}{% load paginator %}{% endif %}
+{% load shortcuts %}
+
+{% block content%}
+    <div class="page-header">
+        <h1>My templates</h1>
+    </div>
+    {% if templates %}
+        {% if is_paginated %}{% paginator 2 %}{% endif %}
+        <form action="{% url 'template_delete' %}" method="get">
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th><button type="submit" class="btn">Delete</button></th>
+                    <th>Template name</th>
+                    <th>Utility</th>
+                    <th>Public</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for template in templates|dictsort:"name.lower" %}
+                    <tr>
+                        <td>{% if not template.is_default %}<input type="checkbox" name="to_delete" value="{{ template.pk }}"/>{% endif %}</td>
+                        <td><a href="{% url 'template_edit' template.pk %}">{{ template.name }}</a></td>
+                        <td>{{ template.is_utility|yesnoimg }}</td>
+                        <td>{{ template.is_public|yesnoimg }}</td>
+                        <td>
+                            {% if not template.is_default %}<a href="{% url 'template_delete' %}?to_delete={{ template.pk }}" title="Delete this template"><i class="icon-remove-sign"></i><span class="hide">Delete</span></a>{% endif %}
+                            <a href="{% url 'scratchpad_index' %}?template={{ template.pk }}" title="View this template in the scratchpad"><i class="icon-eye-open"></i><span class="hide">Scratchpad</span></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </form>
+        <a class="btn btn-primary" href="{% url 'template_add' %}">Create new template</a>
+        {% if is_paginated %}{% paginator 2 %}{% endif %}
+    {% else %}
+        <div class="alert alert-info">You don't have any templates yet. Why don't you try <a href="{% url 'template_add' %}"><strong>creating one</strong></a>?</div>
+    {% endif %}
+{% endblock %}

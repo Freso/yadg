@@ -1,0 +1,15 @@
+{% extends "contact/contact_base.html" %}
+
+{% block content%}
+    <form action="{% url 'contact' %}" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <fieldset xmlns="http://www.w3.org/1999/xhtml">
+        <legend>Contact</legend>
+        {% include 'bootstrap_form_fields.html' %}
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Send message</button>
+            <button class="btn" type="reset">Reset</button>
+        </div>
+    </fieldset>
+</form>
+{% endblock %}

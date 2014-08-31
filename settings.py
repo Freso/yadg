@@ -1,4 +1,5 @@
 # Django settings for whatdesc project.
+import secret
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -12,7 +13,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'E:/temp/what/bla.sql',                      # Or path to database file if using sqlite3.
+        'NAME': 'E:/temp/what/bla-js.sql',                      # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -84,7 +85,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '***REMOVED***'
+SECRET_KEY = secret.SECRET_KEY
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -101,7 +102,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'whatdesc.urls'
+ROOT_URLCONF = 'urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -120,8 +121,13 @@ INSTALLED_APPS = (
     "djcelery",
     'descgen',
     'djangorestframework',
+    'codemirror',
+    'contact',
+    'captcha',
+    'rest_framework',
+    'rest_framework.authtoken',
     # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 )
@@ -166,8 +172,8 @@ LOGGING = {
 
 #email settings
 EMAIL_HOST = '***REMOVED***'
-EMAIL_HOST_USER = '***REMOVED***'
-EMAIL_HOST_PASSWORD = '***REMOVED***'
+EMAIL_HOST_USER = secret.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
 SERVER_EMAIL = '***REMOVED***'
 
@@ -179,8 +185,8 @@ djcelery.setup_loader()
 #celery config
 BROKER_HOST = "localhost"
 BROKER_PORT = 5672
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
+BROKER_USER = secret.BROKER_USER
+BROKER_PASSWORD = secret.BROKER_PASSWORD
 BROKER_VHOST = "/"
 CELERY_RESULT_BACKEND = 'database'
 #CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
@@ -207,4 +213,40 @@ SESSION_FILE_PATH = 'E:/temp/what/'
 SESSION_COOKIE_HTTPONLY = False # make sure cookie is sent with ajax calls
 
 #set a custum csrf_failure view
-CSRF_FAILURE_VIEW = "descgen.views.csrf_failure"
+CSRF_FAILURE_VIEW = "descgen.views.misc.csrf_failure"
+
+CODEMIRROR_PATH = STATIC_URL + r"js/codemirror"
+
+#recaptcha settings
+RECAPTCHA_PUBLIC_KEY = secret.RECAPTCHA_PUBLIC_KEY
+RECAPTCHA_PRIVATE_KEY = secret.RECAPTCHA_PRIVATE_KEY
+RECAPTCHA_USE_SSL = True
+
+#contact form settings
+CONTACT_RECIPIENTS = map(lambda x: x[1], ADMINS)
+
+#config for auth
+LOGIN_REDIRECT_URL = 'index'
+LOGIN_URL = 'login'
+LOGOUT_URL = 'logout'
+
+#from 1.6 onward used instead of TransactionMiddleware
+ATOMIC_REQUESTS = True
+
+REST_FRAMEWORK = {
+    # Use hyperlinked styles by default.
+    # Only used if the `serializer_class` attribute is not set on a view.
+    'DEFAULT_MODEL_SERIALIZER_CLASS':
+        'rest_framework.serializers.HyperlinkedModelSerializer',
+
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny'
+    ],
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+
+    'PAGINATE_BY_PARAM': 'page_size',
+    'MAX_PAGINATE_BY': 100
+}
