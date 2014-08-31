@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from descgen.api.v2.serializers import ApiSerializeVisitor
+from .serializers import ApiSerializeVisitor
 from .serializers import TemplateSerializer, InputSerializer
 from ...models import Template
 from ...mixins import CreateTaskMixin, GetTemplateMixin, SerializeResultMixin
