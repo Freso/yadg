@@ -1,6 +1,6 @@
-{% load url from future %}{% load addforms %}{% add_input_form as INPUT_FORM %}<form action="{% url 'index' %}" method="get" class="form-inline well">
-  {{ input_form.input.label_tag|default:INPUT_FORM.input.label_tag }} {{ input_form.input|default:INPUT_FORM.input }}
-  {{ input_form.scraper.label_tag|default:INPUT_FORM.scraper.label_tag }}
-  {{ input_form.scraper|default:INPUT_FORM.scraper }}
+{% load addforms %}{% if not input_form %}{% add_input_form as input_form %}{% endif %}<form action="{% url 'index' %}" method="get" class="form-inline well">
+  {{ input_form.input.label_tag }} {{ input_form.input }}
+  {{ input_form.scraper.label_tag }}
+  {{ input_form.scraper }}
   <button type="submit" class="btn btn-primary" id="submit">Fetch</button>
 </form>

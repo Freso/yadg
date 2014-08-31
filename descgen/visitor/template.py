@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from .base import Visitor
-from ..forms import InputForm, FormatForm
+from ..forms import InputForm
 from ..formatter import Formatter
-from ..mixins import GetFormatMixin, CreateTaskMixin
+from ..mixins import GetFormatMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin
 
 from django.shortcuts import render
 
 
-class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
+class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin):
 
     def __init__(self, request, additional_data, result_id):
         super(TemplateVisitor, self).__init__()
@@ -24,22 +24,19 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin):
         self.input_form = InputForm(initial=self.additional_data)
 
     def visit_NotFoundResult(self, result):
-        return render(self.request, 'result_id_not_found.html', {'input_form': self.input_form})
+        return render(self.request, 'result/result_id_not_found.html', {'input_form': self.input_form})
 
     def visit_ListResult(self, result):
-        return render(self.request, 'result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
+        return render(self.request, 'result/result_list.html', {'result': result, 'additional_data': self.additional_data, 'input_form': self.input_form})
 
     def visit_ReleaseResult(self, result):
-        form = FormatForm(self.request.GET)
-        if form.is_valid():
-            format = form.cleaned_data['description_format']
-        else:
-            format = None
+        template, form = self.get_template_and_form()
 
-        format = self.get_valid_format(format)
-        release_title = self.formatter.title_from_ReleaseResult(release_result=result)
-        description = self.formatter.description_from_ReleaseResult(release_result=result, format=format)
+        release_title = self.get_release_title(release_result=result)
 
-        format_form = FormatForm(initial={'description_format': format})
+        dependencies = self.get_all_dependencies(template, prefetch_owner=True)
 
-        return render(self.request, 'result.html',{'description': description, 'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': format_form, 'format': format, 'input_form': self.input_form})
+        data = self.serialize_to_json(result)
+
+        return render(self.request, 'result/result.html',{'result_id': self.result_id, 'release_title':release_title, 'additional_data': self.additional_data, 'format_form': form, 'input_form': self.input_form,
+                                                   'json_data': data, 'template':template, 'dependencies':dependencies})

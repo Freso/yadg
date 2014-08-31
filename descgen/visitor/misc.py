@@ -134,3 +134,125 @@ class SerializeVisitor(Visitor):
             code.append(u'%s.append_album_art(album_art)' % self.var_name)
             code.append(u'')
         return u'\n'.join(code)
+
+
+class JSONSerializeVisitor(Visitor):
+
+    RESULT_TYPE_NAME = u'type'
+
+    ALBUM_ART_TYPE_TRANSLATION = {
+        ReleaseResult.AlbumArtTypes.BACK: u'back',
+        ReleaseResult.AlbumArtTypes.DISC: u'disc',
+        ReleaseResult.AlbumArtTypes.FRONT: u'front',
+        ReleaseResult.AlbumArtTypes.INLET: u'inlet'
+    }
+
+    ARTIST_TYPE_TRANSLATION = {
+        ReleaseResult.ArtistTypes.MAIN: u'main',
+        ReleaseResult.ArtistTypes.FEATURING: u'guest',
+        ReleaseResult.ArtistTypes.REMIXER: u'remixer'
+    }
+
+    def _unicode_or_none(self, str):
+        if str is not None:
+            return unicode(str)
+        else:
+            return None
+
+    def visit_NotFoundResult(self, result):
+        out = {
+            self.RESULT_TYPE_NAME: u'NotFoundResult'
+        }
+        return out
+
+    def visit_ListItem(self, item):
+        out = {
+            u'name':  self._unicode_or_none(item.get_name()),
+            u'info':  self._unicode_or_none(item.get_info()),
+            u'query': self._unicode_or_none(item.get_query()),
+            u'url':   self._unicode_or_none(item.get_url())
+        }
+        return out
+
+    def visit_ListResult(self, result):
+        out = {
+            self.RESULT_TYPE_NAME: u'ListResult',
+
+            u'items': map(lambda x: self.visit(x), result.get_items())
+        }
+        return out
+
+    def visit_AlbumArt(self, albumart):
+        out = {
+            u'url':    self._unicode_or_none(albumart.get_url()),
+            u'type':   self.ALBUM_ART_TYPE_TRANSLATION[albumart.get_type()] if albumart.get_type() else None,
+            u'width':  albumart.get_width(),
+            u'height': albumart.get_height(),
+            u'hint':   self._unicode_or_none(albumart.get_hint())
+        }
+        return out
+
+    def visit_ReleaseEvent(self, rel_event):
+        out = {
+            u'date':    self._unicode_or_none(rel_event.get_date()),
+            u'country': self._unicode_or_none(rel_event.get_country())
+        }
+        return out
+
+    def visit_LabelId(self, labelId):
+        out = {
+            u'label':        self._unicode_or_none(labelId.get_label()),
+            u'catalogueNrs': map(lambda x: self._unicode_or_none(x), labelId.get_catalogue_nrs())
+        }
+        return out
+
+    def visit_Artist(self, artist):
+        out = {
+            u'name':      self._unicode_or_none(artist.get_name()),
+            u'types':     map(lambda x: self.ARTIST_TYPE_TRANSLATION[x], artist.get_types()),
+            u'isVarious': artist.is_various()
+        }
+        return out
+
+    def visit_Track(self, track):
+        out = {
+            u'number':  self._unicode_or_none(track.get_number()),
+            u'artists': map(lambda x: self.visit(x), track.get_artists()),
+            u'title':   self._unicode_or_none(track.get_title()),
+            u'length':  track.get_length()
+        }
+        return out
+
+    def visit_Disc(self, disc):
+        out = {
+            u'number': disc.get_number(),
+            u'title':  disc.get_title(),
+            u'tracks': map(lambda x: self.visit(x), disc.get_tracks())
+        }
+        return out
+
+    def visit_ReleaseResult(self, result):
+        out = {
+            self.RESULT_TYPE_NAME: u'ReleaseResult',
+
+            u'releaseEvents': map(lambda x: self.visit(x), result.get_release_events()),
+            u'format':        self._unicode_or_none(result.get_format()),
+            u'labelIds':      map(lambda x: self.visit(x), result.get_label_ids()),
+            u'title':         self._unicode_or_none(result.get_title()),
+            u'artists':       map(lambda x: self.visit(x), result.get_release_artists()),
+            u'genres':        map(lambda x: self._unicode_or_none(x), result.get_genres()),
+            u'styles':        map(lambda x: self._unicode_or_none(x), result.get_styles()),
+            u'url':           self._unicode_or_none(result.get_url()),
+            u'discs':         map(lambda x: self.visit(x), result.get_discs()),
+            u'albumArts':     map(lambda x: self.visit(x), result.get_album_arts())
+        }
+        return out
+
+
+class CheckReleaseResultVisitor(Visitor):
+
+    def visit_ReleaseResult(self, result):
+        return True
+
+    def generic_visit(self, obj, *args, **kwargs):
+        return False

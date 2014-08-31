@@ -1,0 +1,13 @@
+<div class="pagination pagination-centered">
+    <ul>
+    {% if page_obj.has_previous %}<li><a href="{{ base_url }}page={{ page_obj.previous_page_number }}">←</a></li>{% endif %}
+    {% if show_first %}<li><a href="{{ base_url }}page=1">1</a></li>
+    <li class="disabled"><a href="#">...</a></li>{% endif %}
+    {% for num in page_numbers %}
+    {% if page_obj.number == num %}<li class="active"><a href="#">{{ num }}</a></li>{% else %}<li><a href="{{ base_url }}page={{ num }}">{{ num }}</a></li>{% endif %}
+    {% endfor %}
+    {% if show_last %}<li class="disabled"><a href="#">...</a></li>
+    <li><a href="{{ base_url }}page={{ paginator.num_pages }}">{{ paginator.num_pages }}</a></li>{% endif %}
+    {% if page_obj.has_next %}<li><a href="{{ base_url }}page={{ page_obj.next_page_number }}">→</a></li>{% endif %}
+    </ul>
+</div>

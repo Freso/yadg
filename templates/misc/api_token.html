@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title%}Create API token – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block content %}
+    {% if created %}
+        <div class="alert alert-info">A new API token was created successfully.</div>
+    {% endif %}
+
+    <div class="page-header">
+        <h1>Create API token</h1>
+    </div>
+
+    <dl>
+        <dt>Current API token:</dt>
+        <dd>{{ token|default:"You currently have no API token" }}</dd>
+    </dl>
+
+     <form action="{% url 'api_token' %}" method="post" id="api_token_form">
+        {% csrf_token %}
+        {{ form }}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create new API token</button>
+            <a href="{% url 'user_detail' user.pk %}">Back to user page</a>
+        </div>
+    </form>
+{% endblock %}

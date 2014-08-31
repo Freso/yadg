@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title%}Register – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block register_li_tags %} class="active"{% endblock %}
+
+{% block content%}
+    <form action="{% url 'register' %}" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <fieldset xmlns="http://www.w3.org/1999/xhtml">
+        <legend>Register new account</legend>
+        {% include 'bootstrap_form_fields.html' %}
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Register</button>
+        </div>
+    </fieldset>
+</form>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "template/template_edit.html" %}
+
+{% block title%}{% if template_id %}Edit{% else %}Add{% endif %} template – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block content%}
+    <div class="alert alert-danger">
+        <strong>Warning!</strong> Your changes from the scratchpad have not yet been saved. If you want to do so click the button at the bottom.
+    </div>
+    {% if template_id %}
+        {% include 'template/template_edit_form.html' %}
+    {% else %}
+        {% include 'template/template_add_form.html' %}
+    {% endif %}
+{% endblock %}

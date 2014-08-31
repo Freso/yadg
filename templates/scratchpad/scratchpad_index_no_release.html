@@ -1,0 +1,13 @@
+{% extends "base_with_form.html" %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block scratchpad_li_tags %} class="active"{% endblock %}
+
+{% block title%}Error – {% endblock %}
+
+{% block subcontent %}
+<div class="alert alert-danger">
+    <strong>Error!</strong> There is no release in the database that could be used in the scratchpad currently. Just search for one via the input box above and try again.
+</div>
+{% endblock %}

@@ -17,6 +17,8 @@ from djcelery.models import TaskMeta
 
 from ..visitor.api import APIVisitorV1
 
+import urllib
+
 
 class GETFormResource(FormResource):
     """
@@ -60,9 +62,9 @@ class Root(View):
     """
 
     def get(self, request):
-        return [{'name': 'Format List', 'url': reverse('api_v1_formatlist')},
-                {'name': 'Scraper List', 'url': reverse('api_v1_scraperlist')},
-                {'name': 'Make Query', 'url': reverse('api_v1_makequery')},
+        return [{'name': 'Format List', 'url': urllib.unquote(reverse('api_v1_formatlist'))},
+                {'name': 'Scraper List', 'url': urllib.unquote(reverse('api_v1_scraperlist'))},
+                {'name': 'Make Query', 'url': urllib.unquote(reverse('api_v1_makequery'))},
                 ]
 
 
@@ -136,7 +138,7 @@ class MakeQuery(View, CreateTaskMixin):
         task = self.create_task(input=input, scraper=scraper)
         
         result = {
-            'result_url': reverse('api_v1_result',args=[task.task_id]),
+            'result_url': urllib.unquote(reverse('api_v1_result',args=[task.task_id])),
             'result_id': task.task_id
         }
         
@@ -144,7 +146,7 @@ class MakeQuery(View, CreateTaskMixin):
     
     def post(self, request):
         params = urlencode(self.CONTENT)
-        return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_makequery')+'?'+params})
+        return Response(status.HTTP_303_SEE_OTHER, headers={'Location': urllib.unquote(reverse('api_v1_makequery'))+'?'+params})
 
 
 class Result(View, GetFormatMixin):
@@ -207,4 +209,4 @@ class Result(View, GetFormatMixin):
             
     def post(self, request, id):
         params = urlencode(self.CONTENT)
-        return Response(status.HTTP_303_SEE_OTHER, headers={'Location':reverse('api_v1_result', args=(id,))+'?'+params})
+        return Response(status.HTTP_303_SEE_OTHER, headers={'Location': urllib.unquote(reverse('api_v1_result', args=(id,)))+'?'+params})

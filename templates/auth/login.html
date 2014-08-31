@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title%}Login – {% endblock %}
+
+{% block home_li_tags %}{% endblock %}
+
+{% block login_li_tags %} class="active"{% endblock %}
+
+{% block content%}
+    {% if form.errors %}
+        <div class="alert alert-error">Please enter a correct username and password. Note that both fields are case-sensitive.</div>
+    {% endif %}
+    <form action="{% url 'login' %}" method="post" class="form-horizontal">
+    {% csrf_token %}
+    <fieldset xmlns="http://www.w3.org/1999/xhtml">
+        <legend>Login</legend>
+        {% include 'bootstrap_form_fields.html' %}
+
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}" />
+        {% endif %}
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Login</button>
+        </div>
+    </fieldset>
+</form>
+{% endblock %}

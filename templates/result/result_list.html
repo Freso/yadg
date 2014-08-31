@@ -1,4 +1,4 @@
-{% extends "base_with_form.html" %}{% load url from future %}
+{% extends "base_with_form.html" %}
 
 {% block title %}Search result – {% endblock %}
 
@@ -12,4 +12,4 @@
     <div class="alert alert-error">Sorry, there were no matches.</div>
     {% endif %}
 
-    {% include "perma_link.html" %}{% endblock %}
+    {% include "result/perma_link.html" %}{% endblock %}
