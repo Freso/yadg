@@ -248,3 +248,6 @@ class ScraperFactory(StandardFactory):
 
     scraper_classes = [ReleaseScraper, DiscographyScraper]
     search_scraper = DiscographyScraper
+
+    def is_searchable(self):
+        return False
