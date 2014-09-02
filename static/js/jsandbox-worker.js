@@ -53,13 +53,9 @@
 			response.error = e.message;
 		}
 
-		try {
-			delete self.input;
+		delete self.input;
+		if (self.onmessage) {
 			delete self.onmessage; // in case the code defined it
-		} catch (e) {
-			// in strict mode 'delete' throws an exception if it cannot delete the property,
-			// this occurs in Safari (at least <= 5.1.7), so just do nothing in this case and
-			// hope it will work anyway
 		}
 		
 		postMessage(response);
