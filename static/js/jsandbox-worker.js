@@ -39,7 +39,6 @@
 			
 			case "eval": // JSLint has something against indenting cases
 				response.results = globalEval(data);
-                if (response.results === 'parseError') {throw 'parseError'};
 				break;
 			case "exec":
 				importScripts("data:application/javascript," +
@@ -53,9 +52,15 @@
 		} catch (e) {
 			response.error = e.message;
 		}
-		
-		delete self.input;
-		delete self.onmessage; // in case the code defined it
+
+		try {
+			delete self.input;
+			delete self.onmessage; // in case the code defined it
+		} catch (e) {
+			// in strict mode 'delete' throws an exception if it cannot delete the property,
+			// this occurs in Safari (at least <= 5.1.7), so just do nothing in this case and
+			// hope it will work anyway
+		}
 		
 		postMessage(response);
 	};

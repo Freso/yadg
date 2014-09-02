@@ -32,6 +32,7 @@ for scraper_key in sorted(_SCRAPERS):
     _SCRAPER_FACTORIES_SORTED.append({'factory': _SCRAPER_FACTORIES[scraper_key], 'name': scraper_key})
     has_release = True
     has_search = _SCRAPER_FACTORIES[scraper_key].has_search()
+    is_searchable = _SCRAPER_FACTORIES[scraper_key].is_searchable()
     readable_name = scraper.READABLE_NAME
     url = scraper.SCRAPER_URL
     if has_search:
@@ -42,7 +43,7 @@ for scraper_key in sorted(_SCRAPERS):
         'name': readable_name,
         'url': url,
         'release': has_release,
-        'searchable': has_search
+        'searchable': is_searchable
     }
     if hasattr(scraper, 'NOTES'):
         scraper_item['notes'] = scraper.NOTES
