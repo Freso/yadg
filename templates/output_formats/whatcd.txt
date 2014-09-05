@@ -1,2 +1,0 @@
-{% include "output_formats/gazelle-generic-header.txt" with gazelle_url="https://what.cd" %}
-{% include "output_formats/gazelle-generic-tracks.txt" %}

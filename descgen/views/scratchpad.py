@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import FormView, View, TemplateView
 from djcelery.models import TaskMeta
 from descgen.forms import ScratchpadForm, TemplateForm
-from descgen.mixins import GetTemplateMixin, GetFormatMixin, SerializeResultMixin, CheckResultMixin
+from descgen.mixins import GetTemplateMixin, GetReleaseTitleMixin, SerializeResultMixin, CheckResultMixin
 from descgen.models import Template
 
 
@@ -97,7 +97,7 @@ class ScratchpadIndexView(View, CheckResultMixin):
         return super(ScratchpadIndexView, self).dispatch(request, *args, **kwargs)
 
 
-class ScratchpadView(TemplateView, GetTemplateMixin, GetFormatMixin, SerializeResultMixin, CheckResultMixin):
+class ScratchpadView(TemplateView, GetTemplateMixin, GetReleaseTitleMixin, SerializeResultMixin, CheckResultMixin):
     template_name = 'scratchpad/scratchpad.html'
 
     def get_context_data(self, id):
