@@ -25,7 +25,12 @@
 {% if not user.is_authenticated %}
     <div class="row">
         <div class="span9">{% include "result/perma_link.html" %}</div>
-        <div class="span3"><div class="alert alert-info"><strong>Hint:</strong> You can create your own templates after <strong><a href="{% url 'register' %}">registering an account</a></strong>.</div></div>
+        <div class="span3"><div class="alert alert-info"><strong>Heads up!</strong> There are quite a few advantages to <strong><a href="{% url 'register' %}">registering an account</a></strong>. Among other things you gain the ability to
+            <ul>
+                <li>create your own templates</li>
+                <li>choose the template that is selected by default</li>
+            </ul>
+        </div></div>
     </div>
 {% else %}
     {% include "result/perma_link.html" %}
