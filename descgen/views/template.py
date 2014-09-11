@@ -77,7 +77,7 @@ class TemplateCopyView(TemplateView):
 
     def get_context_data(self, **kwargs):
         try:
-            template = Template.objects.get(pk=kwargs['id'])
+            template = Template.objects.get(pk=int(kwargs['id']))
         except Template.DoesNotExist:
             raise Http404
         # check if the user has access to the requested template
