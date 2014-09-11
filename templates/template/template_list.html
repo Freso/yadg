@@ -51,6 +51,7 @@
                         <td>{{ template.is_utility|yesnoimg }}</td>
                         <td>{{ template.is_public|yesnoimg }}</td>
                         <td>
+                            <a href="{% url 'template_copy' template.pk %}" title="Create a new template from this template"><i class="icon-plus"></i><span class="hide">Copy</span></a>
                             {% if not template.is_default %}<a href="{% url 'template_delete' %}?to_delete={{ template.pk }}" title="Delete this template"><i class="icon-remove-sign"></i><span class="hide">Delete</span></a>{% endif %}
                             <a href="{% url 'scratchpad_index' %}?template={{ template.pk }}" title="View this template in the scratchpad"><i class="icon-eye-open"></i><span class="hide">Scratchpad</span></a>
                         </td>
