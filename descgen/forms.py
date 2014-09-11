@@ -47,7 +47,7 @@ class FormatForm(forms.Form):
         super(FormatForm, self).__init__(*args, **kwargs)
         self.fields['template'] = forms.TypedChoiceField(coerce=int, label='Template:',
                                                     choices=map(lambda x: (x.pk, unicode(x)),
-                                                                Template.templates_for_user(user, with_utility=with_utility, sort_by_name=True)),
+                                                                Template.templates_for_user(user, with_utility=with_utility, sort_by_name=True, prefetch_owner=True)),
                                                     widget=forms.Select(attrs={'class': 'auto_width'}), initial=default_template)
 
 
@@ -70,9 +70,7 @@ class SettingsAdminForm(forms.ModelForm):
         if 'prefetch_owner' in kwargs:
             del kwargs['prefetch_owner']
         super(SettingsAdminForm, self).__init__(*args, **kwargs)
-        t = Template.templates_for_user(self.instance.user if self.instance else None, with_utility=False, sort_by_name=True)
-        if prefetch_owner:
-            t = t.select_related('owner')
+        t = Template.templates_for_user(self.instance.user if self.instance else None, with_utility=False, sort_by_name=True, prefetch_owner=prefetch_owner)
         self.fields['default_template'].queryset = t
 
     def clean_user(self):
@@ -160,9 +158,7 @@ class TemplateAdminForm(forms.ModelForm):
             except User.DoesNotExist:
                 pass
             else:
-                t = Template.templates_for_user(u, sort_by_name=True)
-                if prefetch_owner:
-                    t = t.select_related('owner')
+                t = Template.templates_for_user(u, sort_by_name=True, prefetch_owner=prefetch_owner)
         self.fields['dependencies'].queryset = t
 
     def clean(self):
