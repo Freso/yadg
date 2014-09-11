@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse_lazy
 
 from .views.misc import IndexView, ResultView, ScrapersView, SettingsView, ApiTokenView
 from .views.scratchpad import ScratchpadIndexView, ScratchpadView, TemplateFromScratchpadView
-from .views.template import TemplateAddView, TemplateEditView, TemplateDeleteView, TemplateListView
+from .views.template import TemplateAddView, TemplateEditView, TemplateDeleteView, TemplateListView, TemplateCopyView
 from .views.user import SubscribeView, SubscriptionsView, UnsubscribeView, UserDetailView, UserListView
 from .views.auth import RegisterView
 
@@ -27,6 +27,7 @@ urlpatterns = patterns('',
 
     url(r'^templates/$', TemplateListView.as_view(), name='template_list'),
     url(r'^templates/add$', TemplateAddView.as_view(), name='template_add'),
+    url(r'^templates/copy/(?P<id>[\d]+)$', TemplateCopyView.as_view(), name='template_copy'),
     url(r'^templates/delete$', TemplateDeleteView.as_view(), name='template_delete'),
     url(r'^templates/scratchpad(?:/(?P<id>[\d]+))?$', TemplateFromScratchpadView.as_view(), name='template_from_scratchpad'),
     url(r'^templates/(?P<id>[\d]+)$', TemplateEditView.as_view(), name='template_edit'),

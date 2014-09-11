@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import ListView, View, FormView
+from django.views.generic import ListView, View, FormView, TemplateView
 from django.views.generic.base import TemplateResponseMixin
 from descgen.forms import TemplateDeleteForm, TemplateForm
 from descgen.models import Template
@@ -70,6 +70,26 @@ class TemplateAddView(FormView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(TemplateAddView, self).dispatch(request, *args, **kwargs)
+
+
+class TemplateCopyView(TemplateView):
+    template_name = 'template/template_add.html'
+
+    def get_context_data(self, **kwargs):
+        try:
+            template = Template.objects.get(pk=kwargs['id'])
+        except Template.DoesNotExist:
+            raise Http404
+        # check if the user has access to the requested template
+        if not template in Template.templates_for_user(self.request.user, with_utility=True):
+            raise Http404
+        template.name += u' (copy)'
+        form = TemplateForm(instance=template)
+        return super(TemplateCopyView, self).get_context_data(form=form, **kwargs)
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(TemplateCopyView, self).dispatch(request, *args, **kwargs)
 
 
 class TemplateEditView(FormView, GetTemplateMixin):
