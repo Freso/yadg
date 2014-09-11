@@ -12,6 +12,9 @@ from descgen.mixins import GetTemplateMixin, GetFormatMixin, SerializeResultMixi
 from descgen.models import Template
 
 
+SESSION_KEY_LAST_SCRATCHPAD_RELEASE = 'descgen_scratchpad_last_release'
+
+
 class TemplateFromScratchpadView(FormView, GetTemplateMixin):
     form_class = ScratchpadForm
     template_name = 'scratchpad/template_from_scratchpad.html'
@@ -53,26 +56,32 @@ class TemplateFromScratchpadView(FormView, GetTemplateMixin):
 class ScratchpadIndexView(View, CheckResultMixin):
 
     def get(self, request):
-        results = TaskMeta.objects.filter(status__exact='SUCCESS').order_by('id')
+        # first try to get the id of the last used task from the session
+        task_id = self.request.session.get(SESSION_KEY_LAST_SCRATCHPAD_RELEASE, None)
 
-        task_id = None
-        i = 0
-        # todo: maybe be a bit smarter about this and don't loop over all successful tasks
-        while task_id is None and i < len(results):
-            task = results[i]
-            # the task could be a cleanup task that has no result, so make sure we don't crash in this case by checking
-            # if result is there
-            if task.result is not None:
-                try:
-                    temp = task.result[0]
-                except (TypeError, IndexError):
-                    # if result is unsubscriptable (array access [] can't be used) a TypeError exception will be raised
-                    # if element 0 does not exist an IndexError will be raised
-                    pass
-                else:
-                    if self.is_release_result(temp):
-                        task_id = task.task_id
-            i += 1
+        if task_id is None or not TaskMeta.objects.filter(task_id=task_id).exists():
+            # there was no valid task id in the session so we brute force to find one
+
+            results = TaskMeta.objects.filter(status__exact='SUCCESS').order_by('id')
+
+            task_id = None
+            i = 0
+            # todo: maybe be a bit smarter about this and don't loop over all successful tasks
+            while task_id is None and i < len(results):
+                task = results[i]
+                # the task could be a cleanup task that has no result, so make sure we don't crash in this case by checking
+                # if result is there
+                if task.result is not None:
+                    try:
+                        temp = task.result[0]
+                    except (TypeError, IndexError):
+                        # if result is unsubscriptable (array access [] can't be used) a TypeError exception will be raised
+                        # if element 0 does not exist an IndexError will be raised
+                        pass
+                    else:
+                        if self.is_release_result(temp):
+                            task_id = task.task_id
+                i += 1
 
         if task_id is not None:
             redirect_url = reverse('scratchpad', args=(task_id,))
@@ -102,6 +111,10 @@ class ScratchpadView(TemplateView, GetTemplateMixin, GetFormatMixin, SerializeRe
 
         if not self.is_release_result(task_result):
             raise Http404
+
+        # save the current task id in the session if it is different so that it may be used by the ScratchpadIndexView
+        if self.request.session.get(SESSION_KEY_LAST_SCRATCHPAD_RELEASE, None) != id:
+            self.request.session[SESSION_KEY_LAST_SCRATCHPAD_RELEASE] = id
 
         data = {
             'json_data': self.serialize_to_json(task_result),
