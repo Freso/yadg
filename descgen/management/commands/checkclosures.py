@@ -14,8 +14,8 @@ class Command(BaseCommand):
         count = Template.objects.all().count()
         i = 0
         last = 0
+        clean = True
         for template in Template.objects.all():
-            clean = True
             cached = template.cached_dependencies_set()
             actual = template.dependencies_set()
 
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write('    <empty>\n')
                 self.stdout.write('\n\n')
-                clean =False
+                clean = False
 
             i += 1
             percent = (i / float(count))*100
