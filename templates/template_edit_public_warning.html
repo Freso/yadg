@@ -1,0 +1,10 @@
+{% if template and not template.is_default and template.is_public and template.depending_templates_requiring_public.exists %}
+    <div class="alert alert-warning">
+        <strong>Warning!</strong> You are editing a public template which has at least one other template depending on it that is either
+        <ul>
+            <li>owned by another user or</li>
+            <li>owned by you and public at the same time.</li>
+        </ul>
+        Making this template private will <strong>remove all these dependencies irreversibly</strong>. Dependencies from non-public templates owned by you will not be affected.
+    </div>
+{% endif %}

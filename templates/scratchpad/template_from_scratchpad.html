@@ -8,6 +8,7 @@
     <div class="alert alert-danger">
         <strong>Warning!</strong> Your changes from the scratchpad have not yet been saved. If you want to do so click the button at the bottom.
     </div>
+    {% include "template_edit_public_warning.html" %}
     {% if template_id %}
         {% include 'template/template_edit_form.html' %}
     {% else %}

@@ -80,6 +80,9 @@ class Template(models.Model):
             height += aggregate['max_height']
         return height
 
+    def depending_templates_requiring_public(self):
+        return self.depending_set.filter(~Q(owner_id__exact=self.owner_id) | Q(owner_id__exact=self.owner_id, is_public__exact=True))
+
     @staticmethod
     def circular_checker(parent, child):
         """
@@ -285,8 +288,8 @@ def template_saved(sender, **kwargs):
         DependencyClosure.objects.create(ancestor_id=instance.pk, descendant_id=instance.pk, count=1, path_length=0)
     elif not instance.is_visible:
         # the template might have been public before, so remove all dependencies that are not from templates
-        # owned by this user
-        dependant_templates = instance.depending_set.filter(~Q(owner_id__exact=instance.owner.pk))
+        # owned by this user and from public templates that are owned by the user
+        dependant_templates = instance.depending_templates_requiring_public()
         for template in dependant_templates:
             # remove the modified instance from each template that does not belong to the owner
             template.dependencies.remove(instance)
