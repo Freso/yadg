@@ -101,6 +101,7 @@ class TemplateEditView(FormView, GetTemplateMixin):
         ctx = super(TemplateEditView, self).get_context_data(**kwargs)
         ctx['template_id'] = self.kwargs['id']
         if self.template is not None:
+            ctx['template'] = self.template
             ctx['immediate_dependencies'] = self.get_immediate_dependencies(self.template, prefetch_owner=True)
         return ctx
 

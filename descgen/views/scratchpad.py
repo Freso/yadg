@@ -43,6 +43,7 @@ class TemplateFromScratchpadView(FormView, GetTemplateMixin):
             ctx['immediate_dependencies'] = immediate_dependencies
         if id is not None:
             ctx['template_id'] = id
+            ctx['template'] = t
         return self.render_to_response(ctx)
 
     def form_invalid(self, form):
