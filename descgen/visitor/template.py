@@ -3,13 +3,12 @@
 
 from .base import Visitor
 from ..forms import InputForm
-from ..formatter import Formatter
-from ..mixins import GetFormatMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin
+from ..mixins import GetReleaseTitleMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin
 
 from django.shortcuts import render
 
 
-class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin):
+class TemplateVisitor(Visitor, GetReleaseTitleMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin):
 
     def __init__(self, request, additional_data, result_id):
         super(TemplateVisitor, self).__init__()
@@ -17,7 +16,6 @@ class TemplateVisitor(Visitor, GetFormatMixin, CreateTaskMixin, GetTemplateMixin
         self.request = request
         self.additional_data = additional_data
         self.result_id = result_id
-        self.formatter = Formatter()
 
         if not self.additional_data['scraper']:
             self.additional_data['scraper'] = self.get_valid_scraper(None)

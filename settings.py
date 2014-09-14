@@ -120,7 +120,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     "djcelery",
     'descgen',
-    'djangorestframework',
     'codemirror',
     'contact',
     'captcha',
