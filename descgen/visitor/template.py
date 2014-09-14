@@ -3,7 +3,6 @@
 
 from .base import Visitor
 from ..forms import InputForm
-from ..formatter import Formatter
 from ..mixins import GetReleaseTitleMixin, CreateTaskMixin, GetTemplateMixin, SerializeResultMixin
 
 from django.shortcuts import render
@@ -17,7 +16,6 @@ class TemplateVisitor(Visitor, GetReleaseTitleMixin, CreateTaskMixin, GetTemplat
         self.request = request
         self.additional_data = additional_data
         self.result_id = result_id
-        self.formatter = Formatter()
 
         if not self.additional_data['scraper']:
             self.additional_data['scraper'] = self.get_valid_scraper(None)
