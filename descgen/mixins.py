@@ -1,5 +1,5 @@
 from .scraper.factory import ScraperFactory
-from .formatter import Formatter, FORMAT_DEFAULT
+from .formatter import Formatter
 from .tasks import get_result
 from .models import Settings, Template
 from .forms import FormatForm
@@ -110,16 +110,9 @@ class GetTemplateMixin(GetSettingsMixin):
         return dependencies
 
 
-class GetFormatMixin(object):
+class GetReleaseTitleMixin(object):
     
     formatter = Formatter()
-
-    def get_valid_format(self, format):
-        if not format:
-            format = self.request.session.get("default_format", FORMAT_DEFAULT)
-        format = self.formatter.get_valid_format(format)
-        
-        return format
 
     def get_release_title(self, release_result):
         return self.formatter.title_from_ReleaseResult(release_result=release_result)

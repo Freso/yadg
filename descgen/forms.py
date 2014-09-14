@@ -1,6 +1,5 @@
 from django import forms
 from descgen.scraper.factory import SCRAPER_CHOICES,SCRAPER_DEFAULT
-from descgen.formatter import FORMAT_CHOICES,FORMAT_DEFAULT
 from .models import Template, Subscription, Settings
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -49,11 +48,6 @@ class FormatForm(forms.Form):
                                                     choices=map(lambda x: (x.pk, unicode(x)),
                                                                 Template.templates_for_user(user, with_utility=with_utility, sort_by_name=True, prefetch_owner=True)),
                                                     widget=forms.Select(attrs={'class': 'auto_width'}), initial=default_template)
-
-
-class ResultForm(forms.Form):
-    description_format = forms.ChoiceField(required=False, label='Format:', choices=FORMAT_CHOICES, initial=FORMAT_DEFAULT)
-    include_raw_data = forms.BooleanField(required=False, label='Include raw data:', initial=False)
 
 
 class ApiTokenForm(forms.Form):
