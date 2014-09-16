@@ -20,7 +20,7 @@ class TemplateFromScratchpadView(FormView, GetTemplateMixin):
     template_name = 'scratchpad/template_from_scratchpad.html'
 
     def get(self, request, *args, **kwargs):
-        return redirect(reverse('scratchpad_index'))
+        return redirect('scratchpad_index')
 
     def form_valid(self, form):
         template_code = form.cleaned_data['template_code']
@@ -47,7 +47,7 @@ class TemplateFromScratchpadView(FormView, GetTemplateMixin):
         return self.render_to_response(ctx)
 
     def form_invalid(self, form):
-        return redirect(reverse('scratchpad_index'))
+        return redirect('scratchpad_index')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
