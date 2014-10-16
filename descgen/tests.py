@@ -5196,7 +5196,7 @@ class MusicbrainzTest(TestCase):
         release_event.set_country('Japan')
         expected.append_release_event(release_event)
 
-        expected.set_format('CD + DVD, Album + Compilation')
+        expected.set_format('CD + DVD-Video, Album + Compilation')
 
         label_id = expected.create_label_id()
         label_id.set_label(u'MusicRay\u2019n')
@@ -5464,7 +5464,7 @@ class MusicbrainzTest(TestCase):
 
         track = disc.create_track()
         track.set_number(u'6')
-        track.set_title(u'\u30e2\u30b6\u30a4\u30af\u30ab\u30b1\u30e9 type2')
+        track.set_title(u'\u30e2\u30b6\u30a4\u30af\u30ab\u30b1\u30e9 type1')
         track.set_length(93)
         track_artist = expected.create_artist()
         track_artist.set_name(u'SunSet Swish')
