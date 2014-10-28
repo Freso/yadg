@@ -6824,7 +6824,7 @@ class MetalarchivesTest(TestCase):
         release_event.set_country(None)
         expected.append_release_event(release_event)
 
-        expected.set_format('Live album')
+        expected.set_format('Live album, 2CD')
 
         label_id = expected.create_label_id()
         label_id.set_label('Roadrunner Records')
