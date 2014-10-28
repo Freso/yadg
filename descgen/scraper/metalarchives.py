@@ -134,7 +134,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             columns = row.cssselect('td')
             if len(columns) == 1:
                 header = columns[0].text_content()
-                m = re.search('(?:Disc|CD) (\d+)', header)
+                m = re.search('(?:Disc|CD)(?:\s+)(\d+)', header)
                 if m:
                     disc_number = int(m.group(1))
             elif len(columns) == 4:
