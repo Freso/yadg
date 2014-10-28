@@ -8,6 +8,17 @@ from .scraper import audiojelly, beatport, discogs, itunes, junodownload, metala
 from .result import ReleaseResult, ListResult, NotFoundResult, Result
 
 
+def todict(obj):
+    if hasattr(obj, "__iter__"):
+        return [todict(v) for v in obj]
+    elif hasattr(obj, "__dict__"):
+        return dict([(key, todict(value))
+                     for key, value in obj.__dict__.iteritems()
+                     if not callable(value) and not key.startswith('_')])
+    else:
+        return obj
+
+
 class TestCase(TestCaseBase):
 
     maxDiff = None
@@ -21,13 +32,7 @@ class TestCase(TestCaseBase):
         self.assertTrue(issubclass(d1.__class__, Result), 'First argument is not a Result')
         self.assertTrue(issubclass(d2.__class__, Result), 'Second argument is not a Result')
 
-        if d1 != d2:
-            standardMsg = '%s != %s' % (repr(d1), repr(d2))
-            diff = ('\n' + '\n'.join(difflib.ndiff(
-                           repr(d1).splitlines(),
-                           repr(d2).splitlines())))
-            standardMsg = self._truncateMessage(standardMsg, diff)
-            self.fail(self._formatMessage(msg, standardMsg))
+        self.assertEqual(todict(d1), todict(d2), msg)
 
 
 class DiscogsTest(TestCase):
@@ -5191,7 +5196,7 @@ class MusicbrainzTest(TestCase):
         release_event.set_country('Japan')
         expected.append_release_event(release_event)
 
-        expected.set_format('CD + DVD, Album + Compilation')
+        expected.set_format('CD + DVD-Video, Album + Compilation')
 
         label_id = expected.create_label_id()
         label_id.set_label(u'MusicRay\u2019n')
@@ -5459,7 +5464,7 @@ class MusicbrainzTest(TestCase):
 
         track = disc.create_track()
         track.set_number(u'6')
-        track.set_title(u'\u30e2\u30b6\u30a4\u30af\u30ab\u30b1\u30e9 type2')
+        track.set_title(u'\u30e2\u30b6\u30a4\u30af\u30ab\u30b1\u30e9 type1')
         track.set_length(93)
         track_artist = expected.create_artist()
         track_artist.set_name(u'SunSet Swish')
@@ -6819,7 +6824,7 @@ class MetalarchivesTest(TestCase):
         release_event.set_country(None)
         expected.append_release_event(release_event)
 
-        expected.set_format('Live album')
+        expected.set_format('Live album, 2CD')
 
         label_id = expected.create_label_id()
         label_id.set_label('Roadrunner Records')

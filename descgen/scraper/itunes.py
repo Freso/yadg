@@ -159,7 +159,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin, Logger
                         track_artists.append(artist)
                 else:
                     artist = self.result.create_artist()
-                    artist.set_name(artist_string)
+                    artist.set_name(self.remove_whitespace(artist_string))
                     artist.append_type(self.result.ArtistTypes.MAIN)
                     track_artists.append(artist)
         return track_artists

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from django.contrib.auth.decorators import login_required
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
@@ -39,13 +38,13 @@ class TemplateDeleteView(View, TemplateResponseMixin):
             other_users_template_count = Template.dependencies.through.objects.filter(Q(to_template__in=t) & ~Q(from_template__owner_id__exact=self.request.user.pk)).values('from_template_id').distinct().count()
             return self.render_to_response({'to_delete': t, 'dependencies': d, 'other_users_template_count': other_users_template_count})
         else:
-            return redirect(reverse('template_list'))
+            return redirect('template_list')
 
     def post(self, request):
         form = self.form_class(request.POST, user=self.request.user)
         if form.is_valid():
             Template.objects.filter(id__in=form.cleaned_data['to_delete']).delete()
-            return redirect(reverse('template_list'))
+            return redirect('template_list')
         else:
             return self.render_to_response({'form': form})
 
@@ -65,7 +64,7 @@ class TemplateAddView(FormView):
 
     def form_valid(self, form):
         form.save()
-        return redirect(reverse('template_list'))
+        return redirect('template_list')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -117,7 +116,7 @@ class TemplateEditView(FormView, GetTemplateMixin):
 
     def form_valid(self, form):
         form.save()
-        return redirect(reverse('template_list'))
+        return redirect('template_list')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):

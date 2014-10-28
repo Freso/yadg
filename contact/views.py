@@ -5,7 +5,6 @@ from django.views.generic.edit import FormView
 from django.views.generic.base import TemplateView
 from django.core.mail import send_mail
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 
 from smtplib import SMTPException
@@ -31,9 +30,9 @@ class ContactView(FormView):
         try:
             send_mail(subject=subject, message=message, from_email=from_email, recipient_list=recipients)
         except SMTPException:
-            return redirect(reverse('contact_error'))
+            return redirect('contact_error')
         else:
-            return redirect(reverse('contact_success'))
+            return redirect('contact_success')
 
 
 class ContactSuccessView(TemplateView):

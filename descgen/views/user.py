@@ -3,7 +3,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
@@ -74,7 +73,7 @@ class UserDetailView(DetailView):
 class SubscribeView(View):
 
     def get(self, request):
-        return redirect(reverse('user_list'))
+        return redirect('user_list')
 
     def post(self, request):
         form = SubscribeForm(request.POST)
@@ -91,7 +90,7 @@ class SubscribeView(View):
             if is_safe_url(redirect_to):
                 return redirect(redirect_to)
             else:
-                return redirect(reverse('user_list'))
+                return redirect('user_list')
         else:
             return render(request, 'user/user_does_not_exist.html')
 
@@ -142,7 +141,7 @@ class UnsubscribeView(FormView):
         next = form.cleaned_data['next']
         if is_safe_url(next):
             return redirect(next)
-        return redirect(reverse('user_list'))
+        return redirect('user_list')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
