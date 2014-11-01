@@ -96,6 +96,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -126,6 +127,7 @@ INSTALLED_APPS = (
     'captcha',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -250,3 +252,7 @@ REST_FRAMEWORK = {
 
 #set allowed hosts
 ALLOWED_HOSTS = ['.yadg.cc', '88.198.107.164']
+
+# django-cors-headers config
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_URLS_REGEX = r'^/api/.*$' #only send CORS headers for API endpoints
