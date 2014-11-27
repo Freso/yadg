@@ -8363,9 +8363,9 @@ class ITunesTest(TestCase):
         expected.append_release_artist(artist)
 
         expected.append_genre('Rock')
+        expected.append_genre('Metal')
         expected.append_genre('Alternative')
         expected.append_genre('Goth Rock')
-        expected.append_genre('Metal')
 
         expected.set_url('http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4')
 
@@ -10839,6 +10839,13 @@ class BandcampTest(TestCase):
         item.set_info('Release date: 2012-09-11')
         item.set_query(u'http://amandapalmer.bandcamp.com/album/theatre-is-evil-2?pk=459')
         item.set_url(u'http://amandapalmer.bandcamp.com/album/theatre-is-evil-2?pk=459')
+        expected.append_item(item)
+
+        item = expected.create_item()
+        item.set_name(u'Amanda Palmer \u2013 The Art of Asking Playlist')
+        item.set_info('Release date: 2014-11-11')
+        item.set_query(u'http://amandapalmer.bandcamp.com/album/the-art-of-asking-playlist?pk=459')
+        item.set_url(u'http://amandapalmer.bandcamp.com/album/the-art-of-asking-playlist?pk=459')
         expected.append_item(item)
 
         item = expected.create_item()
