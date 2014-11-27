@@ -10842,6 +10842,13 @@ class BandcampTest(TestCase):
         expected.append_item(item)
 
         item = expected.create_item()
+        item.set_name(u'Amanda Palmer \u2013 The Art of Asking Playlist')
+        item.set_info('Release date: 2014-11-11')
+        item.set_query(u'http://amandapalmer.bandcamp.com/album/the-art-of-asking-playlist?pk=459')
+        item.set_url(u'http://amandapalmer.bandcamp.com/album/the-art-of-asking-playlist?pk=459')
+        expected.append_item(item)
+
+        item = expected.create_item()
         item.set_name(u'Amanda Palmer \u2013 Amanda Palmer Performs The Popular Hits Of Radiohead On Her Magical Ukulele')
         item.set_info('Release date: 2010-07-20')
         item.set_query(u'http://amandapalmer.bandcamp.com/album/amanda-palmer-performs-the-popular-hits-of-radiohead-on-her-magical-ukulele?pk=459')
