@@ -8363,9 +8363,9 @@ class ITunesTest(TestCase):
         expected.append_release_artist(artist)
 
         expected.append_genre('Rock')
-        expected.append_genre('Metal')
         expected.append_genre('Alternative')
         expected.append_genre('Goth Rock')
+        expected.append_genre('Metal')
 
         expected.set_url('http://itunes.apple.com/us/album/requiembryo/id461460427?uo=4')
 
