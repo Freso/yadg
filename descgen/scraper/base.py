@@ -218,6 +218,9 @@ class Factory(object):
     def has_search(self):
         return False
 
+    def is_searchable(self):
+        return self.has_search()
+
 
 class StandardFactory(Factory):
 
@@ -238,9 +241,3 @@ class StandardFactory(Factory):
 
     def has_search(self):
         return self.search_scraper is not None
-
-    def is_searchable(self):
-        return self.has_search()
-
-
-
