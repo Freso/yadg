@@ -3285,6 +3285,12 @@ class DiscogsTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_search_scraper(self):
+        s = discogs.SearchScraper('love')
+        r = s.get_result()
+
+        self.assertTrue(len(r.get_items()) > 0)
+
 
 class MusicbrainzTest(TestCase):
 
@@ -5667,6 +5673,12 @@ class MusicbrainzTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_search_scraper(self):
+        s = musicbrainz.SearchScraper('love')
+        r = s.get_result()
+
+        self.assertTrue(len(r.get_items()) > 0)
+
 
 @unittest.skip("skipping Beatport tests")
 class BeatportTest(TestCase):
@@ -7053,6 +7065,12 @@ class MetalarchivesTest(TestCase):
 
         self.assertEqual(expected, r)
 
+    def test_search_scraper(self):
+        s = metalarchives.SearchScraper('love')
+        r = s.get_result()
+
+        self.assertTrue(len(r.get_items()) > 0)
+
 
 @unittest.skip("skipping Audiojelly tests")
 class AudiojellyTest(TestCase):
@@ -8240,6 +8258,12 @@ class JunodownloadTest(TestCase):
         r = s.get_result()
 
         self.assertEqual(expected, r)
+
+    def test_search_scraper(self):
+        s = junodownload.SearchScraper('love')
+        r = s.get_result()
+
+        self.assertTrue(len(r.get_items()) > 0)
 
 
 class ITunesTest(TestCase):
@@ -9966,6 +9990,12 @@ class ITunesTest(TestCase):
         r = s.get_result()
 
         self.assertEqual(expected, r)
+
+    def test_search_scraper(self):
+        s = itunes.SearchScraper('love')
+        r = s.get_result()
+
+        self.assertTrue(len(r.get_items()) > 0)
 
 
 class BandcampTest(TestCase):
@@ -12295,3 +12325,9 @@ class MusikSammlerTest(TestCase):
         r = s.get_result()
 
         self.assertEqual(expected, r)
+
+    def test_search_scraper(self):
+        s = musiksammler.SearchScraper('love')
+        r = s.get_result()
+
+        self.assertTrue(len(r.get_items()) > 0)
