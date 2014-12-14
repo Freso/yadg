@@ -454,7 +454,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
     url = 'http://www.discogs.com/search'
 
     def get_params(self):
-        return {'type': 'release', 'q': self.search_term}
+        return {'type': 'release', 'layout': 'sm', 'q': self.search_term}
 
     def prepare_response_content(self, content):
         #get the raw response content and parse it
