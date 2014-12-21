@@ -48,6 +48,7 @@ class ListItem(CommonEqualityAndReprMixin):
         self.name = None
         self.info = None
         self.query = None
+        self.query_scraper = None
         self.url = None
 
     def set_name(self, name):
@@ -59,6 +60,9 @@ class ListItem(CommonEqualityAndReprMixin):
     def set_query(self, query):
         self.query = query
 
+    def set_query_scraper(self, query_scraper):
+        self.query_scraper = query_scraper
+
     def get_name(self):
         return self.name
 
@@ -67,6 +71,9 @@ class ListItem(CommonEqualityAndReprMixin):
 
     def get_query(self):
         return self.query
+
+    def get_query_scraper(self):
+        return self.query_scraper
 
     def set_url(self, url):
         self.url = url

@@ -5,7 +5,7 @@
 {% block subcontent %}{% if result.get_items %}<div class="well">
     <ul id="release_list">
     {% for item in result.get_items %}
-    <li><a href="{% url 'index' %}?input={{ item.get_query|urlencode:"" }}&scraper={{ result.get_scraper_name|urlencode:"" }}">{{ item.get_name }}</a><br /><span class="label">{{ item.get_info }}</span></li>
+    <li><a href="{% url 'index' %}?input={{ item.get_query|urlencode:"" }}&scraper={% if item.get_query_scraper %}{{ item.get_query_scraper|urlencode:"" }}{% else %}{{ result.get_scraper_name|urlencode:"" }}{% endif %}">{{ item.get_name }}</a><br /><span class="label">{{ item.get_info }}</span></li>
     {% endfor %}
     </ul></div>
     {% else %}

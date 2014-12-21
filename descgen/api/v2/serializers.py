@@ -48,6 +48,8 @@ class ApiSerializeVisitor(JSONSerializeVisitor):
 
     def visit_ListItem(self, item):
         out = super(ApiSerializeVisitor, self).visit_ListItem(item)
-        out['queryParams'] = {'input': out['query'], 'scraper': ''}
+        out['queryParams'] = {'input': out['query'],
+                              'scraper': out['query_scraper'] if out['query_scraper'] is not None else ''}
         del out['query']
+        del out['query_scraper']
         return out

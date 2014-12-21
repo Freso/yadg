@@ -239,6 +239,7 @@ class DiscographyScraper(Scraper, ExceptionMixin, RequestMixin):
                 list_item.set_name(release_name)
                 list_item.set_info(release_info)
                 list_item.set_query(release_url)
+                list_item.set_query_scraper(self.get_name())
                 list_item.set_url(release_url)
                 result.append_item(list_item)
         return result
