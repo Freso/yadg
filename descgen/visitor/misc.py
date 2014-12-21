@@ -148,10 +148,11 @@ class JSONSerializeVisitor(Visitor):
 
     def visit_ListItem(self, item):
         out = {
-            u'name':  self._unicode_or_none(item.get_name()),
-            u'info':  self._unicode_or_none(item.get_info()),
-            u'query': self._unicode_or_none(item.get_query()),
-            u'url':   self._unicode_or_none(item.get_url())
+            u'name':          self._unicode_or_none(item.get_name()),
+            u'info':          self._unicode_or_none(item.get_info()),
+            u'query':         self._unicode_or_none(item.get_query()),
+            u'query_scraper': self._unicode_or_none(item.get_query_scraper()),
+            u'url':           self._unicode_or_none(item.get_url())
         }
         return out
 

@@ -213,7 +213,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def get_track_artists(self, trackContainer):
         track_artists = []
-        track_artist_feature_names = {}
+        track_artist_names = {}
         children = trackContainer['children']
         if len(children) == 4:
             track = children[2]
@@ -230,14 +230,13 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 if is_feature:
                     # we assume every artist after "feat." is a feature
                     track_artist.append_type(self.result.ArtistTypes.FEATURING)
-                    # the same featuring artists might appear in the track artist column and the blockquote int the track column
-                    track_artist_feature_names[track_artist_name] = True
                 else:
                     track_artist.append_type(self.result.ArtistTypes.MAIN)
                     if track_artist_element.tail and re.search(self._featuring_artist_regex, track_artist_element.tail):
                         # all artists after this one are features
                         is_feature = True
                 track_artists.append(track_artist)
+                track_artist_names[track_artist_name] = track_artist
         else:
             track = children[1]
         #there might be featuring artists in the track column
@@ -257,12 +256,17 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                         track_feature = track_featuring_element.text_content()
                         track_feature = self.remove_whitespace(track_feature)
                         track_feature = self._prepare_artist_name(track_feature)
-                        # only add the featuring artist if we don't already added it from the track artist column
-                        if not track_feature in track_artist_feature_names:
+                        if not track_feature in track_artist_names:
+                            # only add the additional artist if we didn't already add an artist with the same name
                             track_artist = self.result.create_artist()
                             track_artist.set_name(track_feature)
                             track_artist.append_type(track_artist_type)
                             track_artists.append(track_artist)
+                            track_artist_names[track_feature] = track_artist
+                        elif not track_artist_type in track_artist_names[track_feature].get_types():
+                            # otherwise add the new type to the existing track artist
+                            track_artist_names[track_feature].append_type(track_artist_type)
+
         return track_artists
 
     def get_track_title(self, trackContainer):
