@@ -10,7 +10,7 @@ from ...visitor.misc import JSONSerializeVisitor
 class DependencyListingField(serializers.Field):
     def to_native(self, value):
         result = {}
-        for val in value.all():
+        for val in value:
             result[val.get_unique_name()] = val.template
         return result
 
@@ -21,7 +21,7 @@ class TemplateSerializer(serializers.HyperlinkedModelSerializer):
     code = serializers.Field(source='template')
     ownedByYou = serializers.SerializerMethodField('is_owner')
     default = serializers.SerializerMethodField('is_default')
-    dependencies = DependencyListingField(source='dependencies')
+    dependencies = DependencyListingField(source='cached_dependencies_set')
     isUtility = serializers.Field(source='is_utility')
 
     class Meta:
