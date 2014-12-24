@@ -62,7 +62,7 @@ class TemplateViewSet(viewsets.ReadOnlyModelViewSet, GetTemplateMixin):
         return ctx
 
     def get_queryset(self):
-        return Template.templates_for_user(self.request.user, with_utility=True, sort_by_name=True)
+        return Template.templates_for_user(self.request.user, with_utility=True, sort_by_name=True, prefetch_owner=True)
 
 
 class ScraperViewSet(viewsets.ViewSet, CreateTaskMixin):
