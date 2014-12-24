@@ -32,7 +32,7 @@ class TemplateVisitor(Visitor, GetReleaseTitleMixin, CreateTaskMixin, GetTemplat
 
         release_title = self.get_release_title(release_result=result)
 
-        dependencies = self.get_all_dependencies(template, prefetch_owner=True)
+        dependencies = self.get_all_dependencies(template, prefetch_owner=False)
 
         data = self.serialize_to_json(result)
 
