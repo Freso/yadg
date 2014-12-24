@@ -55,6 +55,7 @@ class SerializeVisitor(Visitor):
             code.append(u'item.set_name(%r)' % item.get_name())
             code.append(u'item.set_info(%r)' % item.get_info())
             code.append(u'item.set_query(%r)' % item.get_query())
+            code.append(u'item.set_query_scraper(%r)' % item.get_query_scraper())
             code.append(u'item.set_url(%r)' % item.get_url())
             code.append(u'%s.append_item(item)' % self.var_name)
         return u'\n'.join(code)
