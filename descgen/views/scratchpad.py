@@ -130,7 +130,7 @@ class ScratchpadView(TemplateView, GetTemplateMixin, GetReleaseTitleMixin, Seria
         data['visible_templates_ids'] = map(lambda x: x[0], form.fields['template'].choices)
         if template is not None:
             data['template'] = template
-            data['dependencies'] = self.get_all_dependencies(template, prefetch_owner=True)
+            data['dependencies'] = self.get_all_dependencies(template, prefetch_owner=False)
             data['immediate_dependencies'] = self.get_immediate_dependencies(template, prefetch_owner=True)
 
             scratchpad = ScratchpadForm(data={'template_code': template.template})
