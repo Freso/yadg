@@ -37,7 +37,7 @@ class TemplateSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class InputSerializer(serializers.Serializer, CreateTaskMixin):
-    input = serializers.CharField(max_length=255, label='Search term')
+    input = serializers.CharField(max_length=255, label='Input')
     scraper = serializers.ChoiceField(required=False, choices=SCRAPER_CHOICES, default=SCRAPER_DEFAULT, label='Scraper')
 
     def save_object(self, obj, **kwargs):
