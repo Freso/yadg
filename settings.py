@@ -5,7 +5,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    ('Slack', 'your_email@example.com'),
+    secret.ADMIN,
 )
 
 MANAGERS = ADMINS
@@ -172,11 +172,11 @@ LOGGING = {
 }
 
 #email settings
-EMAIL_HOST = '***REMOVED***'
+EMAIL_HOST = secret.EMAIL_HOST
 EMAIL_HOST_USER = secret.EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
-SERVER_EMAIL = '***REMOVED***'
+SERVER_EMAIL = secret.SERVER_EMAIL
 
 
 #add celery
