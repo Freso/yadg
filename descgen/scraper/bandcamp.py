@@ -1,4 +1,5 @@
 # coding=utf-8
+import secret
 import json
 import datetime
 from .base import Scraper, ExceptionMixin, RequestMixin, StandardFactory
@@ -13,7 +14,7 @@ NOTES = u'YADG cannot search for releases on Bandcamp, you will always need to e
         u"choosing it from the drop down menu (this will result in the input being interpreted as a Bandcamp URL)."
 
 
-_API_KEY = ''
+_API_KEY = secret.BANDCAMP_API_KEY
 
 
 class ReleaseScraper(Scraper, ExceptionMixin, RequestMixin):
