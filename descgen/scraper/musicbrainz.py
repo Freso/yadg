@@ -20,6 +20,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         super(ReleaseScraper, self).__init__()
         self.id = id
 
+        self.main_release_artists = []
+
     def get_instance_info(self):
         return u'id="%s"' % self.id
 
@@ -199,6 +201,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 artist.set_name(artist_name)
             artist.append_type(self.result.ArtistTypes.MAIN)
             self.result.append_release_artist(artist)
+            self.main_release_artists.append(artist)
 
     def get_disc_containers(self):
         return dict(zip([i for i in range(1, len(self.javascript_object)+1)], self.javascript_object))
@@ -219,7 +222,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
             self.raise_exception(u'could not find track number')
         return track_container['number']
 
-    def get_track_artists(self, track_container):
+    def get_track_artists(self, track_container, include_main_artists):
         track_artists = []
         is_feature = False
         if self.show_artists and 'artistCredit' in track_container and track_container['artistCredit']:
@@ -235,7 +238,8 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                         artist.append_type(self.result.ArtistTypes.FEATURING)
                     else:
                         artist.append_type(self.result.ArtistTypes.MAIN)
-                    track_artists.append(artist)
+                    if is_feature or include_main_artists:
+                        track_artists.append(artist)
                     if u'feat.' in artistCredit['joinPhrase']:
                         is_feature = True
         return track_artists
@@ -252,6 +256,19 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def add_discs(self):
         disc_containers = self.get_disc_containers()
+
+        # check if the release main artists are equal to all main track artists
+        track_artists_equal_main_artists = True
+        for disc_nr in disc_containers:
+            for track_container in self.get_track_containers(disc_containers[disc_nr]):
+                track_artists = self.get_track_artists(track_container, True)
+                main_track_artists = filter(lambda x: self.result.ArtistTypes.MAIN in x.get_types(), track_artists)
+                track_artists_equal_main_artists &= self.main_release_artists == main_track_artists
+                if not track_artists_equal_main_artists:
+                    break
+            if not track_artists_equal_main_artists:
+                break
+
         for disc_nr in disc_containers:
             disc = self.result.create_disc()
             disc.set_number(disc_nr)
@@ -271,7 +288,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 track_length = self.get_track_length(track_container)
                 if track_length:
                     track.set_length(track_length)
-                track_artists = self.get_track_artists(track_container)
+                track_artists = self.get_track_artists(track_container, not track_artists_equal_main_artists)
                 for track_artist in track_artists:
                     track.append_artist(track_artist)
 
