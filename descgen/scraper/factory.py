@@ -2,7 +2,6 @@ import discogs
 import musicbrainz
 #import beatport
 import metalarchives
-#import audiojelly
 import junodownload
 import itunes
 import bandcamp
@@ -13,7 +12,6 @@ _SCRAPERS = {
     'musicbrainz': {'module': musicbrainz, 'priority': 10},
     #'beatport': {'module': beatport, 'priority': 10},
     'metalarchives': {'module': metalarchives, 'priority': 10},
-    #'audiojelly': {'module': audiojelly, 'priority': 10},
     'junodownload': {'module': junodownload, 'priority': 10},
     'itunes': {'module': itunes, 'priority': 10},
     'bandcamp': {'module': bandcamp, 'priority': 15},
