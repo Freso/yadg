@@ -1,6 +1,25 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+#
+# Copyright (c) 2011-2015 Slack
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 #There are several classes in this module that were supposed to be inner classes of their result class. Those classes
 #were moved to the module level to allow pickling of the result classes which is necessary for celery
@@ -123,6 +142,9 @@ class AlbumArt(CommonEqualityAndReprMixin):
         self.type = None
         self.width = None
         self.height = None
+        self.thumbnail_url = None
+        self.thumbnail_width = None
+        self.thumbnail_height = None
         self.hint = None
 
     def set_url(self, url):
@@ -136,6 +158,15 @@ class AlbumArt(CommonEqualityAndReprMixin):
 
     def set_height(self, height):
         self.height = height
+
+    def set_thumbnail_url(self, thumbnail_url):
+        self.thumbnail_url = thumbnail_url
+
+    def set_thumbnail_width(self, thumbnail_width):
+        self.thumbnail_width = thumbnail_width
+
+    def set_thumbnail_height(self, thumbnail_height):
+        self.thumbnail_height = thumbnail_height
 
     def set_hint(self, hint):
         self.hint = hint
@@ -151,6 +182,15 @@ class AlbumArt(CommonEqualityAndReprMixin):
 
     def get_height(self):
         return self.height
+
+    def get_thumbnail_url(self):
+        return self.thumbnail_url
+
+    def get_thumbnail_width(self):
+        return self.thumbnail_width
+
+    def get_thumbnail_height(self):
+        return self.thumbnail_height
 
     def get_hint(self):
         return self.hint

@@ -3,4 +3,4 @@
 /whatdesc.komodoproject
 /.komodotools
 /.idea
-/secret.py
+secret.py
