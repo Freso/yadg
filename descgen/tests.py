@@ -1,7 +1,5 @@
 # coding=utf-8
 
-import difflib
-
 from django.test import TestCase as TestCaseBase
 from django.utils import unittest
 from .scraper import beatport, discogs, itunes, junodownload, metalarchives, musicbrainz, bandcamp, musiksammler
