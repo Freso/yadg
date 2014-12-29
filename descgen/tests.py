@@ -32,6 +32,7 @@ class TestCase(TestCaseBase):
         self.assertTrue(issubclass(d1.__class__, Result), 'First argument is not a Result')
         self.assertTrue(issubclass(d2.__class__, Result), 'Second argument is not a Result')
 
+        self.assertEqual(d1.__class__.__name__, d2.__class__.__name__)
         self.assertEqual(todict(d1), todict(d2), msg)
 
 
