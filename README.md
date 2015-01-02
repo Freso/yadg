@@ -10,6 +10,36 @@ The python packages that are needed to run YADG are listed in `requirements.txt`
 
 Additionally [rabbitmq](http://www.rabbitmq.com/) has to be installed to run Celery.
 
+The following modules have to be created and populated:
+
+`/secret.py`:
+
+```python
+ADMIN = ('admin', 'your@mail.com')
+
+SECRET_KEY = ''
+
+DATABASE_USER = ''
+DATABASE_PASSWORD = ''
+
+EMAIL_HOST = ''
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+SERVER_EMAIL = ''
+
+BROKER_USER = ''
+BROKER_PASSWORD = ''
+
+RECAPTCHA_PUBLIC_KEY = ''
+RECAPTCHA_PRIVATE_KEY = ''
+```
+
+`/descgen/scraper/secret.py`:
+
+```python
+BANDCAMP_API_KEY = ''
+```
+
 If all dependencies are met a development server can be started with:
 
     $ python manage.py celeryd
