@@ -55,6 +55,8 @@ Contributing
 
 If you want to contribute to the development of YADG please use the standard *Fork & Pull* model used on Github. More information on how to apply this model in practice can be found [here](https://help.github.com/articles/using-pull-requests/).
 
+Please use `develop` as the base for your feature branches.
+
 If you want to add a new scraper please also add test cases for the most common album types.
 
 To build the test cases you can use `descgen.visitor.misc.SerializeVisitor` to serialize any instance of a class from the `descgen.result` module.
