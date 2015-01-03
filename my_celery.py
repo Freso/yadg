@@ -21,8 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from celery import shared_task
+import os
+from celery import Celery
+from django.conf import settings
 
-@shared_task
-def get_result(scraper, additional_data):
-    return scraper.get_result(), additional_data
+# set the default Django settings module for the 'celery' program.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
+
+app = Celery('yadg')
+
+# Using a string here means the worker will not have to
+# pickle the object when using Windows.
+app.config_from_object('django.conf:settings')
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)

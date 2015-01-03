@@ -200,23 +200,14 @@ EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
 SERVER_EMAIL = secret.SERVER_EMAIL
 
-
-#add celery
-import djcelery
-djcelery.setup_loader()
-
 #celery config
-BROKER_HOST = "localhost"
-BROKER_PORT = 5672
-BROKER_USER = secret.BROKER_USER
-BROKER_PASSWORD = secret.BROKER_PASSWORD
-BROKER_VHOST = "/"
-CELERY_RESULT_BACKEND = 'database'
-#CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
+BROKER_URL = secret.BROKER_URL
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 CELERY_TASK_RESULT_EXPIRES = 3600
 #make sure the task is available in the database
 CELERY_TRACK_STARTED = True
-
+#only accept pickle as a serializer
+CELERY_ACCEPT_CONTENT = ['pickle']
 
 #add context processors
 TEMPLATE_CONTEXT_PROCESSORS = (
