@@ -528,3 +528,5 @@ class ScraperFactory(StandardFactory):
 
     scraper_classes = (MasterScraper, ReleaseScraper)
     search_scraper = SearchScraper
+
+    global_rate_limit = RATE_LIMIT
