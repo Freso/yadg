@@ -41,12 +41,12 @@ class Factory(object):
 
     def _populate_queues(self):
         if self.queues is None:
-            # the default queue (without any rate limit) which will be used for all scrapers that are not part of an
-            # explicit rate limit group
+            # the default queue (without any rate limit or concurrency setting) which will be used for all scrapers
+            # that are not part of an explicit rate limit group
             self.queues = [
                 Queue(self.default_queue, Exchange(self.default_exchange, type='direct'), routing_key=self.default_routing_key)
             ]
-            self.queue_rate_limits[self.default_queue] = None
+            self.queue_rate_limits[self.default_queue] = (None, None)
 
             queue_names = {}
             rate_limit_groups = self.scraper_factory.get_rate_limit_groups()
@@ -75,8 +75,8 @@ class Factory(object):
                 for class_path in class_paths:
                     self.class_routing_keys[class_path] = routing_key
 
-                # save the given rate limit for the queue
-                self.queue_rate_limits[name] = rate_limit_group.get_rate_limit()
+                # save the given rate limit and concurrency setting for the queue
+                self.queue_rate_limits[name] = (rate_limit_group.get_rate_limit(), rate_limit_group.get_concurrency())
 
                 # finally create the queue and save it in the list
                 queue = Queue(name, Exchange(self.default_exchange, type='direct'), routing_key=routing_key)
