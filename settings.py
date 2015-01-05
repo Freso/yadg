@@ -23,6 +23,10 @@
 
 import secret
 
+from celery_conf.routers import Router as CeleryRouter
+from celery_conf.queues import Factory as CeleryFactory
+
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -149,6 +153,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'celery_conf',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -200,23 +205,18 @@ EMAIL_HOST_PASSWORD = secret.EMAIL_HOST_PASSWORD
 EMAIL_USE_TLS = True
 SERVER_EMAIL = secret.SERVER_EMAIL
 
-
-#add celery
-import djcelery
-djcelery.setup_loader()
-
 #celery config
-BROKER_HOST = "localhost"
-BROKER_PORT = 5672
-BROKER_USER = secret.BROKER_USER
-BROKER_PASSWORD = secret.BROKER_PASSWORD
-BROKER_VHOST = "/"
-CELERY_RESULT_BACKEND = 'database'
-#CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
+BROKER_URL = secret.BROKER_URL
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 CELERY_TASK_RESULT_EXPIRES = 3600
-#make sure the task is available in the database
-CELERY_TRACK_STARTED = True
-
+#only accept pickle as a serializer
+CELERY_ACCEPT_CONTENT = ['pickle']
+CELERY_CREATE_MISSING_QUEUES = True
+CELERY_QUEUE_FACTORY = CeleryFactory()
+CELERY_QUEUES = CELERY_QUEUE_FACTORY.get_queues()
+CELERY_DEFAULT_QUEUE = CELERY_QUEUE_FACTORY.get_default_queue()
+CELERY_DEFAULT_ROUTING_KEY = CELERY_QUEUE_FACTORY.get_default_routing_key()
+CELERY_ROUTES = (CeleryRouter(CELERY_QUEUE_FACTORY), )
 
 #add context processors
 TEMPLATE_CONTEXT_PROCESSORS = (

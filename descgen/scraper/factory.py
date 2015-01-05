@@ -80,6 +80,10 @@ class ScraperFactoryError(Exception):
 
 
 class ScraperFactory(object):
+
+    def __init__(self):
+        super(ScraperFactory, self).__init__()
+        self.rate_limit_groups = None
     
     def get_scraper_by_string(self, url):
         scraper = None
@@ -102,6 +106,13 @@ class ScraperFactory(object):
         search.set_name(scraper)
         
         return search
+
+    def get_rate_limit_groups(self):
+        if self.rate_limit_groups is None:
+            self.rate_limit_groups = []
+            for factory in _SCRAPER_FACTORIES_SORTED:
+                self.rate_limit_groups.extend(factory['factory'].get_rate_limit_groups())
+        return self.rate_limit_groups
 
     @staticmethod
     def get_valid_scraper(scraper):
