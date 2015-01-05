@@ -24,8 +24,9 @@
 import lxml.html
 import lxml.etree
 import re
-from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, StatusCodeError, StandardFactory
+from .base import ExceptionMixin, RequestMixin, UtilityMixin, RateLimitMixin, StatusCodeError, StandardFactory
 from .base import SearchScraper as SearchScraperBase
+from .base import Scraper as ScraperBase
 from ..result import ReleaseResult, ListResult, NotFoundResult
 import json
 import secret
@@ -36,44 +37,24 @@ SCRAPER_URL = 'http://www.discogs.com/'
 
 _APP_IDENTIFIER = 'YADG/0.1'
 
+RATE_LIMIT = '1/s'
+
 CONSUMER_KEY = secret.DISCOGS_CONSUMER_KEY
 CONSUMER_SECRET = secret.DISCOGS_CONSUMER_SECRET
 ACCESS_TOKEN = secret.DISCOGS_ACCESS_TOKEN
 ACCESS_SECRET = secret.DISCOGS_ACCESS_SECRET
 
 
-class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
+class Scraper(ScraperBase, UtilityMixin, RequestMixin):
 
     _base_url = 'http://www.discogs.com/'
     _api_base_url = 'https://api.discogs.com/'
-    string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
 
     headers = {'User-Agent': _APP_IDENTIFIER}
-
-    ARTIST_NAME_VARIOUS = "Various"
-
-    _featuring_artist_regex = u'(?i)feat(uring)?\.?'
-
-    def __init__(self, id):
-        super(ReleaseScraper, self).__init__()
-        self.id = id
-        self.data = {}
 
     @staticmethod
     def _get_args_from_match(match):
         return (int(match.group(1)), )
-
-    def get_instance_info(self):
-        return u'id="%d"' % self.id
-
-    def get_url(self):
-        if 'url' in self.data:
-            return self.data['url']
-        else:
-            return self._base_url + 'release/%d' % self.id
-
-    def get_api_url(self):
-        return self._api_base_url + 'releases/%d' % self.id
 
     def _remove_enum_suffix(self, string):
         return re.sub(u'(.*) \(\d+\)$', r'\1', string)
@@ -89,6 +70,32 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         else:
             artist_name = artist['name']
         return self._prepare_artist_name(self.remove_whitespace(artist_name))
+
+
+class ReleaseScraper(Scraper, ExceptionMixin):
+
+    string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
+
+    ARTIST_NAME_VARIOUS = "Various"
+
+    _featuring_artist_regex = u'(?i)feat(uring)?\.?'
+
+    def __init__(self, id):
+        super(ReleaseScraper, self).__init__()
+        self.id = id
+        self.data = {}
+
+    def get_instance_info(self):
+        return u'id="%d"' % self.id
+
+    def get_url(self):
+        if 'url' in self.data:
+            return self.data['url']
+        else:
+            return self._base_url + 'release/%d' % self.id
+
+    def get_api_url(self):
+        return self._api_base_url + 'releases/%d' % self.id
 
     def _split_infos(self, info_string):
         components = info_string.split(',')
@@ -121,23 +128,23 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def _get_tracks(self, track_list, disc_containers):
         for track in filter(lambda x: x['type_'] in [u'track', u'index'], track_list):
-                if track['type_'] == u'track':
-                    #determine cd and track number
-                    m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*)|(face )?[ivxc]+)(?:\.)?$', track['position'])
-                    if not m:
-                        #ignore tracks with strange track number
-                        continue
-                    cd_number = m.group(1)
-                    #if there is no cd number we default to 1
-                    if not cd_number:
-                        cd_number = 1
-                    else:
-                        cd_number = int(cd_number)
-                    if not cd_number in disc_containers:
-                        disc_containers[cd_number] = []
-                    disc_containers[cd_number].append({'track': track, 'track_number_string': m.group(2)})
-                elif track['type_'] == u'index' and 'sub_tracks' in track:
-                    self._get_tracks(track['sub_tracks'], disc_containers)
+            if track['type_'] == u'track':
+                #determine cd and track number
+                m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*)|(face )?[ivxc]+)(?:\.)?$', track['position'])
+                if not m:
+                    #ignore tracks with strange track number
+                    continue
+                cd_number = m.group(1)
+                #if there is no cd number we default to 1
+                if not cd_number:
+                    cd_number = 1
+                else:
+                    cd_number = int(cd_number)
+                if not cd_number in disc_containers:
+                    disc_containers[cd_number] = []
+                disc_containers[cd_number].append({'track': track, 'track_number_string': m.group(2)})
+            elif track['type_'] == u'index' and 'sub_tracks' in track:
+                self._get_tracks(track['sub_tracks'], disc_containers)
 
     def parse_response_content(self, response_content):
         try:
@@ -330,76 +337,80 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         return self.result
 
 
-class MasterScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
+class MasterScraper(Scraper, ExceptionMixin, RateLimitMixin):
 
-    _base_url = 'http://www.discogs.com/'
     string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?master/(\d+)$'
+
+    rate_limit = RATE_LIMIT
 
     def __init__(self, id):
         super(MasterScraper, self).__init__()
         self.id = id
+        self.data_master = {}
+        self.data_versions = {}
 
     def get_instance_info(self):
-        return u'id="%s"' % self.id
+        return u'id="%d"' % self.id
 
-    def get_url(self):
-        return self._base_url + 'master/%s' % self.id
-
-    def prepare_response_content(self, content):
-        #get the raw response content and parse it
-        self.parsed_response = lxml.html.document_fromstring(content)
+    def parse_response_content(self, response_content):
+        try:
+            response = json.loads(response_content)
+        except:
+            self.raise_exception(u'invalid server response: %r' % response_content)
+        return response
 
     def get_artist_string(self):
-        #get artist and title
-        title_element = self.parsed_response.cssselect('div.profile h1')
-        if len(title_element) != 1:
-            self.raise_exception(u'could not find title element')
-        artist_span = title_element[0].cssselect('span[itemprop="byArtist"]')
-        if len(artist_span) != 1:
-            self.raise_exception(u'could not find correct artist span')
-        return self.remove_whitespace(artist_span[0].text_content())
+        artist_names = []
+        if 'artists' in self.data_master:
+            for artist in self.data_master['artists']:
+                artist_name = self._get_artist_name(artist)
+                artist_names.append(artist_name)
+                if 'join' in artist and artist['join']:
+                    artist_names.append(self.remove_whitespace(artist['join']))
+        return u' '.join(artist_names)
 
     def get_release_containers(self):
-        return self.parsed_response.cssselect('table#versions tr[data-object-type="release"]')
+        if 'versions' in self.data_versions:
+            return self.data_versions['versions']
+        return []
 
     def get_release_name_and_url(self, release_container):
-        release_link = release_container.cssselect('td.title > a')
-        if len(release_link) == 0:
-            self.raise_exception(u'could not extract release link from:' + release_container.text_content())
-        release_link = release_link[0]
-        release_name = release_link.text_content()
-        release_name = self.remove_whitespace(release_name)
-        if not release_name:
-            release_name = None
-        release_url = release_link.attrib['href']
-        # make the release URL a fully qualified one
-        if release_url.startswith('/'):
-            release_url = 'http://www.discogs.com' + release_url
-        m = re.match(ReleaseScraper.string_regex, release_url)
-        if not m:
-            release_url = None
+        release_name = None
+        if 'title' in release_container:
+            release_name = self.remove_whitespace(release_container['title'])
+        release_url = None
+        if 'id' in release_container:
+            release_url = self._base_url + u'release/%d' % release_container['id']
         return release_name, release_url
 
     def get_release_info(self, release_container):
         #get additional info
         components = []
-        span = release_container.cssselect('td.title > span.format')
-        if span:
-            format = self.remove_whitespace(span[0].text_content())
-            if format:
-                components.append(format)
-        children = []
-        [children.extend(release_container.cssselect('td.%s' % x)) for x in ('label','catno','country','year')]
-        for child in children:
-            components.append(child.text_content())
-        components = map(self.remove_whitespace, components)
+        for key in ['format', 'label', 'catno', 'country', 'released']:
+            if key in release_container:
+                value = self.remove_whitespace(release_container[key])
+                if value:
+                    components.append(value)
         if components:
             return u' | '.join(components)
         return None
 
     def get_result(self):
-        response = self.request_get(url=self.get_url())
-        self.prepare_response_content(self.get_response_content(response))
+        try:
+            self.rate_limit_sleep()
+            response_master = self.request_get(url=self._api_base_url + 'masters/%d' % self.id)
+            self.rate_limit_sleep()
+            response_versions = self.request_get(url=self._api_base_url + 'masters/%d/versions' % self.id)
+        except StatusCodeError as e:
+            if str(e) == "404":
+                self.result = NotFoundResult()
+                self.result.set_scraper_name(self.get_name())
+                return self.result
+            else:
+                raise e
+
+        self.data_master = self.parse_response_content(self.get_response_content(response_master))
+        self.data_versions = self.parse_response_content(self.get_response_content(response_versions))
 
         result = ListResult()
         result.set_scraper_name(self.get_name())
