@@ -234,7 +234,16 @@ class RateLimitMixin(object):
 class Scraper(object):
 
     string_regex = None
+
+    '''
+    The maximum rate with which multiple instances of this scraper should be executed.
+    '''
     rate_limit = None
+
+    '''
+    The maximum number of concurrent processes that should execute instances of this scraper simultaneously.
+    '''
+    concurrency = None
 
     def __init__(self):
         super(Scraper, self).__init__()
@@ -289,9 +298,10 @@ class SearchScraper(Scraper):
 
 class RateLimitGroup(object):
 
-    def __init__(self, rate_limit=None, objects=[]):
+    def __init__(self, rate_limit=None, concurrency=None, objects=[]):
         super(RateLimitGroup, self).__init__()
         self.rate_limit = rate_limit
+        self.concurrency = concurrency
         self.objects = objects
 
     def set_rate_limit(self, rate_limit):
@@ -299,6 +309,12 @@ class RateLimitGroup(object):
 
     def get_rate_limit(self):
         return self.rate_limit
+
+    def set_concurrency(self, concurrency):
+        self.concurrency = concurrency
+
+    def get_concurrency(self):
+        return self.concurrency
 
     def append_object(self, object):
         self.objects.append(object)
@@ -345,12 +361,12 @@ class StandardFactory(Factory):
     '''
     Force a specific grouping of scrapers into rate limit groups by providing a list in the following format:
     [
-        ('100/s', [
+        ('100/s', concurrency, [
             ScraperClass1,
             ScraperClass2,
             ...
         ]),
-        ('100/m', [
+        ('100/m', concurrency, [
             ScraperClass3,
             ScraperClass4,
             ...
@@ -367,6 +383,12 @@ class StandardFactory(Factory):
     If force_rate_limit_groups is also provided, force_rate_limit_groups will take precedence.
     '''
     global_rate_limit = None
+
+    '''
+    The global concurrency that will be set for all automatically generated rate limit groups. This value will not
+    affect rate limit groups defined via force_rate_limit_groups
+    '''
+    global_concurrency = None
 
     def __init__(self):
         super(StandardFactory, self).__init__()
@@ -402,10 +424,20 @@ class StandardFactory(Factory):
                     rate_limit = getattr(scraper_class, 'rate_limit', None)
                     if rate_limit:
                         rate_limit_bins[rate_limit].append(scraper_class)
-            items = rate_limit_bins.items()
+            items = []
+            for rate_limit, objects in rate_limit_bins.items():
+                if self.global_concurrency is None:
+                    concurrences = map(lambda y: getattr(y, 'concurrency', None), objects)
+                    if all([x is None for x in concurrences]):
+                        concurrency = None
+                    else:
+                        concurrency = reduce(min, filter(lambda x: x is not None, concurrences))
+                else:
+                    concurrency = self.global_concurrency
+                items.append((rate_limit, concurrency, objects))
         else:
             items = self.force_rate_limit_groups
         # make sure the order of the rate_limit_groups is consistent over multiple executions
-        for rate_limit, objects in sorted(items, key=lambda(k, v): (k, str(v))):
-            rate_limit_group = self.create_rate_limit_group(rate_limit, objects)
+        for rate_limit, concurrency, objects in sorted(items, key=lambda(k, c, v): (k, c, str(v))):
+            rate_limit_group = self.create_rate_limit_group(rate_limit, concurrency, objects)
             self.append_rate_limit_group(rate_limit_group)
