@@ -37,6 +37,7 @@ SCRAPER_URL = 'http://www.discogs.com/'
 _API_BASE_URL = 'https://api.discogs.com/'
 _APP_IDENTIFIER = 'YADG/0.1'
 RATE_LIMIT = '1/s'
+CONCURRENCY = 1
 
 CONSUMER_KEY = secret.DISCOGS_CONSUMER_KEY
 CONSUMER_SECRET = secret.DISCOGS_CONSUMER_SECRET
@@ -530,3 +531,4 @@ class ScraperFactory(StandardFactory):
     search_scraper = SearchScraper
 
     global_rate_limit = RATE_LIMIT
+    global_concurrency = CONCURRENCY
