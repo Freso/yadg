@@ -145,14 +145,20 @@ class ReleaseScraper(Scraper, ExceptionMixin):
                     #ignore tracks with strange track number
                     continue
                 cd_number = m.group(1)
+                track_number_string = m.group(2)
                 #if there is no cd number we default to 1
                 if not cd_number:
                     cd_number = 1
+                elif re.search('\D', track_number_string):
+                    # track number like: 11-A
+                    # here 11 is most likely not the cd number, but the whole thing is a weird designation for a sub track
+                    # let's try to just ignore the track and see where we will come crashing down
+                    continue
                 else:
                     cd_number = int(cd_number)
                 if not cd_number in disc_containers:
                     disc_containers[cd_number] = []
-                disc_containers[cd_number].append({'track': track, 'track_number_string': m.group(2)})
+                disc_containers[cd_number].append({'track': track, 'track_number_string': track_number_string})
             elif track['type_'] == u'index' and 'sub_tracks' in track:
                 self._get_tracks(track['sub_tracks'], disc_containers)
 
