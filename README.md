@@ -37,6 +37,11 @@ RECAPTCHA_PRIVATE_KEY = ''
 
 ```python
 BANDCAMP_API_KEY = ''
+
+DISCOGS_CONSUMER_KEY = ''
+DISCOGS_CONSUMER_SECRET = ''
+DISCOGS_ACCESS_TOKEN = ''
+DISCOGS_ACCESS_SECRET = ''
 ```
 
 If all dependencies are met a development server can be started with:
