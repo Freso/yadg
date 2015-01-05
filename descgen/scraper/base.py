@@ -60,7 +60,7 @@ class RequestMixin(object):
 
     def __init__(self):
         super(RequestMixin, self).__init__()
-        self.initialize_new_session()
+        self.session = self.get_new_session()
 
     def _make_request(self, method, url, params, headers, post_data, kwargs):
         """
@@ -88,8 +88,8 @@ class RequestMixin(object):
     def request_post(self, url, post_data=None, params=None, headers=None, kwargs=None):
         return self._make_request(method=self.REQUEST_METHOD_GET, url=url, params=params, headers=headers, post_data=post_data, kwargs=kwargs)
 
-    def initialize_new_session(self):
-        self.session = requests.Session()
+    def get_new_session(self):
+        return requests.Session()
 
     def raise_request_exception(self, message):
         raise StatusCodeError(message)
