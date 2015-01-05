@@ -21,13 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import lxml.html
-import lxml.etree
 import re
 from .base import ExceptionMixin, RequestMixin, UtilityMixin, RateLimitMixin, StatusCodeError, StandardFactory
 from .base import SearchScraper as SearchScraperBase
 from .base import Scraper as ScraperBase
 from ..result import ReleaseResult, ListResult, NotFoundResult
+from rauth import OAuth1Service
 import json
 import secret
 
@@ -35,8 +34,8 @@ import secret
 READABLE_NAME = 'Discogs'
 SCRAPER_URL = 'http://www.discogs.com/'
 
+_API_BASE_URL = 'https://api.discogs.com/'
 _APP_IDENTIFIER = 'YADG/0.1'
-
 RATE_LIMIT = '1/s'
 
 CONSUMER_KEY = secret.DISCOGS_CONSUMER_KEY
@@ -44,11 +43,21 @@ CONSUMER_SECRET = secret.DISCOGS_CONSUMER_SECRET
 ACCESS_TOKEN = secret.DISCOGS_ACCESS_TOKEN
 ACCESS_SECRET = secret.DISCOGS_ACCESS_SECRET
 
+discogsOauth = OAuth1Service(
+    name='discogs',
+    base_url=_API_BASE_URL,
+    request_token_url='https://api.discogs.com/oauth/request_token',
+    access_token_url='https://api.discogs.com/oauth/access_token',
+    authorize_url='http://www.discogs.com/oauth/authorize',
+    consumer_key=CONSUMER_KEY,
+    consumer_secret=CONSUMER_SECRET
+)
+
 
 class Scraper(ScraperBase, UtilityMixin, RequestMixin):
 
     _base_url = 'http://www.discogs.com/'
-    _api_base_url = 'https://api.discogs.com/'
+    _api_base_url = _API_BASE_URL
 
     headers = {'User-Agent': _APP_IDENTIFIER}
 
@@ -435,56 +444,65 @@ class MasterScraper(Scraper, ExceptionMixin, RateLimitMixin):
 
 class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixin):
 
-    url = 'http://www.discogs.com/search'
+    discogsOauth=discogsOauth
+
+    url = _API_BASE_URL + 'database/search'
+
+    data = {}
+
+    def get_new_session(self):
+        return self.discogsOauth.get_session((ACCESS_TOKEN, ACCESS_SECRET))
 
     def get_params(self):
-        return {'type': 'release', 'layout': 'sm', 'q': self.search_term}
+        return {'type': 'release', 'per_page': '20', 'query': self.search_term}
 
-    def prepare_response_content(self, content):
-        #get the raw response content and parse it
-        self.parsed_response = lxml.html.document_fromstring(content)
+    def parse_response_content(self, response_content):
+        try:
+            response = json.loads(response_content)
+        except:
+            self.raise_exception(u'invalid server response: %r' % response_content)
+        return response
 
     def get_release_containers(self):
-        return self.parsed_response.cssselect('div#search_results div[data-object-type="release"] div.card_body')
+        if 'results' in self.data:
+            return self.data['results']
+        return []
 
     def get_release_name_and_url(self, release_container):
-        title_h4 = release_container.cssselect('h4')
-        if len(title_h4) != 1:
-            self.raise_exception(u'could not extract title h4 from:' + release_container.text_content())
-        title_h4 = title_h4[0]
-        name_span = release_container.cssselect('span[itemprop="name"]')
-        if len(name_span) == 0:
-            self.raise_exception(u'could not find name span in:' + release_container.text_content())
-        release_link = name_span[-1].getnext()
-        if release_link is None:
-            self.raise_exception(u'could not extract release link from:' + release_container.text_content())
-        release_name = title_h4.text_content()
-        release_name = self.remove_whitespace(release_name)
-        if not release_name:
-            release_name = None
-        release_url = release_link.attrib['href']
-        # make the release URL a fully qualified one
-        if release_url.startswith('/'):
-            release_url = 'http://www.discogs.com' + release_url
-        m = re.match(ReleaseScraper.string_regex, release_url)
-        if not m:
-            release_url = None
+        release_name = None
+        if 'title' in release_container:
+            release_name = self.remove_whitespace(release_container['title'])
+        release_url= None
+        if 'uri' in release_container:
+            uri = release_container['uri']
+            # make the release URL a fully qualified one
+            if uri.startswith('/'):
+                release_url = 'http://www.discogs.com' + uri
         return release_name, release_url
 
     def get_release_info(self, release_container):
         #get additional info
-        release_info = release_container.cssselect('p.card_info')
-        if len(release_info) != 1:
-            self.raise_exception(u'could not extract additional info from: ' + release_container.text_content())
-        release_info_children = release_info[0].getchildren()
-        release_info = u' | '.join(filter(lambda x: x, map(lambda x: self.remove_whitespace(x.text_content()), release_info_children)))
-        if release_info:
-            return release_info
+        components = []
+        if 'format' in release_container:
+            format = u', '.join(release_container['format'])
+            if format:
+                components.append(format)
+        if 'label' in release_container and len(release_container['label']) > 0:
+            # there can be a whole lot of labels in the list, so just take the first one
+            components.append(release_container['label'][0])
+        # additional components that don't require special handling
+        for key in ['catno', 'country', 'year']:
+            if key in release_container:
+                value = self.remove_whitespace(release_container[key])
+                if value:
+                    components.append(value)
+        if components:
+            return u' | '.join(components)
         return None
 
     def get_result(self):
         response = self.request_get(url=self.url, params=self.get_params())
-        self.prepare_response_content(self.get_response_content(response))
+        self.data = self.parse_response_content(self.get_response_content(response))
 
         result = ListResult()
         result.set_scraper_name(self.get_name())
