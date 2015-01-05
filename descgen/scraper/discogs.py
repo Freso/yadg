@@ -27,16 +27,28 @@ import re
 from .base import Scraper, ExceptionMixin, RequestMixin, UtilityMixin, StatusCodeError, StandardFactory
 from .base import SearchScraper as SearchScraperBase
 from ..result import ReleaseResult, ListResult, NotFoundResult
+import json
+import secret
 
 
 READABLE_NAME = 'Discogs'
 SCRAPER_URL = 'http://www.discogs.com/'
 
+_APP_IDENTIFIER = 'YADG/0.1'
+
+CONSUMER_KEY = secret.DISCOGS_CONSUMER_KEY
+CONSUMER_SECRET = secret.DISCOGS_CONSUMER_SECRET
+ACCESS_TOKEN = secret.DISCOGS_ACCESS_TOKEN
+ACCESS_SECRET = secret.DISCOGS_ACCESS_SECRET
+
 
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://www.discogs.com/'
+    _api_base_url = 'https://api.discogs.com/'
     string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
+
+    headers = {'User-Agent': _APP_IDENTIFIER}
 
     ARTIST_NAME_VARIOUS = "Various"
 
@@ -45,20 +57,23 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     def __init__(self, id):
         super(ReleaseScraper, self).__init__()
         self.id = id
+        self.data = {}
+
+    @staticmethod
+    def _get_args_from_match(match):
+        return (int(match.group(1)), )
 
     def get_instance_info(self):
-        return u'id="%s"' % self.id
+        return u'id="%d"' % self.id
 
     def get_url(self):
-        return self._base_url + 'release/%s' % self.id
+        if 'url' in self.data:
+            return self.data['url']
+        else:
+            return self._base_url + 'release/%d' % self.id
 
-    def _split_infos(self, info_string):
-        components = info_string.split(',')
-        #remove leading and trailing whitespace
-        components = map(lambda x: x.strip(), components)
-        #remove empty elements
-        components = filter(lambda x: x, components)
-        return components
+    def get_api_url(self):
+        return self._api_base_url + 'releases/%d' % self.id
 
     def _remove_enum_suffix(self, string):
         return re.sub(u'(.*) \(\d+\)$', r'\1', string)
@@ -68,103 +83,27 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
         artist_name = self.swap_suffix(artist_name)
         return artist_name
 
-    def prepare_response_content(self, content):
-        #get the raw response content and parse it
-        doc = lxml.html.document_fromstring(content)
+    def _get_artist_name(self, artist):
+        if 'anv' in artist and artist['anv']:
+            artist_name = artist['anv']
+        else:
+            artist_name = artist['name']
+        return self._prepare_artist_name(self.remove_whitespace(artist_name))
 
-        #get the div that contains all the information we want
-        container = doc.cssselect('div#page_content')
-        if len(container) != 1:
-            self.raise_exception(u'could not find anchor point')
-        self.container = container[0]
+    def _split_infos(self, info_string):
+        components = info_string.split(',')
+        #remove leading and trailing whitespace
+        components = map(lambda x: x.strip().strip(u' &').strip('& '), components)
+        #remove empty elements
+        components = filter(lambda x: x, components)
+        return components
 
-        #get additional infos
-        self.additional_infos = {}
-        additional_infos = self.container.cssselect('div.head + div.content')
-        for additional_info in additional_infos:
-            label_element = additional_info.getprevious()
-            #get label and remove whitespace and ':'
-            label = label_element.text_content()
-            label = self.remove_whitespace(label)
-            #make sure only valid keys are present
-            label = re.sub('\W','',label)
-            label = label.lower()
-            # handle formats with line breaks in them by replacing the linebreak with a comma
-            if label == 'format':
-                # ugly hack: convert the element to a string, replace all '<br>'s and parse the resulting string as HTML again
-                additional_info = lxml.html.fragment_fromstring(re.sub('(?m)\s*<br(\s*/)?>(\s*<br(\s*/)?>)*', u', ', lxml.etree.tostring(additional_info)))
-            #get content and remove whitespace
-            content = additional_info.text_content()
-            content = self.remove_whitespace(content)
-            if content and (content != 'none'):
-                # we might have left a lone comma at the end if we replaced some linebreaks
-                if content.endswith(','):
-                    content = content[:-1]
-                self.additional_infos[label] = content
-
-    def add_release_event(self):
-        release_event = self.result.create_release_event()
-        found = False
-        if self.additional_infos.has_key('released'):
-            release_event.set_date(self.additional_infos['released'])
-            found = True
-        if self.additional_infos.has_key('country'):
-            release_event.set_country(self.additional_infos['country'])
-            found = True
-        if found:
-            self.result.append_release_event(release_event)
-
-    def add_release_format(self):
-        if self.additional_infos.has_key('format'):
-            self.result.set_format(self.additional_infos['format'])
-
-    def add_label_ids(self):
-        if self.additional_infos.has_key('label'):
-            label_string = self.additional_infos['label']
-            label_components = self._split_infos(label_string)
-
-            #sometimes we have the format "label - catalog#" for a label
-            for label_component in label_components:
-                label_id = self.result.create_label_id()
-                split = label_component.split(u' \u200e\u2013 ')
-                if len(split) == 2: #we have exactely label and catalog#
-                    label = self._remove_enum_suffix(split[0])
-                    if split[1] != 'none':
-                        catalog_nr = split[1]
-                        label_id.append_catalogue_nr(catalog_nr)
-                else:
-                    #we just have a label or to many components, so don't change anything
-                    label = self._remove_enum_suffix(label_component)
-                label_id.set_label(label)
-                self.result.append_label_id(label_id)
-
-    def add_release_title(self):
-        title_spans = self.container.cssselect('div.profile h1 span')
-        if len(title_spans) == 0:
-            self.raise_exception(u'could not find title element')
-        title_span = None
-        for span in title_spans:
-            if u'–' in span.tail:
-                title_span = span.xpath('following-sibling::span')
-        if title_span is not None and len(title_span) == 1:
-            title = self.remove_whitespace(title_span[0].text_content())
-            if title:
-                self.result.set_title(title)
-
-    def add_release_artists(self):
-        #get artist and title
-        title_element = self.container.cssselect('div.profile h1')
-        if len(title_element) != 1:
-            self.raise_exception(u'could not find title element')
-        artist_elements = title_element[0].cssselect('a')
-        if len(artist_elements) == 0:
-            self.raise_exception(u'could not find artist elements')
+    def _get_main_and_feat_artists(self, artist_elements):
+        artists = []
         is_feature = False
         for artist_element in artist_elements:
             artist = self.result.create_artist()
-            artist_name = artist_element.text_content()
-            artist_name = self.remove_whitespace(artist_name)
-            artist_name = self._prepare_artist_name(artist_name)
+            artist_name = self._get_artist_name(artist_element)
             is_various = artist_name == self.ARTIST_NAME_VARIOUS
             if not is_various:
                 artist.set_name(artist_name)
@@ -174,53 +113,107 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
                 artist.append_type(self.result.ArtistTypes.FEATURING)
             else:
                 artist.append_type(self.result.ArtistTypes.MAIN)
-                if re.search(self._featuring_artist_regex, artist_element.tail):
+                if re.search(self._featuring_artist_regex, artist_element['join']):
                     # all artists after this one are features
                     is_feature = True
-            self.result.append_release_artist(artist)
+            artists.append(artist)
+        return artists
+
+    def _get_tracks(self, track_list, disc_containers):
+        for track in filter(lambda x: x['type_'] in [u'track', u'index'], track_list):
+                if track['type_'] == u'track':
+                    #determine cd and track number
+                    m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*)|(face )?[ivxc]+)(?:\.)?$', track['position'])
+                    if not m:
+                        #ignore tracks with strange track number
+                        continue
+                    cd_number = m.group(1)
+                    #if there is no cd number we default to 1
+                    if not cd_number:
+                        cd_number = 1
+                    else:
+                        cd_number = int(cd_number)
+                    if not cd_number in disc_containers:
+                        disc_containers[cd_number] = []
+                    disc_containers[cd_number].append({'track': track, 'track_number_string': m.group(2)})
+                elif track['type_'] == u'index' and 'sub_tracks' in track:
+                    self._get_tracks(track['sub_tracks'], disc_containers)
+
+    def parse_response_content(self, response_content):
+        try:
+            response = json.loads(response_content)
+        except:
+            self.raise_exception(u'invalid server response: %r' % response_content)
+        return response
+
+    def add_release_event(self):
+        release_event = self.result.create_release_event()
+        found = False
+        if 'released_formatted' in self.data:
+            release_event.set_date(self.data['released_formatted'])
+            found = True
+        if 'country' in self.data:
+            release_event.set_country(self.data['country'])
+            found = True
+        if found:
+            self.result.append_release_event(release_event)
+
+    def add_release_format(self):
+        if 'formats' in self.data:
+            format_strings = []
+            for format in self.data['formats']:
+                format_string = u''
+                if 'qty' in format and format['qty'] and format['qty'] != u'1':
+                    format_string = u'%s \xd7 ' % (format['qty'])
+                format_string_components = []
+                if 'name' in format and format['name']:
+                    format_string_components.append(format['name'])
+                if 'descriptions' in format:
+                    format_string_components.extend(format['descriptions'])
+                if 'text' in format and format['text']:
+                    format_string_components.append(format['text'])
+                format_string += u', '.join(format_string_components)
+                format_strings.append(format_string)
+            self.result.set_format(u', '.join(format_strings))
+
+    def add_label_ids(self):
+        if 'labels' in self.data:
+            for label in self.data['labels']:
+                if 'name' in label:
+                    label_id = self.result.create_label_id()
+                    label_id.set_label(self._remove_enum_suffix(label['name']))
+                    if 'catno' in label and label['catno'] != 'none':
+                        label_id.append_catalogue_nr(label['catno'])
+                    self.result.append_label_id(label_id)
+
+    def add_release_title(self):
+        if 'title' in self.data:
+            self.result.set_title(self.remove_whitespace(self.data['title']))
+
+    def add_release_artists(self):
+        if 'artists' in self.data:
+            for artist in self._get_main_and_feat_artists(self.data['artists']):
+                self.result.append_release_artist(artist)
 
     def add_genres(self):
-        if self.additional_infos.has_key('genre'):
-            genre_string = self.additional_infos['genre']
-            for genre in map(lambda x: x.strip(' &'), self._split_infos(genre_string)):
+        if 'genres' in self.data:
+            for genre in [item for sublist in map(self._split_infos, self.data['genres']) for item in sublist]:
                 self.result.append_genre(genre)
 
     def add_styles(self):
-        if self.additional_infos.has_key('style'):
-            style_string = self.additional_infos['style']
-            for style in map(lambda x: x.strip(' &'), self._split_infos(style_string)):
+        if 'styles' in self.data:
+            for style in [item for sublist in map(self._split_infos, self.data['styles']) for item in sublist]:
                 self.result.append_style(style)
 
     def get_disc_containers(self):
         disc_containers = {}
-        tracklist_tables = self.container.cssselect('div#tracklist table')
-        if not tracklist_tables:
-            self.raise_exception(u'could not find tracklisting')
-        for table in tracklist_tables:
-            rows = table.cssselect('tr.tracklist_track')
-            if not rows:
-                self.raise_exception(u'could not find track information')
-            for row in rows:
-                children = row.getchildren()
-                #determine cd and track number
-                m = re.search('(?i)^(?:(?:(?:cd)?(\d{1,2})(?:-|\.|:))|(?:cd(?:\s+|\.|-)))?(\d+|(\w{1,2}\s?\d*)|(face )?[ivxc]+)(?:\.)?$',children[0].text_content())
-                if not m:
-                    #ignore tracks with strange track number
-                    continue
-                cd_number = m.group(1)
-                #if there is no cd number we default to 1
-                if not cd_number:
-                    cd_number = 1
-                else:
-                    cd_number = int(cd_number)
-                if not disc_containers.has_key(cd_number):
-                    disc_containers[cd_number] = []
-                disc_containers[cd_number].append({'children': children, 'track_number_string': m.group(2)})
+        if 'tracklist' in self.data:
+            self._get_tracks(self.data['tracklist'], disc_containers)
         return disc_containers
 
     def get_track_number(self, trackContainer):
         number = trackContainer['track_number_string']
-        if not re.search('\D',number):
+        if not re.search('\D', number):
             #remove leading zeros
             number_without_zeros = number.lstrip('0')
             #see if there is anything left
@@ -236,86 +229,40 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
     def get_track_artists(self, trackContainer):
         track_artists = []
         track_artist_names = {}
-        children = trackContainer['children']
-        if len(children) == 4:
-            track = children[2]
-            track_artists_column = children[1]
-            #get track artist
-            is_feature = False
-            track_artists_elements = track_artists_column.cssselect('a')
-            for track_artist_element in track_artists_elements:
-                track_artist = self.result.create_artist()
-                track_artist_name = track_artist_element.text_content()
-                track_artist_name = self.remove_whitespace(track_artist_name)
-                track_artist_name = self._prepare_artist_name(track_artist_name)
-                track_artist.set_name(track_artist_name)
-                if is_feature:
-                    # we assume every artist after "feat." is a feature
-                    track_artist.append_type(self.result.ArtistTypes.FEATURING)
-                else:
-                    track_artist.append_type(self.result.ArtistTypes.MAIN)
-                    if track_artist_element.tail and re.search(self._featuring_artist_regex, track_artist_element.tail):
-                        # all artists after this one are features
-                        is_feature = True
+        if 'artists' in trackContainer['track']:
+            for track_artist in self._get_main_and_feat_artists(trackContainer['track']['artists']):
                 track_artists.append(track_artist)
-                track_artist_names[track_artist_name] = track_artist
-        else:
-            track = children[1]
-        #there might be featuring artists in the track column
-        blockquote = track.cssselect('blockquote')
-        if len(blockquote) == 1:
-            blockquote = blockquote[0]
-            extra_artist_spans = blockquote.cssselect('span.tracklist_extra_artist_span')
-            for extra_artist_span in extra_artist_spans:
-                span_text = extra_artist_span.text_content()
-                if re.match(u'(?s).*(Featuring|Remix).*\u2013.*', span_text):
-                    if u'Featuring' in span_text:
+                track_artist_names[track_artist.get_name()] = track_artist
+        #there might be featuring artists in extraArtists
+        if 'extraartists' in trackContainer['track']:
+            for extra_artist in trackContainer['track']['extraartists']:
+                role = extra_artist['role']
+                if re.match(u'(?s).*(Featuring|Remix).*', role):
+                    if u'Featuring' in role:
                         track_artist_type = self.result.ArtistTypes.FEATURING
-                    elif u'Remix' in span_text:
+                    elif u'Remix' in role:
                         track_artist_type = self.result.ArtistTypes.REMIXER
-                    track_featuring_elements = extra_artist_span.cssselect('a')
-                    for track_featuring_element in track_featuring_elements:
-                        track_feature = track_featuring_element.text_content()
-                        track_feature = self.remove_whitespace(track_feature)
-                        track_feature = self._prepare_artist_name(track_feature)
-                        if not track_feature in track_artist_names:
-                            # only add the additional artist if we didn't already add an artist with the same name
-                            track_artist = self.result.create_artist()
-                            track_artist.set_name(track_feature)
-                            track_artist.append_type(track_artist_type)
-                            track_artists.append(track_artist)
-                            track_artist_names[track_feature] = track_artist
-                        elif not track_artist_type in track_artist_names[track_feature].get_types():
-                            # otherwise add the new type to the existing track artist
-                            track_artist_names[track_feature].append_type(track_artist_type)
-
+                    track_artist_name = self._get_artist_name(extra_artist)
+                    if not track_artist_name in track_artist_names:
+                        # only add the additional artist if we didn't already add an artist with the same name
+                        track_artist = self.result.create_artist()
+                        track_artist.set_name(track_artist_name)
+                        track_artist.append_type(track_artist_type)
+                        track_artists.append(track_artist)
+                        track_artist_names[track_artist_name] = track_artist
+                    elif not track_artist_type in track_artist_names[track_artist_name].get_types():
+                        # otherwise add the new type to the existing track artist
+                        track_artist_names[track_artist_name].append_type(track_artist_type)
         return track_artists
 
     def get_track_title(self, trackContainer):
-        children = trackContainer['children']
-        if len(children) == 4:
-            track = children[2]
-        else:
-            track = children[1]
-        track_title = track.cssselect('span.tracklist_track_title')
-        if len(track_title) != 1:
-            self.raise_exception(u'could not determine track title')
-        track_title = track_title[0].text_content()
-        track_title = self.remove_whitespace(track_title)
-        if track_title:
-            return track_title
+        if trackContainer['track']['title']:
+            return self.remove_whitespace(trackContainer['track']['title'])
         return None
 
     def get_track_length(self, trackContainer):
-        children = trackContainer['children']
-        if len(children) == 4:
-            track_duration = children[3]
-        else:
-            track_duration = children[2]
-        track_duration = track_duration.text_content()
-        track_duration = self.remove_whitespace(track_duration)
-        if track_duration:
-            return self.seconds_from_string(track_duration)
+        if trackContainer['track']['duration']:
+            return self.seconds_from_string(trackContainer['track']['duration'])
         return None
 
     def add_discs(self):
@@ -344,19 +291,19 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     def get_result(self):
         try:
-            response = self.request_get(self.get_url())
+            response = self.request_get(url=self.get_api_url())
         except StatusCodeError as e:
             if str(e) == "404":
                 self.result = NotFoundResult()
                 self.result.set_scraper_name(self.get_name())
                 return self.result
             else:
-                self.raise_exception("request to server unsuccessful, status code: %s" % str(e))
+                raise e
+
+        self.data = self.parse_response_content(self.get_response_content(response))
 
         self.result = ReleaseResult()
         self.result.set_scraper_name(self.get_name())
-
-        self.prepare_response_content(self.get_response_content(response))
 
         self.add_release_event()
 
