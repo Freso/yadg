@@ -36,7 +36,7 @@ SCRAPER_URL = 'http://www.discogs.com/'
 
 _API_BASE_URL = 'https://api.discogs.com/'
 _APP_IDENTIFIER = 'YADG/0.1'
-RATE_LIMIT = '1/s'
+RATE_LIMIT = '0.7/s'
 CONCURRENCY = 1
 
 CONSUMER_KEY = secret.DISCOGS_CONSUMER_KEY
