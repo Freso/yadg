@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from celery.decorators import task
+from celery import shared_task
 
-@task
+@shared_task
 def get_result(scraper, additional_data):
     return scraper.get_result(), additional_data

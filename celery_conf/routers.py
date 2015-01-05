@@ -21,6 +21,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# This will make sure the app is always imported when
-# Django starts so that shared_task will use this app.
-from .celery_conf import app as celery_app
+
+class Router(object):
+
+    task_name = 'descgen.tasks.get_result'
+
+    def __init__(self, queue_factory):
+        self.queue_factory = queue_factory
+        self.class_routing_keys = queue_factory.get_class_routing_keys()
+
+    def route_for_task(self, task, args=None, kwargs=None):
+        # only handle get_result tasks
+        if task == self.task_name:
+            # that have the right amount of args
+            if len(args) == 2:
+                # if the given scraper has an explicit routing_key, use it
+                class_path = args[0].__module__ + '.' + args[0].__class__.__name__
+                if class_path in self.class_routing_keys:
+                    return {
+                        'queue': self.class_routing_keys[class_path],
+                        'routing_key': self.class_routing_keys[class_path]
+                    }
+        return None

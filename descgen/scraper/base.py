@@ -24,6 +24,7 @@
 import requests
 import re
 import logging
+from collections import defaultdict
 
 
 class ScraperError(Exception):
@@ -178,6 +179,7 @@ class LoggerMixin(object):
 class Scraper(object):
 
     string_regex = None
+    rate_limit = None
 
     def __init__(self):
         super(Scraper, self).__init__()
@@ -230,7 +232,33 @@ class SearchScraper(Scraper):
         return u'search_term="%s"' % self.search_term
 
 
+class RateLimitGroup(object):
+
+    def __init__(self, rate_limit=None, objects=[]):
+        super(RateLimitGroup, self).__init__()
+        self.rate_limit = rate_limit
+        self.objects = objects
+
+    def set_rate_limit(self, rate_limit):
+        self.rate_limit = rate_limit
+
+    def get_rate_limit(self):
+        return self.rate_limit
+
+    def append_object(self, object):
+        self.objects.append(object)
+
+    def get_objects(self):
+        return self.objects
+
+
 class Factory(object):
+
+    RateLimitGroup = RateLimitGroup
+
+    def __init__(self):
+        super(Factory, self).__init__()
+        self.rate_limit_groups = []
 
     def get_scraper_by_string(self, string):
         return None
@@ -244,11 +272,50 @@ class Factory(object):
     def is_searchable(self):
         return self.has_search()
 
+    def create_rate_limit_group(self, *args, **kwargs):
+        return self.RateLimitGroup(*args, **kwargs)
+
+    def append_rate_limit_group(self, rate_limit_group):
+        self.rate_limit_groups.append(rate_limit_group)
+
+    def get_rate_limit_groups(self):
+        return self.rate_limit_groups
+
 
 class StandardFactory(Factory):
 
     scraper_classes = []
     search_scraper = None
+
+    '''
+    Force a specific grouping of scrapers into rate limit groups by providing a list in the following format:
+    [
+        ('100/s', [
+            ScraperClass1,
+            ScraperClass2,
+            ...
+        ]),
+        ('100/m', [
+            ScraperClass3,
+            ScraperClass4,
+            ...
+        ]),
+        ...
+    ]
+    '''
+    force_rate_limit_groups = []
+
+    '''
+    Set a rate limit for all classes known to this factory. All known scraper classes will be part of the same rate
+    limit group with this rate limit.
+
+    If force_rate_limit_groups is also provided, force_rate_limit_groups will take precedence.
+    '''
+    global_rate_limit = None
+
+    def __init__(self):
+        super(StandardFactory, self).__init__()
+        self.create_rate_limit_groups()
 
     def get_search_scraper(self, search_term):
         if self.search_scraper is not None:
@@ -264,3 +331,26 @@ class StandardFactory(Factory):
 
     def has_search(self):
         return self.search_scraper is not None
+
+    def create_rate_limit_groups(self):
+        if not self.force_rate_limit_groups:
+            scraper_classes = list(self.scraper_classes)
+            if self.search_scraper:
+                scraper_classes.append(self.search_scraper)
+            rate_limit_bins = defaultdict(list)
+            # if a global rate limit is set, we set this rate limit for all classes known to this factory
+            if self.global_rate_limit is not None:
+                rate_limit_bins[self.global_rate_limit].extend(scraper_classes)
+            else:
+                # otherwise we look at scraper specific rate limits
+                for scraper_class in scraper_classes:
+                    rate_limit = getattr(scraper_class, 'rate_limit', None)
+                    if rate_limit:
+                        rate_limit_bins[rate_limit].append(scraper_class)
+            items = rate_limit_bins.items()
+        else:
+            items = self.force_rate_limit_groups
+        # make sure the order of the rate_limit_groups is consistent over multiple executions
+        for rate_limit, objects in sorted(items, key=lambda(k, v): (k, str(v))):
+            rate_limit_group = self.create_rate_limit_group(rate_limit, objects)
+            self.append_rate_limit_group(rate_limit_group)

@@ -20,7 +20,3 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# This will make sure the app is always imported when
-# Django starts so that shared_task will use this app.
-from .celery_conf import app as celery_app
