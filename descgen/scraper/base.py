@@ -24,6 +24,8 @@
 import requests
 import re
 import logging
+import datetime
+import time
 from collections import defaultdict
 
 
@@ -58,7 +60,7 @@ class RequestMixin(object):
 
     def __init__(self):
         super(RequestMixin, self).__init__()
-        self.initialize_new_session()
+        self.session = self.get_new_session()
 
     def _make_request(self, method, url, params, headers, post_data, kwargs):
         """
@@ -86,8 +88,8 @@ class RequestMixin(object):
     def request_post(self, url, post_data=None, params=None, headers=None, kwargs=None):
         return self._make_request(method=self.REQUEST_METHOD_GET, url=url, params=params, headers=headers, post_data=post_data, kwargs=kwargs)
 
-    def initialize_new_session(self):
-        self.session = requests.Session()
+    def get_new_session(self):
+        return requests.Session()
 
     def raise_request_exception(self, message):
         raise StatusCodeError(message)
@@ -176,10 +178,72 @@ class LoggerMixin(object):
         self.log(self.CRITICAL, msg)
 
 
+class RateLimitMixin(object):
+
+    _last_call_time = None
+    _rate_limit_interval = None
+
+    def get_rate_limit_value(self):
+        return self.rate_limit
+
+    def raise_rate_limit_format_error(self, rate_limit_format):
+        raise ValueError(u'invalid rate limit format: %s' % rate_limit_format)
+
+    def calculate_rate_limit_interval(self):
+        rate_limit = self.get_rate_limit_value()
+        components = rate_limit.split('/')
+        if len(components) == 1:
+            # interpret value as seconds
+            number_of_calls_string = components[0]
+            base = 1.0
+        elif len(components) == 2:
+            number_of_calls_string = components[0]
+            base_string = components[1]
+            if base_string == 's':
+                base = 1.0
+            elif base_string == 'm':
+                base = 60.0
+            elif base_string == 'h':
+                base = 60.0 * 60.0
+            else:
+                self.raise_rate_limit_format_error(rate_limit)
+        else:
+            self.raise_rate_limit_format_error(rate_limit)
+        try:
+            number_of_calls = float(components[0])
+        except ValueError:
+            self.raise_rate_limit_format_error(rate_limit)
+        self._rate_limit_interval = datetime.timedelta(seconds=base/number_of_calls)
+
+    def get_rate_limit_interval(self):
+        if self._rate_limit_interval is None:
+            self.calculate_rate_limit_interval()
+        return self._rate_limit_interval
+
+    def rate_limit_sleep(self):
+        if self._last_call_time is not None:
+            last_call_delta = datetime.datetime.now() - self._last_call_time
+            rate_limit_interval = self.get_rate_limit_interval()
+            if last_call_delta < rate_limit_interval:
+                delta = rate_limit_interval - last_call_delta
+                delta_seconds = (delta.microseconds + (delta.seconds + delta.days * 24 * 3600) * 10**6) / 10.0**6
+                time.sleep(delta_seconds)
+        self._last_call_time = datetime.datetime.now()
+
+
 class Scraper(object):
 
     string_regex = None
+
+    '''
+    The maximum rate with which multiple instances of this scraper should be executed.
+    '''
     rate_limit = None
+
+    '''
+    The maximum number of concurrent processes that should execute instances of this scraper simultaneously.
+    '''
+    concurrency = None
 
     def __init__(self):
         super(Scraper, self).__init__()
@@ -234,9 +298,10 @@ class SearchScraper(Scraper):
 
 class RateLimitGroup(object):
 
-    def __init__(self, rate_limit=None, objects=[]):
+    def __init__(self, rate_limit=None, concurrency=None, objects=[]):
         super(RateLimitGroup, self).__init__()
         self.rate_limit = rate_limit
+        self.concurrency = concurrency
         self.objects = objects
 
     def set_rate_limit(self, rate_limit):
@@ -244,6 +309,12 @@ class RateLimitGroup(object):
 
     def get_rate_limit(self):
         return self.rate_limit
+
+    def set_concurrency(self, concurrency):
+        self.concurrency = concurrency
+
+    def get_concurrency(self):
+        return self.concurrency
 
     def append_object(self, object):
         self.objects.append(object)
@@ -290,12 +361,12 @@ class StandardFactory(Factory):
     '''
     Force a specific grouping of scrapers into rate limit groups by providing a list in the following format:
     [
-        ('100/s', [
+        ('100/s', concurrency, [
             ScraperClass1,
             ScraperClass2,
             ...
         ]),
-        ('100/m', [
+        ('100/m', concurrency, [
             ScraperClass3,
             ScraperClass4,
             ...
@@ -312,6 +383,12 @@ class StandardFactory(Factory):
     If force_rate_limit_groups is also provided, force_rate_limit_groups will take precedence.
     '''
     global_rate_limit = None
+
+    '''
+    The global concurrency that will be set for all automatically generated rate limit groups. This value will not
+    affect rate limit groups defined via force_rate_limit_groups
+    '''
+    global_concurrency = None
 
     def __init__(self):
         super(StandardFactory, self).__init__()
@@ -347,10 +424,20 @@ class StandardFactory(Factory):
                     rate_limit = getattr(scraper_class, 'rate_limit', None)
                     if rate_limit:
                         rate_limit_bins[rate_limit].append(scraper_class)
-            items = rate_limit_bins.items()
+            items = []
+            for rate_limit, objects in rate_limit_bins.items():
+                if self.global_concurrency is None:
+                    concurrences = map(lambda y: getattr(y, 'concurrency', None), objects)
+                    if all([x is None for x in concurrences]):
+                        concurrency = None
+                    else:
+                        concurrency = reduce(min, filter(lambda x: x is not None, concurrences))
+                else:
+                    concurrency = self.global_concurrency
+                items.append((rate_limit, concurrency, objects))
         else:
             items = self.force_rate_limit_groups
         # make sure the order of the rate_limit_groups is consistent over multiple executions
-        for rate_limit, objects in sorted(items, key=lambda(k, v): (k, str(v))):
-            rate_limit_group = self.create_rate_limit_group(rate_limit, objects)
+        for rate_limit, concurrency, objects in sorted(items, key=lambda(k, c, v): (k, c, str(v))):
+            rate_limit_group = self.create_rate_limit_group(rate_limit, concurrency, objects)
             self.append_rate_limit_group(rate_limit_group)

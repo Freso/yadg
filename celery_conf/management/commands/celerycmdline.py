@@ -57,8 +57,10 @@ class Command(BaseCommand):
 
         i = 1
         for queue in queue_factory.get_queues():
-            rate_limit = queue_rate_limits.get(queue.name, None)
+            rate_limit, concurrency = queue_rate_limits.get(queue.name, (None, None))
             start_command += ' -Q:%d %s' %(i, queue.name)
+            if concurrency is not None:
+                start_command += ' -c:%d %d' % (i, concurrency)
             if rate_limit is not None:
                 rate_limit_commands.append('celery -A %s control -d celery%d@%s rate_limit %s %s' % (self.celery_app_path, i, hostname, task_name, rate_limit))
             i += 1
