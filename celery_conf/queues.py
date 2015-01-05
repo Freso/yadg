@@ -63,6 +63,7 @@ class Factory(object):
                 name = orig_name
                 i = 1
                 while name in queue_names:
+                    # todo: make sure queue name components can be just an integer
                     name = orig_name + '.' + str(i)
                     i += 1
                 queue_names[name] = True
