@@ -461,7 +461,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         return self.discogsOauth.get_session((ACCESS_TOKEN, ACCESS_SECRET))
 
     def get_params(self):
-        return {'type': 'release', 'per_page': '20', 'query': self.search_term}
+        return {'type': 'release', 'per_page': '20', 'q': self.search_term}
 
     def parse_response_content(self, response_content):
         try:
