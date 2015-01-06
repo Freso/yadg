@@ -62,12 +62,12 @@ class Command(BaseCommand):
             if concurrency is not None:
                 start_command += ' -c:%d %d' % (i, concurrency)
             if rate_limit is not None:
-                rate_limit_commands.append('celery -A %s control -t 10 -d celery%d@%s rate_limit %s %s' % (self.celery_app_path, i, hostname, task_name, rate_limit))
+                rate_limit_commands.append('celery -A %s control -t 3 -d celery%d@%s rate_limit %s %s' % (self.celery_app_path, i, hostname, task_name, rate_limit))
             i += 1
 
         print start_command
 
         if rate_limit_commands and mode in ['start', 'restart']:
-            print
+            print 'sleep 5s' # give the worker nodes time to start so that they are able to receive the celery control messages
             for command in rate_limit_commands:
                 print command
