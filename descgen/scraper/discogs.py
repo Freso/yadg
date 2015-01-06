@@ -36,7 +36,7 @@ SCRAPER_URL = 'http://www.discogs.com/'
 
 _API_BASE_URL = 'https://api.discogs.com/'
 _APP_IDENTIFIER = 'YADG/0.1'
-RATE_LIMIT = '1/s'
+RATE_LIMIT = '0.7/s'
 CONCURRENCY = 1
 
 CONSUMER_KEY = secret.DISCOGS_CONSUMER_KEY
@@ -461,7 +461,7 @@ class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixi
         return self.discogsOauth.get_session((ACCESS_TOKEN, ACCESS_SECRET))
 
     def get_params(self):
-        return {'type': 'release', 'per_page': '20', 'query': self.search_term}
+        return {'type': 'release', 'per_page': '20', 'q': self.search_term}
 
     def parse_response_content(self, response_content):
         try:
