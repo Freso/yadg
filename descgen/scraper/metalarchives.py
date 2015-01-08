@@ -37,7 +37,7 @@ NOTES = 'Search terms are only matched against **album titles**. It is *not poss
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://www.metal-archives.com/'
-    string_regex = '^http://(?:www\.)?metal-archives\.com/albums/(.*?)/(.*?)/(\d+)$'
+    string_regex = '^http(?:s)?://(?:www\.)?metal-archives\.com/albums/(.*?)/(.*?)/(\d+)$'
 
     forced_response_encoding = 'utf-8'
 
