@@ -38,7 +38,7 @@ NOTES = '*  Search terms are only matched against **album titles**\n' \
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://www.musik-sammler.de/'
-    string_regex = '^http://(?:www\.)?musik-sammler\.de/media/(\d*?)/?$'
+    string_regex = '^http(?:s)?://(?:www\.)?musik-sammler\.de/media/(\d*?)/?$'
 
     _VARIOUS_ARTISTS_NAMES = ('diverse interpreten', 'v.a.', 'various artists/sampler')
     _UNKNOWN_SYNONYMS = ('unbekannt', 'k.a.', 'nicht vorhanden')
