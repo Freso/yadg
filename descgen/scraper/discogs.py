@@ -84,7 +84,7 @@ class Scraper(ScraperBase, UtilityMixin, RequestMixin):
 
 class ReleaseScraper(Scraper, ExceptionMixin):
 
-    string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
+    string_regex = '^http(?:s)?://(?:www\.)?discogs\.com/(?:.+?/)?release/(\d+)$'
 
     ARTIST_NAME_VARIOUS = "Various"
 
@@ -355,7 +355,7 @@ class ReleaseScraper(Scraper, ExceptionMixin):
 
 class MasterScraper(Scraper, ExceptionMixin, RateLimitMixin):
 
-    string_regex = '^http://(?:www\.)?discogs\.com/(?:.+?/)?master/(\d+)$'
+    string_regex = '^http(?:s)?://(?:www\.)?discogs\.com/(?:.+?/)?master/(\d+)$'
 
     rate_limit = RATE_LIMIT
 
