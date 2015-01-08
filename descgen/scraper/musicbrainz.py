@@ -36,7 +36,7 @@ SCRAPER_URL = 'http://musicbrainz.org/'
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
     _base_url = 'http://musicbrainz.org/'
-    string_regex = '^http://(?:www\.)?musicbrainz.org/release/([A-Za-z0-9\-]+)$'
+    string_regex = '^http(?:s)?://(?:www\.)?musicbrainz.org/release/([A-Za-z0-9\-]+)$'
 
     def __init__(self, id):
         super(ReleaseScraper, self).__init__()
