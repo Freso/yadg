@@ -30,12 +30,12 @@ from ..result import ReleaseResult, ListResult, NotFoundResult
 
 
 READABLE_NAME = 'MusicBrainz'
-SCRAPER_URL = 'http://musicbrainz.org/'
+SCRAPER_URL = 'https://musicbrainz.org/'
 
 
 class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
-    _base_url = 'http://musicbrainz.org/'
+    _base_url = 'https://musicbrainz.org/'
     string_regex = '^http(?:s)?://(?:www\.)?musicbrainz.org/release/([A-Za-z0-9\-]+)$'
 
     def __init__(self, id):
@@ -358,7 +358,7 @@ class ReleaseScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
 class ReleaseGroupScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
-    _base_url = 'http://musicbrainz.org/'
+    _base_url = 'https://musicbrainz.org/'
     string_regex = '^http://(?:www\.)?musicbrainz.org/release-group/([A-Za-z0-9\-]+)$'
 
     def __init__(self, id):
@@ -466,7 +466,7 @@ class ReleaseGroupScraper(Scraper, RequestMixin, ExceptionMixin, UtilityMixin):
 
 class SearchScraper(SearchScraperBase, RequestMixin, ExceptionMixin, UtilityMixin):
 
-    url = 'http://musicbrainz.org/search'
+    url = 'https://musicbrainz.org/search'
 
     def get_params(self):
         return {'type': 'release', 'limit': '25', 'query': self.search_term}

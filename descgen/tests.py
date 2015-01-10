@@ -4441,7 +4441,7 @@ class MusicBrainzTest(TestCase):
 
 
 
-        expected.set_url('http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
+        expected.set_url('https://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -4515,7 +4515,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/e008606b-a1c9-48ab-8011-5dbf8b874f1b')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -4550,7 +4550,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+        expected.set_url('https://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -4809,7 +4809,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/79de4a0c-b469-4dfd-b23c-129462b741fb')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -4838,7 +4838,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
+        expected.set_url('https://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5022,7 +5022,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/9d78a55c-0eee-4b61-b6eb-b69765c37740')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5051,7 +5051,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
+        expected.set_url('https://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5347,7 +5347,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/12c94a0f-828f-4ab3-8e0d-dfe4599dc310')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5376,7 +5376,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
+        expected.set_url('https://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5456,7 +5456,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/fc6ee7a8-c70a-4c8f-ab42-43a457a0731f')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5468,18 +5468,18 @@ class MusicBrainzTest(TestCase):
         item = expected.create_item()
         item.set_name(u'ASP, Chamber \u2013 Humility')
         item.set_info(u'CD | 8 | 2006-04-21 | DE | Trisol | TRI 273 CD | 4260063942730')
-        item.set_query('http://musicbrainz.org/release/58bad121-bfab-4dda-89f8-4b1bc092de44')
-        item.set_url('http://musicbrainz.org/release/58bad121-bfab-4dda-89f8-4b1bc092de44')
+        item.set_query('https://musicbrainz.org/release/58bad121-bfab-4dda-89f8-4b1bc092de44')
+        item.set_url('https://musicbrainz.org/release/58bad121-bfab-4dda-89f8-4b1bc092de44')
         expected.append_item(item)
 
         item = expected.create_item()
         item.set_name(u'ASP, Chamber \u2013 Humility: Die verschollenen Archive 2')
         item.set_info(u'CD | 7 | 2012-03-09 | DE | Trisol | 4260063944505')
-        item.set_query('http://musicbrainz.org/release/c2834b8b-77c4-4505-9b55-a31208eb98c3')
-        item.set_url('http://musicbrainz.org/release/c2834b8b-77c4-4505-9b55-a31208eb98c3')
+        item.set_query('https://musicbrainz.org/release/c2834b8b-77c4-4505-9b55-a31208eb98c3')
+        item.set_url('https://musicbrainz.org/release/c2834b8b-77c4-4505-9b55-a31208eb98c3')
         expected.append_item(item)
 
-        s = musicbrainz.ReleaseGroupScraper.from_string('http://musicbrainz.org/release-group/9c8ec90f-dcef-3fc7-904d-27f535454e44')
+        s = musicbrainz.ReleaseGroupScraper.from_string('https://musicbrainz.org/release-group/9c8ec90f-dcef-3fc7-904d-27f535454e44')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5508,7 +5508,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/bdb4ba37-bb4b-3d2a-bd58-c109dc4d72f0')
+        expected.set_url('https://musicbrainz.org/release/bdb4ba37-bb4b-3d2a-bd58-c109dc4d72f0')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5576,7 +5576,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/bdb4ba37-bb4b-3d2a-bd58-c109dc4d72f0')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/bdb4ba37-bb4b-3d2a-bd58-c109dc4d72f0')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5595,7 +5595,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/0e3b3c85-61b6-4a07-852b-26f7e8dd0ade')
+        expected.set_url('https://musicbrainz.org/release/0e3b3c85-61b6-4a07-852b-26f7e8dd0ade')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5719,7 +5719,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/0e3b3c85-61b6-4a07-852b-26f7e8dd0ade')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/0e3b3c85-61b6-4a07-852b-26f7e8dd0ade')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5743,7 +5743,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/d37fc56e-4b9b-4c4c-9e9e-5d6d5a66944c')
+        expected.set_url('https://musicbrainz.org/release/d37fc56e-4b9b-4c4c-9e9e-5d6d5a66944c')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5817,7 +5817,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/d37fc56e-4b9b-4c4c-9e9e-5d6d5a66944c')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/d37fc56e-4b9b-4c4c-9e9e-5d6d5a66944c')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5845,7 +5845,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/020fc291-af3e-45d7-a2f3-212d42fc260b')
+        expected.set_url('https://musicbrainz.org/release/020fc291-af3e-45d7-a2f3-212d42fc260b')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -5949,7 +5949,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/020fc291-af3e-45d7-a2f3-212d42fc260b')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/020fc291-af3e-45d7-a2f3-212d42fc260b')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -5983,7 +5983,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/f6fe7f52-b0c8-4bd8-af06-68af909e09ca')
+        expected.set_url('https://musicbrainz.org/release/f6fe7f52-b0c8-4bd8-af06-68af909e09ca')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -6330,7 +6330,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/f6fe7f52-b0c8-4bd8-af06-68af909e09ca')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/f6fe7f52-b0c8-4bd8-af06-68af909e09ca')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -6358,7 +6358,7 @@ class MusicBrainzTest(TestCase):
         artist.append_type(expected.ArtistTypes.MAIN)
         expected.append_release_artist(artist)
 
-        expected.set_url('http://musicbrainz.org/release/dd3f9b98-364c-4da0-b4d7-c79f1c20f1e6')
+        expected.set_url('https://musicbrainz.org/release/dd3f9b98-364c-4da0-b4d7-c79f1c20f1e6')
 
         disc = expected.create_disc()
         disc.set_number(1)
@@ -6420,7 +6420,7 @@ class MusicBrainzTest(TestCase):
 
         expected.append_disc(disc)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/dd3f9b98-364c-4da0-b4d7-c79f1c20f1e6')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/dd3f9b98-364c-4da0-b4d7-c79f1c20f1e6')
         r = s.get_result()
 
         self.assertEqual(expected, r)
@@ -6429,7 +6429,7 @@ class MusicBrainzTest(TestCase):
         expected = NotFoundResult()
         expected.set_scraper_name(None)
 
-        s = musicbrainz.ReleaseScraper.from_string('http://musicbrainz.org/release/12345-abcdefg')
+        s = musicbrainz.ReleaseScraper.from_string('https://musicbrainz.org/release/12345-abcdefg')
         r = s.get_result()
 
         self.assertEqual(expected, r)
