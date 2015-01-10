@@ -4413,7 +4413,7 @@ class DiscogsTest(TestCase):
         self.assertTrue(len(r.get_items()) > 0)
 
 
-class MusicbrainzTest(TestCase):
+class MusicBrainzTest(TestCase):
 
     def test_simple_album(self):
         expected = ReleaseResult()

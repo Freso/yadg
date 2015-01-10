@@ -29,7 +29,7 @@ from .base import SearchScraper as SearchScraperBase
 from ..result import ReleaseResult, ListResult, NotFoundResult
 
 
-READABLE_NAME = 'Musicbrainz'
+READABLE_NAME = 'MusicBrainz'
 SCRAPER_URL = 'http://musicbrainz.org/'
 
 
